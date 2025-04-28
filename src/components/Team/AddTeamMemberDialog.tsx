@@ -1,8 +1,9 @@
+
 import React from 'react';
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { PlusCircle } from 'lucide-react';
+import { PlusCircle, Plus, Minus } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -21,10 +22,20 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { departments } from '@/data/mockData';
+import { Checkbox } from "@/components/ui/checkbox";
+import { Textarea } from "@/components/ui/textarea";
+import { departments, projects } from '@/data/mockData';
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { createTeamMember } from '@/services/teamService';
+import { createTeamMember, ProjectInvolvement, RequiredResource, OfficeDays } from '@/services/teamService';
+
+const resourceTypes = [
+  { value: 'account', label: 'Account' },
+  { value: 'permission', label: 'Permission' },
+  { value: 'url', label: 'URL Link' },
+  { value: 'vpn', label: 'VPN Access' },
+  { value: 'other', label: 'Other' },
+];
 
 const formSchema = z.object({
   name: z.string().min(2, "Name is required"),
@@ -33,7 +44,27 @@ const formSchema = z.object({
   department: z.string().min(1, "Department is required"),
   avatar: z.string().url("Must be a valid URL").or(z.literal("")),
   skills: z.string().transform(val => val.split(',').map(skill => skill.trim()).filter(Boolean)),
-  availability: z.number().min(0).max(100)
+  availability: z.number().min(0).max(100),
+  projectInvolvements: z.array(
+    z.object({
+      projectId: z.string().min(1, "Project is required"),
+      percentage: z.number().min(0).max(100, "Percentage must be between 0 and 100")
+    })
+  ),
+  requiredResources: z.array(
+    z.object({
+      type: z.string().min(1, "Resource type is required"),
+      name: z.string().min(1, "Resource name is required"),
+      description: z.string()
+    })
+  ),
+  officeDays: z.object({
+    monday: z.boolean().default(false),
+    tuesday: z.boolean().default(false),
+    wednesday: z.boolean().default(false),
+    thursday: z.boolean().default(false),
+    friday: z.boolean().default(false)
+  })
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -51,8 +82,25 @@ export default function AddTeamMemberDialog() {
       department: "",
       avatar: "",
       skills: [],
-      availability: 100
+      availability: 100,
+      projectInvolvements: [{ projectId: "", percentage: 0 }],
+      requiredResources: [],
+      officeDays: {
+        monday: false,
+        tuesday: false,
+        wednesday: false,
+        thursday: false,
+        friday: false
+      }
     }
+  });
+  
+  const { fields: projectFields, append: appendProject, remove: removeProject } = form.useFieldArray({
+    name: "projectInvolvements"
+  });
+  
+  const { fields: resourceFields, append: appendResource, remove: removeResource } = form.useFieldArray({
+    name: "requiredResources" 
   });
   
   const onSubmit = async (data: FormValues) => {
@@ -69,7 +117,10 @@ export default function AddTeamMemberDialog() {
         avatar: avatarUrl,
         skills: Array.isArray(data.skills) ? data.skills : [data.skills],
         availability: data.availability,
-        projects: []
+        projects: data.projectInvolvements.map(p => p.projectId),
+        projectInvolvements: data.projectInvolvements,
+        requiredResources: data.requiredResources,
+        officeDays: data.officeDays
       });
 
       toast({
@@ -100,7 +151,7 @@ export default function AddTeamMemberDialog() {
           Add Team Member
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Add New Team Member</DialogTitle>
         </DialogHeader>
@@ -241,6 +292,256 @@ export default function AddTeamMemberDialog() {
                 </FormItem>
               )}
             />
+            
+            <div>
+              <div className="flex items-center justify-between">
+                <h3 className="text-md font-medium mb-2">Project Involvement</h3>
+                <Button 
+                  type="button" 
+                  size="sm" 
+                  variant="outline"
+                  onClick={() => appendProject({ projectId: "", percentage: 0 })}
+                >
+                  <Plus className="h-4 w-4 mr-1" /> Add Project
+                </Button>
+              </div>
+              
+              {projectFields.map((field, index) => (
+                <div key={field.id} className="flex items-end gap-2 mb-2">
+                  <FormField
+                    control={form.control}
+                    name={`projectInvolvements.${index}.projectId`}
+                    render={({ field }) => (
+                      <FormItem className="flex-1">
+                        <FormLabel className={index !== 0 ? "sr-only" : ""}>Project</FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select project" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {projects.map((project) => (
+                              <SelectItem key={project.id} value={project.id}>
+                                {project.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name={`projectInvolvements.${index}.percentage`}
+                    render={({ field }) => (
+                      <FormItem className="w-24">
+                        <FormLabel className={index !== 0 ? "sr-only" : ""}>%</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            min="0"
+                            max="100"
+                            {...field}
+                            onChange={(e) => field.onChange(parseInt(e.target.value))}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  {index > 0 && (
+                    <Button 
+                      type="button" 
+                      variant="ghost" 
+                      size="icon"
+                      onClick={() => removeProject(index)}
+                    >
+                      <Minus className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              ))}
+            </div>
+            
+            <div>
+              <div className="flex items-center justify-between">
+                <h3 className="text-md font-medium mb-2">Required Resources</h3>
+                <Button 
+                  type="button" 
+                  size="sm" 
+                  variant="outline"
+                  onClick={() => appendResource({ type: "", name: "", description: "" })}
+                >
+                  <Plus className="h-4 w-4 mr-1" /> Add Resource
+                </Button>
+              </div>
+              
+              {resourceFields.map((field, index) => (
+                <div key={field.id} className="border rounded-md p-3 mb-3">
+                  <div className="flex justify-between mb-2">
+                    <h4 className="text-sm font-medium">Resource #{index + 1}</h4>
+                    <Button 
+                      type="button" 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => removeResource(index)}
+                    >
+                      <Minus className="h-4 w-4 mr-1" /> Remove
+                    </Button>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-3 mb-3">
+                    <FormField
+                      control={form.control}
+                      name={`requiredResources.${index}.type`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Type</FormLabel>
+                          <Select
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select resource type" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {resourceTypes.map((type) => (
+                                <SelectItem key={type.value} value={type.value}>
+                                  {type.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name={`requiredResources.${index}.name`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Name/Identifier</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Resource name" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  
+                  <FormField
+                    control={form.control}
+                    name={`requiredResources.${index}.description`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Description</FormLabel>
+                        <FormControl>
+                          <Textarea placeholder="Resource details..." {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              ))}
+            </div>
+            
+            <div>
+              <h3 className="text-md font-medium mb-2">Office Days</h3>
+              <div className="grid grid-cols-5 gap-2">
+                <FormField
+                  control={form.control}
+                  name="officeDays.monday"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col items-center space-y-1">
+                      <FormLabel>Mon</FormLabel>
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="officeDays.tuesday"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col items-center space-y-1">
+                      <FormLabel>Tue</FormLabel>
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="officeDays.wednesday"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col items-center space-y-1">
+                      <FormLabel>Wed</FormLabel>
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="officeDays.thursday"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col items-center space-y-1">
+                      <FormLabel>Thu</FormLabel>
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="officeDays.friday"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col items-center space-y-1">
+                      <FormLabel>Fri</FormLabel>
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
             
             <div className="flex justify-end space-x-2 pt-4">
               <Button 

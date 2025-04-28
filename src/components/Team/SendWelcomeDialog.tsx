@@ -16,16 +16,31 @@ import { useToast } from "@/hooks/use-toast";
 import { useEmailConfig } from "@/hooks/useEmailConfig";
 import { teamMembers } from '@/data/mockData';
 import { Mail } from 'lucide-react';
-import { sendWelcomePackage } from '@/services/teamService';
+import { sendWelcomePackage, RequiredResource } from '@/services/teamService';
+import { Checkbox } from "@/components/ui/checkbox";
 
 export default function SendWelcomeDialog() {
   const [email, setEmail] = React.useState("");
   const [replacingMember, setReplacingMember] = React.useState("");
   const [additionalNotes, setAdditionalNotes] = React.useState("");
+  const [selectedMember, setSelectedMember] = React.useState<string | null>(null);
+  const [requiredResources, setRequiredResources] = React.useState<RequiredResource[]>([]);
   const [isOpen, setIsOpen] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(false);
   const { toast } = useToast();
   const { emailConfig } = useEmailConfig();
+
+  // Find selected team member and their resources
+  React.useEffect(() => {
+    if (selectedMember) {
+      const member = teamMembers.find(m => m.id === selectedMember);
+      if (member && member.requiredResources) {
+        setRequiredResources(member.requiredResources);
+      } else {
+        setRequiredResources([]);
+      }
+    }
+  }, [selectedMember]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,7 +61,8 @@ export default function SendWelcomeDialog() {
       await sendWelcomePackage({
         email,
         replacingMember,
-        additionalNotes
+        additionalNotes,
+        requiredResources
       });
 
       toast({
@@ -58,6 +74,8 @@ export default function SendWelcomeDialog() {
       setEmail("");
       setReplacingMember("");
       setAdditionalNotes("");
+      setSelectedMember(null);
+      setRequiredResources([]);
     } catch (error) {
       console.error("Error sending welcome package:", error);
       toast({
@@ -70,6 +88,27 @@ export default function SendWelcomeDialog() {
     }
   };
 
+  const handleMemberSelect = (memberId: string) => {
+    setSelectedMember(memberId);
+    if (memberId !== 'none') {
+      const member = teamMembers.find(m => m.id === memberId);
+      if (member && member.email) {
+        setEmail(member.email);
+      }
+    }
+  };
+
+  const toggleResource = (resourceIndex: number) => {
+    setRequiredResources(prev => {
+      const updated = [...prev];
+      updated[resourceIndex] = {
+        ...updated[resourceIndex],
+        selected: !updated[resourceIndex].selected
+      };
+      return updated;
+    });
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
@@ -78,19 +117,39 @@ export default function SendWelcomeDialog() {
           Send Welcome Package
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Send Welcome Package</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="email">New Member Email</Label>
+            <Label htmlFor="member">Team Member</Label>
+            <Select 
+              value={selectedMember || ''} 
+              onValueChange={handleMemberSelect}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select team member" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">New Member (Not in system)</SelectItem>
+                {teamMembers.map((member) => (
+                  <SelectItem key={member.id} value={member.id}>
+                    {member.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="email">Member Email</Label>
             <Input
               id="email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="new.member@company.com"
+              placeholder="team.member@company.com"
               required
             />
           </div>
@@ -111,6 +170,32 @@ export default function SendWelcomeDialog() {
               </SelectContent>
             </Select>
           </div>
+
+          {requiredResources.length > 0 && (
+            <div className="space-y-3">
+              <Label>Required Resources</Label>
+              <div className="border rounded-md p-3 space-y-3 max-h-[200px] overflow-y-auto">
+                {requiredResources.map((resource, idx) => (
+                  <div key={idx} className="flex items-start space-x-3">
+                    <Checkbox 
+                      id={`resource-${idx}`}
+                      checked={resource.selected}
+                      onCheckedChange={() => toggleResource(idx)}
+                    />
+                    <div className="space-y-1">
+                      <Label 
+                        htmlFor={`resource-${idx}`}
+                        className="text-sm font-medium"
+                      >
+                        {resource.name} ({resource.type})
+                      </Label>
+                      <p className="text-xs text-muted-foreground">{resource.description}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="notes">Additional Notes</Label>

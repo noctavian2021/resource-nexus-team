@@ -28,10 +28,10 @@ const SidebarLink = ({
   <NavLink
     to={to}
     className={cn(
-      'flex items-center gap-3 rounded-lg px-3 py-2 transition-all text-white/70',
+      'flex items-center gap-3 rounded-lg px-3 py-2 transition-all text-white/80',
       isActive
-        ? 'bg-white/10 text-white'
-        : 'hover:bg-white/10 hover:text-white'
+        ? 'bg-white/15 text-white'
+        : 'hover:bg-white/15 hover:text-white'
     )}
   >
     <Icon className="h-5 w-5" />
@@ -47,7 +47,7 @@ export default function Sidebar() {
   return (
     <aside
       className={cn(
-        "relative bg-gradient-to-b from-[#8B5CF6] to-[#D946EF] dark:from-[#1A1F2C] dark:to-[#403E43] z-10 h-screen group/sidebar overflow-hidden border-r border-white/10",
+        "relative bg-gradient-to-b from-[#2c3e50] to-[#3498db] dark:from-[#1A1F2C] dark:to-[#2c3e50] z-10 h-screen group/sidebar overflow-hidden border-r border-white/10",
         isOpen ? "w-64" : "w-16",
       )}
     >

@@ -15,7 +15,7 @@ export default function Header({ title }: HeaderProps) {
   const isMobile = useIsMobile();
 
   return (
-    <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-gradient-to-r from-[#8B5CF6] to-[#D946EF] dark:from-[#1A1F2C] dark:to-[#403E43] px-4 md:px-6">
+    <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-gradient-to-r from-[#2c3e50] to-[#3498db] dark:from-[#1A1F2C] dark:to-[#2c3e50] px-4 md:px-6">
       {isMobile && (
         <Sheet>
           <SheetTrigger asChild>
