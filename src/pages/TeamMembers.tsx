@@ -6,10 +6,12 @@ import SendWelcomeDialog from '@/components/Team/SendWelcomeDialog';
 import AddTeamMemberDialog from '@/components/Team/AddTeamMemberDialog';
 import { getTeamMembers } from '@/services/teamService';
 import { TeamMember } from '@/data/mockData';
+import { useToast } from '@/hooks/use-toast';
 
 export default function TeamMembers() {
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
   // Fetch team members whenever the component mounts
   useEffect(() => {
@@ -19,13 +21,21 @@ export default function TeamMembers() {
         setTeamMembers(data);
       } catch (error) {
         console.error('Error fetching team members:', error);
+        toast({
+          title: "Error",
+          description: "Failed to fetch team members. Using mock data instead.",
+          variant: "destructive"
+        });
+        
+        // Initialize with empty array if fetch fails
+        setTeamMembers([]);
       } finally {
         setLoading(false);
       }
     };
 
     fetchTeamMembers();
-  }, []);
+  }, [toast]);
 
   return (
     <>
@@ -35,7 +45,9 @@ export default function TeamMembers() {
           <h1 className="text-2xl font-semibold tracking-tight">Team Members</h1>
           <div className="flex gap-2">
             <SendWelcomeDialog />
-            <AddTeamMemberDialog />
+            <AddTeamMemberDialog onMemberAdded={(newMember) => {
+              setTeamMembers(prev => [...prev, newMember]);
+            }} />
           </div>
         </div>
         

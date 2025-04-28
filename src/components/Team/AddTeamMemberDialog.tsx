@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -23,7 +24,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
-import { departments, projects } from '@/data/mockData';
+import { departments, projects, TeamMember } from '@/data/mockData';
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { createTeamMember, ProjectInvolvement, RequiredResource, OfficeDays } from '@/services/teamService';
@@ -68,7 +69,11 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-export default function AddTeamMemberDialog() {
+interface AddTeamMemberDialogProps {
+  onMemberAdded?: (member: TeamMember) => void;
+}
+
+export default function AddTeamMemberDialog({ onMemberAdded }: AddTeamMemberDialogProps) {
   const [isOpen, setIsOpen] = React.useState(false);
   const { toast } = useToast();
   
@@ -127,7 +132,7 @@ export default function AddTeamMemberDialog() {
         friday: !!data.officeDays.friday
       };
 
-      await createTeamMember({
+      const newMember = await createTeamMember({
         name: data.name,
         email: data.email,
         role: data.role,
@@ -149,8 +154,11 @@ export default function AddTeamMemberDialog() {
       setIsOpen(false);
       form.reset();
       
-      window.location.reload();
+      if (onMemberAdded) {
+        onMemberAdded(newMember);
+      }
     } catch (error) {
+      console.error("Error adding team member:", error);
       toast({
         title: "Error",
         description: "Failed to add team member. Please try again.",
