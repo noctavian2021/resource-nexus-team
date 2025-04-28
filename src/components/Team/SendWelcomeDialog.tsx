@@ -89,7 +89,7 @@ export default function SendWelcomeDialog() {
                 <SelectValue placeholder="Select team member being replaced (optional)" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">None</SelectItem>
+                <SelectItem value="none">None</SelectItem>
                 {teamMembers.map((member) => (
                   <SelectItem key={member.id} value={member.id}>
                     {member.name}
