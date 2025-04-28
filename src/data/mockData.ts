@@ -1,4 +1,3 @@
-
 // Mock data for the Resource Nexus Team app
 
 // Team members
@@ -281,6 +280,60 @@ export const allocationData: AllocationData[] = [
   { department: 'Product', allocated: 90, available: 10 },
   { department: 'Marketing', allocated: 40, available: 60 },
   { department: 'Sales', allocated: 60, available: 40 }
+];
+
+// Resource Request Status type
+export type RequestStatus = 'Pending' | 'Approved' | 'Declined';
+
+// Resource Request interface
+export interface ResourceRequest {
+  id: string;
+  title: string;
+  description: string;
+  requestingDepartmentId: string;
+  targetDepartmentId: string;
+  requesterId: string;
+  requiredSkills: string[];
+  startDate: string;
+  endDate: string;
+  status: RequestStatus;
+  createdAt: string;
+  updatedAt: string | null;
+  projectId: string | null;
+}
+
+// Mock resource requests data
+export const resourceRequests: ResourceRequest[] = [
+  {
+    id: '1',
+    title: 'Frontend Developer Needed',
+    description: 'Need a frontend developer for the Website Redesign project',
+    requestingDepartmentId: '4', // Marketing
+    targetDepartmentId: '1', // Engineering
+    requesterId: '4', // Emily Davis
+    requiredSkills: ['React', 'TypeScript'],
+    startDate: '2025-05-01',
+    endDate: '2025-06-30',
+    status: 'Pending',
+    createdAt: '2025-04-15T09:00:00',
+    updatedAt: null,
+    projectId: '1'
+  },
+  {
+    id: '2',
+    title: 'UX Designer for Mobile App',
+    description: 'Requesting UX designer support for our mobile app development',
+    requestingDepartmentId: '1', // Engineering
+    targetDepartmentId: '2', // Design
+    requesterId: '1', // Alex Johnson
+    requiredSkills: ['UI Design', 'User Research'],
+    startDate: '2025-05-15',
+    endDate: '2025-07-15',
+    status: 'Approved',
+    createdAt: '2025-04-10T14:30:00',
+    updatedAt: '2025-04-12T11:20:00',
+    projectId: '2'
+  }
 ];
 
 // Helper function to get team member by ID
