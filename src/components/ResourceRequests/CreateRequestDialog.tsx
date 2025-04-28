@@ -9,7 +9,8 @@ import { departments, ResourceRequest } from '@/data/mockData';
 import { PlusCircle } from 'lucide-react';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from '@/hooks/use-toast';
+import { useNotifications } from '@/hooks/useNotifications';
 
 const requestFormSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -23,8 +24,8 @@ const requestFormSchema = z.object({
 type RequestFormData = z.infer<typeof requestFormSchema>;
 
 export default function CreateRequestDialog() {
-  const { toast } = useToast();
   const [open, setOpen] = React.useState(false);
+  const { addNotification } = useNotifications();
   
   const form = useForm<RequestFormData>({
     resolver: zodResolver(requestFormSchema),
@@ -42,6 +43,8 @@ export default function CreateRequestDialog() {
     // In a real app, this would be an API call
     console.log('New request:', data);
     
+    const targetDepartment = departments.find(dept => dept.id === data.targetDepartmentId);
+    
     const newRequest: Partial<ResourceRequest> = {
       title: data.title,
       description: data.description,
@@ -54,10 +57,13 @@ export default function CreateRequestDialog() {
       createdAt: new Date().toISOString(),
     };
 
-    console.log('Submitting request:', newRequest);
+    // Add notification for the department lead
+    addNotification(
+      "New Resource Request",
+      `${data.title} - Resource request from ${departments.find(d => d.id === '1')?.name}`
+    );
     
-    const targetDepartment = departments.find(dept => dept.id === data.targetDepartmentId);
-    
+    // Show confirmation toast to the requester
     toast({
       title: "Request Sent",
       description: `Your resource request "${data.title}" has been sent to ${targetDepartment?.name}. They will review it shortly.`,
