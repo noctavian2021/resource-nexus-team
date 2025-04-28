@@ -1,9 +1,10 @@
 
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { ResourceRequest, getDepartmentById } from '@/data/mockData';
-import { CalendarDays } from 'lucide-react';
+import { CalendarDays, Check, X } from 'lucide-react';
 import { format } from 'date-fns';
 
 const getStatusBadge = (status: string) => {
@@ -26,6 +27,16 @@ interface RequestCardProps {
 export default function RequestCard({ request }: RequestCardProps) {
   const requestingDepartment = getDepartmentById(request.requestingDepartmentId);
   const targetDepartment = getDepartmentById(request.targetDepartmentId);
+
+  const handleApprove = () => {
+    // In a real app, this would be an API call
+    console.log('Approved request:', request.id);
+  };
+
+  const handleDecline = () => {
+    // In a real app, this would be an API call
+    console.log('Declined request:', request.id);
+  };
 
   return (
     <Card>
@@ -59,6 +70,19 @@ export default function RequestCard({ request }: RequestCardProps) {
           </span>
         </div>
       </CardContent>
+      
+      {request.status === 'Pending' && (
+        <CardFooter className="flex justify-end gap-2">
+          <Button variant="outline" size="sm" onClick={handleDecline}>
+            <X className="mr-1 h-4 w-4" />
+            Decline
+          </Button>
+          <Button size="sm" onClick={handleApprove}>
+            <Check className="mr-1 h-4 w-4" />
+            Approve
+          </Button>
+        </CardFooter>
+      )}
     </Card>
   );
 }
