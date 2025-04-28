@@ -14,10 +14,7 @@ import { Link } from 'react-router-dom';
 export default function Index() {
   const isMobile = useIsMobile();
   
-  // Get a few team members for the dashboard preview
   const featuredMembers = teamMembers.slice(0, 3);
-  
-  // Get a few active projects for the dashboard preview
   const activeProjects = projects
     .filter(project => project.status === 'Active')
     .slice(0, 2);
@@ -25,25 +22,34 @@ export default function Index() {
   return (
     <>
       <Header title="Dashboard" />
-      <main className="flex-1 space-y-6 p-6">
+      <main className="flex-1 space-y-6 p-6 bg-gradient-to-br from-background to-secondary/20">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
+          <h1 className="text-2xl font-semibold tracking-tight bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+            Dashboard
+          </h1>
           <div className="flex flex-wrap gap-2">
-            <Button size="sm">Generate Report</Button>
+            <Button 
+              size="sm" 
+              className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
+            >
+              Generate Report
+            </Button>
           </div>
         </div>
         
         <DashboardMetrics metrics={dashboardMetrics} />
         
-        <AllocationChart data={allocationData} />
+        <div className="rounded-lg p-4 bg-gradient-to-br from-card to-secondary/30 backdrop-blur-sm border border-border/50">
+          <AllocationChart data={allocationData} />
+        </div>
         
         <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-          <div className="md:col-span-2 xl:col-span-2">
+          <div className="md:col-span-2 xl:col-span-2 rounded-lg bg-gradient-to-br from-card to-accent/10 p-4 border border-border/50">
             <RecentActivity activities={recentActivities} />
           </div>
           
           <div className="space-y-6 xl:col-span-1">
-            <div>
+            <div className="rounded-lg bg-gradient-to-br from-card to-secondary/20 p-4 border border-border/50">
               <div className="flex items-center justify-between">
                 <h2 className="text-xl font-semibold tracking-tight">Team Highlights</h2>
                 <Button variant="link" size="sm" asChild>
@@ -57,7 +63,7 @@ export default function Index() {
               </div>
             </div>
             
-            <div>
+            <div className="rounded-lg bg-gradient-to-br from-card to-secondary/20 p-4 border border-border/50">
               <div className="flex items-center justify-between">
                 <h2 className="text-xl font-semibold tracking-tight">Active Projects</h2>
                 <Button variant="link" size="sm" asChild>
