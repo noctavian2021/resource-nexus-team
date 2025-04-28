@@ -1,10 +1,9 @@
 
 import React from 'react';
-import { Button } from '@/components/ui/button';
 import Header from '@/components/Layout/Header';
 import DepartmentList from '@/components/Departments/DepartmentList';
 import { departments } from '@/data/mockData';
-import { PlusCircle } from 'lucide-react';
+import AddDepartmentDialog from '@/components/Departments/AddDepartmentDialog';
 
 export default function Departments() {
   return (
@@ -13,10 +12,7 @@ export default function Departments() {
       <main className="flex-1 space-y-6 p-6">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <h1 className="text-2xl font-semibold tracking-tight">Departments</h1>
-          <Button>
-            <PlusCircle className="mr-2 h-4 w-4" />
-            Add Department
-          </Button>
+          <AddDepartmentDialog />
         </div>
         
         <DepartmentList departments={departments} />

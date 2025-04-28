@@ -11,50 +11,63 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from "@/hooks/use-toast";
 import { useEmailConfig } from "@/hooks/useEmailConfig";
 import { teamMembers } from '@/data/mockData';
 import { Mail } from 'lucide-react';
+import { sendWelcomePackage } from '@/services/teamService';
 
 export default function SendWelcomeDialog() {
   const [email, setEmail] = React.useState("");
   const [replacingMember, setReplacingMember] = React.useState("");
   const [additionalNotes, setAdditionalNotes] = React.useState("");
   const [isOpen, setIsOpen] = React.useState(false);
+  const [isLoading, setIsLoading] = React.useState(false);
   const { toast } = useToast();
   const { emailConfig } = useEmailConfig();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
     
-    if (!emailConfig.enabled) {
+    try {
+      if (!emailConfig.enabled) {
+        toast({
+          title: "Email not configured",
+          description: "Please configure email settings in the admin panel first.",
+          variant: "destructive",
+        });
+        setIsLoading(false);
+        return;
+      }
+
+      // Send welcome package through the API
+      await sendWelcomePackage({
+        email,
+        replacingMember,
+        additionalNotes
+      });
+
       toast({
-        title: "Email not configured",
-        description: "Please configure email settings in the admin panel first.",
+        title: "Welcome package sent",
+        description: "The welcome package has been sent successfully.",
+      });
+
+      setIsOpen(false);
+      setEmail("");
+      setReplacingMember("");
+      setAdditionalNotes("");
+    } catch (error) {
+      console.error("Error sending welcome package:", error);
+      toast({
+        title: "Error",
+        description: "Failed to send welcome package. Please try again.",
         variant: "destructive",
       });
-      return;
+    } finally {
+      setIsLoading(false);
     }
-
-    // In a real app, this would send the email through your backend
-    console.log('Sending welcome package to:', email);
-    console.log('Email config:', emailConfig);
-    
-    if (replacingMember) {
-      const oldMember = teamMembers.find(m => m.id === replacingMember);
-      console.log('Replacing member:', oldMember?.name);
-    }
-
-    toast({
-      title: "Welcome package sent",
-      description: "The welcome package has been sent successfully.",
-    });
-
-    setIsOpen(false);
-    setEmail("");
-    setReplacingMember("");
-    setAdditionalNotes("");
   };
 
   return (
@@ -115,10 +128,13 @@ export default function SendWelcomeDialog() {
               type="button" 
               variant="outline" 
               onClick={() => setIsOpen(false)}
+              disabled={isLoading}
             >
               Cancel
             </Button>
-            <Button type="submit">Send Package</Button>
+            <Button type="submit" disabled={isLoading}>
+              {isLoading ? "Sending..." : "Send Package"}
+            </Button>
           </div>
         </form>
       </DialogContent>

@@ -4,8 +4,8 @@ import { Button } from '@/components/ui/button';
 import Header from '@/components/Layout/Header';
 import TeamList from '@/components/Team/TeamList';
 import { teamMembers } from '@/data/mockData';
-import { PlusCircle } from 'lucide-react';
 import SendWelcomeDialog from '@/components/Team/SendWelcomeDialog';
+import AddTeamMemberDialog from '@/components/Team/AddTeamMemberDialog';
 
 export default function TeamMembers() {
   return (
@@ -16,10 +16,7 @@ export default function TeamMembers() {
           <h1 className="text-2xl font-semibold tracking-tight">Team Members</h1>
           <div className="flex gap-2">
             <SendWelcomeDialog />
-            <Button>
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Add Team Member
-            </Button>
+            <AddTeamMemberDialog />
           </div>
         </div>
         
