@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -5,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { ResourceRequest, getDepartmentById } from '@/data/mockData';
 import { CalendarDays, Check, X } from 'lucide-react';
 import { format } from 'date-fns';
-import { useToast } from '@/components/ui/toast';
+import { useToast } from '@/hooks/use-toast';
 
 const getStatusBadge = (status: string) => {
   switch (status) {
