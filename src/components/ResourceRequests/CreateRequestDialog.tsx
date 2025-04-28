@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -57,9 +56,11 @@ export default function CreateRequestDialog() {
 
     console.log('Submitting request:', newRequest);
     
+    const targetDepartment = departments.find(dept => dept.id === data.targetDepartmentId);
+    
     toast({
-      title: "Request Submitted",
-      description: "Your resource request has been submitted successfully.",
+      title: "Request Sent",
+      description: `Your resource request "${data.title}" has been sent to ${targetDepartment?.name}. They will review it shortly.`,
     });
     
     setOpen(false);
