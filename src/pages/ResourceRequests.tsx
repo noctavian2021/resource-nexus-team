@@ -28,7 +28,7 @@ export default function ResourceRequests() {
       <Header title="Resource Requests" />
       <main className="flex-1 space-y-6 p-6">
         {showEmailAlert && (
-          <Alert variant="warning" className="bg-amber-50 border-amber-200">
+          <Alert variant="default" className="bg-amber-50 border-amber-200">
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Email notifications not configured</AlertTitle>
             <div className="flex items-center justify-between">

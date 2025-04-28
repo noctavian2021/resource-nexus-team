@@ -1,5 +1,6 @@
+
 import React from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
 import {
   BarChart3,
   Users,
@@ -10,7 +11,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
-import { useMobile } from "@/hooks/use-mobile";
+import { useIsMobile } from "@/hooks/use-mobile";
 import NotificationBell from "./NotificationBell";
 
 const SidebarLink = ({
@@ -39,7 +40,9 @@ const SidebarLink = ({
 );
 
 export default function Sidebar() {
-  const { isMobile, isOpen, setIsOpen } = useMobile();
+  const isMobile = useIsMobile();
+  const [isOpen, setIsOpen] = React.useState(true);
+  const location = useLocation();
 
   return (
     <aside
@@ -66,14 +69,14 @@ export default function Sidebar() {
           </button>
         </div>
         <div className="flex flex-col gap-y-2">
-          <SidebarLink to="/" icon={BarChart3} title="Dashboard" />
-          <SidebarLink to="/team" icon={Users} title="Team" />
-          <SidebarLink to="/departments" icon={Building2} title="Departments" />
-          <SidebarLink to="/projects" icon={LayoutGrid} title="Projects" />
-          <SidebarLink to="/requests" icon={FileText} title="Requests" />
+          <SidebarLink to="/" icon={BarChart3} title="Dashboard" isActive={location.pathname === '/'} />
+          <SidebarLink to="/team" icon={Users} title="Team" isActive={location.pathname === '/team'} />
+          <SidebarLink to="/departments" icon={Building2} title="Departments" isActive={location.pathname === '/departments'} />
+          <SidebarLink to="/projects" icon={LayoutGrid} title="Projects" isActive={location.pathname === '/projects'} />
+          <SidebarLink to="/requests" icon={FileText} title="Requests" isActive={location.pathname === '/requests'} />
         </div>
         <div className="mt-auto">
-          <SidebarLink to="/admin/settings" icon={Settings} title="Admin" />
+          <SidebarLink to="/admin/settings" icon={Settings} title="Admin" isActive={location.pathname === '/admin/settings'} />
         </div>
         <div 
           className={cn(
