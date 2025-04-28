@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -95,7 +94,6 @@ export default function AddTeamMemberDialog() {
     }
   });
   
-  // Fix: Use useFieldArray from react-hook-form directly, not as a method on form
   const { fields: projectFields, append: appendProject, remove: removeProject } = useFieldArray({
     control: form.control,
     name: "projectInvolvements"
@@ -108,10 +106,27 @@ export default function AddTeamMemberDialog() {
   
   const onSubmit = async (data: FormValues) => {
     try {
-      // If no avatar URL is provided, use a placeholder
       const avatarUrl = data.avatar || `https://i.pravatar.cc/150?img=${Math.floor(Math.random() * 70) + 1}`;
 
-      // Create the new team member with explicit properties
+      const projectInvolvements: ProjectInvolvement[] = data.projectInvolvements.map(p => ({
+        projectId: p.projectId,
+        percentage: p.percentage
+      }));
+      
+      const requiredResources: RequiredResource[] = data.requiredResources.map(r => ({
+        type: r.type,
+        name: r.name,
+        description: r.description
+      }));
+      
+      const officeDays: OfficeDays = {
+        monday: !!data.officeDays.monday,
+        tuesday: !!data.officeDays.tuesday,
+        wednesday: !!data.officeDays.wednesday,
+        thursday: !!data.officeDays.thursday,
+        friday: !!data.officeDays.friday
+      };
+
       await createTeamMember({
         name: data.name,
         email: data.email,
@@ -121,9 +136,9 @@ export default function AddTeamMemberDialog() {
         skills: Array.isArray(data.skills) ? data.skills : [data.skills],
         availability: data.availability,
         projects: data.projectInvolvements.map(p => p.projectId),
-        projectInvolvements: data.projectInvolvements,
-        requiredResources: data.requiredResources,
-        officeDays: data.officeDays
+        projectInvolvements,
+        requiredResources,
+        officeDays
       });
 
       toast({
@@ -131,11 +146,9 @@ export default function AddTeamMemberDialog() {
         description: `${data.name} has been added to the team.`
       });
 
-      // Close the dialog and reset form
       setIsOpen(false);
       form.reset();
       
-      // Reload the page to show the new team member
       window.location.reload();
     } catch (error) {
       toast({
