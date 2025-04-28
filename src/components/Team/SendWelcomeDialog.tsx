@@ -19,12 +19,16 @@ import { Mail } from 'lucide-react';
 import { sendWelcomePackage, RequiredResource } from '@/services/teamService';
 import { Checkbox } from "@/components/ui/checkbox";
 
+interface ResourceWithSelection extends RequiredResource {
+  selected: boolean;
+}
+
 export default function SendWelcomeDialog() {
   const [email, setEmail] = React.useState("");
   const [replacingMember, setReplacingMember] = React.useState("");
   const [additionalNotes, setAdditionalNotes] = React.useState("");
   const [selectedMember, setSelectedMember] = React.useState<string | null>(null);
-  const [requiredResources, setRequiredResources] = React.useState<RequiredResource[]>([]);
+  const [requiredResources, setRequiredResources] = React.useState<ResourceWithSelection[]>([]);
   const [isOpen, setIsOpen] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(false);
   const { toast } = useToast();
@@ -35,7 +39,13 @@ export default function SendWelcomeDialog() {
     if (selectedMember) {
       const member = teamMembers.find(m => m.id === selectedMember);
       if (member && member.requiredResources) {
-        setRequiredResources(member.requiredResources);
+        // Add selected property to each resource
+        setRequiredResources(
+          member.requiredResources.map(resource => ({
+            ...resource,
+            selected: false
+          }))
+        );
       } else {
         setRequiredResources([]);
       }
@@ -58,11 +68,16 @@ export default function SendWelcomeDialog() {
       }
 
       // Send welcome package through the API
+      // Only include selected resources
+      const selectedResources = requiredResources
+        .filter(resource => resource.selected)
+        .map(({ selected, ...resource }) => resource);
+
       await sendWelcomePackage({
         email,
         replacingMember,
         additionalNotes,
-        requiredResources
+        requiredResources: selectedResources
       });
 
       toast({

@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { useForm } from "react-hook-form";
+import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { PlusCircle, Plus, Minus } from 'lucide-react';
@@ -95,11 +95,14 @@ export default function AddTeamMemberDialog() {
     }
   });
   
-  const { fields: projectFields, append: appendProject, remove: removeProject } = form.useFieldArray({
+  // Fix: Use useFieldArray from react-hook-form directly, not as a method on form
+  const { fields: projectFields, append: appendProject, remove: removeProject } = useFieldArray({
+    control: form.control,
     name: "projectInvolvements"
   });
   
-  const { fields: resourceFields, append: appendResource, remove: removeResource } = form.useFieldArray({
+  const { fields: resourceFields, append: appendResource, remove: removeResource } = useFieldArray({
+    control: form.control,
     name: "requiredResources" 
   });
   

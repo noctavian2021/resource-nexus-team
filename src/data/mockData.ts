@@ -1,4 +1,5 @@
 // Mock data for the Resource Nexus Team app
+import { ProjectInvolvement, RequiredResource, OfficeDays } from '../services/teamService';
 
 // Team members
 export interface TeamMember {
@@ -11,6 +12,9 @@ export interface TeamMember {
   skills: string[];
   availability: number; // Percentage available
   projects: string[];
+  projectInvolvements?: ProjectInvolvement[];
+  requiredResources?: RequiredResource[];
+  officeDays?: OfficeDays;
 }
 
 export const teamMembers: TeamMember[] = [

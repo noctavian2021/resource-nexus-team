@@ -11,6 +11,7 @@ export default function TeamMembers() {
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Fetch team members whenever the component mounts
   useEffect(() => {
     const fetchTeamMembers = async () => {
       try {
