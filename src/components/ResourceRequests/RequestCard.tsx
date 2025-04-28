@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -6,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { ResourceRequest, getDepartmentById } from '@/data/mockData';
 import { CalendarDays, Check, X } from 'lucide-react';
 import { format } from 'date-fns';
+import { useToast } from '@/components/ui/toast';
 
 const getStatusBadge = (status: string) => {
   switch (status) {
@@ -25,17 +25,26 @@ interface RequestCardProps {
 }
 
 export default function RequestCard({ request }: RequestCardProps) {
+  const { toast } = useToast();
   const requestingDepartment = getDepartmentById(request.requestingDepartmentId);
   const targetDepartment = getDepartmentById(request.targetDepartmentId);
 
   const handleApprove = () => {
     // In a real app, this would be an API call
     console.log('Approved request:', request.id);
+    toast({
+      title: "Request Approved",
+      description: "The resource request has been approved successfully.",
+    });
   };
 
   const handleDecline = () => {
     // In a real app, this would be an API call
     console.log('Declined request:', request.id);
+    toast({
+      description: "The resource request has been declined.",
+      variant: "destructive",
+    });
   };
 
   return (

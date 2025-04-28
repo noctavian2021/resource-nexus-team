@@ -3,31 +3,71 @@ import React from 'react';
 import { useForm } from 'react-hook-form';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { departments, ResourceRequest } from '@/data/mockData';
 import { PlusCircle } from 'lucide-react';
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useToast } from '@/hooks/use-toast';
 
-interface RequestFormData {
-  title: string;
-  description: string;
-  targetDepartmentId: string;
-  requiredSkills: string;
-  startDate: string;
-  endDate: string;
-}
+const requestFormSchema = z.object({
+  title: z.string().min(1, "Title is required"),
+  description: z.string().min(1, "Description is required"),
+  targetDepartmentId: z.string().min(1, "Target department is required"),
+  requiredSkills: z.string().min(1, "Required skills are required"),
+  startDate: z.string().min(1, "Start date is required"),
+  endDate: z.string().min(1, "End date is required"),
+});
+
+type RequestFormData = z.infer<typeof requestFormSchema>;
 
 export default function CreateRequestDialog() {
-  const form = useForm<RequestFormData>();
+  const { toast } = useToast();
+  const [open, setOpen] = React.useState(false);
+  
+  const form = useForm<RequestFormData>({
+    resolver: zodResolver(requestFormSchema),
+    defaultValues: {
+      title: '',
+      description: '',
+      targetDepartmentId: '',
+      requiredSkills: '',
+      startDate: '',
+      endDate: '',
+    }
+  });
 
   const onSubmit = (data: RequestFormData) => {
     // In a real app, this would be an API call
     console.log('New request:', data);
+    
+    const newRequest: Partial<ResourceRequest> = {
+      title: data.title,
+      description: data.description,
+      targetDepartmentId: data.targetDepartmentId,
+      requiredSkills: data.requiredSkills.split(',').map(skill => skill.trim()),
+      startDate: data.startDate,
+      endDate: data.endDate,
+      status: 'Pending',
+      requestingDepartmentId: '1', // In a real app, this would come from the authenticated user's department
+      createdAt: new Date().toISOString(),
+    };
+
+    console.log('Submitting request:', newRequest);
+    
+    toast({
+      title: "Request Submitted",
+      description: "Your resource request has been submitted successfully.",
+    });
+    
+    setOpen(false);
+    form.reset();
   };
 
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button>
           <PlusCircle className="mr-2 h-4 w-4" />
@@ -49,6 +89,7 @@ export default function CreateRequestDialog() {
                   <FormControl>
                     <Input placeholder="Enter request title" {...field} />
                   </FormControl>
+                  <FormMessage />
                 </FormItem>
               )}
             />
@@ -62,6 +103,7 @@ export default function CreateRequestDialog() {
                   <FormControl>
                     <Textarea placeholder="Describe your resource needs" {...field} />
                   </FormControl>
+                  <FormMessage />
                 </FormItem>
               )}
             />
@@ -83,6 +125,7 @@ export default function CreateRequestDialog() {
                       </option>
                     ))}
                   </select>
+                  <FormMessage />
                 </FormItem>
               )}
             />
@@ -96,6 +139,7 @@ export default function CreateRequestDialog() {
                   <FormControl>
                     <Input placeholder="e.g., React, TypeScript (comma separated)" {...field} />
                   </FormControl>
+                  <FormMessage />
                 </FormItem>
               )}
             />
@@ -110,6 +154,7 @@ export default function CreateRequestDialog() {
                     <FormControl>
                       <Input type="date" {...field} />
                     </FormControl>
+                    <FormMessage />
                   </FormItem>
                 )}
               />
@@ -123,6 +168,7 @@ export default function CreateRequestDialog() {
                     <FormControl>
                       <Input type="date" {...field} />
                     </FormControl>
+                    <FormMessage />
                   </FormItem>
                 )}
               />
