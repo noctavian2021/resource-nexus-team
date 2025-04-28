@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -59,14 +58,17 @@ export default function AddTeamMemberDialog() {
   const onSubmit = async (data: FormValues) => {
     try {
       // If no avatar URL is provided, use a placeholder
-      if (!data.avatar) {
-        const randomImg = Math.floor(Math.random() * 70) + 1;
-        data.avatar = `https://i.pravatar.cc/150?img=${randomImg}`;
-      }
+      const avatarUrl = data.avatar || `https://i.pravatar.cc/150?img=${Math.floor(Math.random() * 70) + 1}`;
 
-      // Create the new team member
+      // Create the new team member with explicit properties
       await createTeamMember({
-        ...data,
+        name: data.name,
+        email: data.email,
+        role: data.role,
+        department: data.department,
+        avatar: avatarUrl,
+        skills: Array.isArray(data.skills) ? data.skills : [data.skills],
+        availability: data.availability,
         projects: []
       });
 
@@ -80,7 +82,6 @@ export default function AddTeamMemberDialog() {
       form.reset();
       
       // Reload the page to show the new team member
-      // In a real app, we would use React Query or a similar solution
       window.location.reload();
     } catch (error) {
       toast({

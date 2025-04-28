@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -59,7 +58,13 @@ export default function AddProjectDialog() {
   const onSubmit = async (data: FormValues) => {
     try {
       await createProject({
-        ...data,
+        name: data.name,
+        description: data.description,
+        status: data.status,
+        startDate: data.startDate,
+        endDate: data.endDate,
+        priority: data.priority,
+        departmentId: data.departmentId,
         progress: 0,
         teamMembers: []
       });
@@ -69,11 +74,9 @@ export default function AddProjectDialog() {
         description: `${data.name} has been created.`
       });
 
-      // Close the dialog and reset form
       setIsOpen(false);
       form.reset();
       
-      // Reload the page to show the new project
       window.location.reload();
     } catch (error) {
       toast({

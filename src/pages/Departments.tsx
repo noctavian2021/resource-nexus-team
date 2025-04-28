@@ -1,11 +1,30 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Header from '@/components/Layout/Header';
 import DepartmentList from '@/components/Departments/DepartmentList';
-import { departments } from '@/data/mockData';
 import AddDepartmentDialog from '@/components/Departments/AddDepartmentDialog';
+import { getDepartments } from '@/services/departmentService';
+import { Department } from '@/data/mockData';
 
 export default function Departments() {
+  const [departments, setDepartments] = useState<Department[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchDepartments = async () => {
+      try {
+        const data = await getDepartments();
+        setDepartments(data);
+      } catch (error) {
+        console.error('Error fetching departments:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDepartments();
+  }, []);
+
   return (
     <>
       <Header title="Departments" />
@@ -15,7 +34,13 @@ export default function Departments() {
           <AddDepartmentDialog />
         </div>
         
-        <DepartmentList departments={departments} />
+        {loading ? (
+          <div className="flex h-48 items-center justify-center">
+            <p className="text-muted-foreground">Loading departments...</p>
+          </div>
+        ) : (
+          <DepartmentList departments={departments} />
+        )}
       </main>
     </>
   );

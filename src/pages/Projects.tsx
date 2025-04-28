@@ -1,11 +1,30 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Header from '@/components/Layout/Header';
 import ProjectList from '@/components/Projects/ProjectList';
-import { projects } from '@/data/mockData';
 import AddProjectDialog from '@/components/Projects/AddProjectDialog';
+import { getProjects } from '@/services/projectService';
+import { Project } from '@/data/mockData';
 
 export default function Projects() {
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        const data = await getProjects();
+        setProjects(data);
+      } catch (error) {
+        console.error('Error fetching projects:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProjects();
+  }, []);
+
   return (
     <>
       <Header title="Projects" />
@@ -15,7 +34,13 @@ export default function Projects() {
           <AddProjectDialog />
         </div>
         
-        <ProjectList projects={projects} />
+        {loading ? (
+          <div className="flex h-48 items-center justify-center">
+            <p className="text-muted-foreground">Loading projects...</p>
+          </div>
+        ) : (
+          <ProjectList projects={projects} />
+        )}
       </main>
     </>
   );

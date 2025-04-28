@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -54,18 +53,22 @@ export default function AddDepartmentDialog() {
   
   const onSubmit = async (data: FormValues) => {
     try {
-      await createDepartment(data);
+      await createDepartment({
+        name: data.name,
+        description: data.description,
+        leadId: data.leadId,
+        memberCount: data.memberCount,
+        color: data.color
+      });
 
       toast({
         title: "Department added",
         description: `${data.name} department has been created.`
       });
 
-      // Close the dialog and reset form
       setIsOpen(false);
       form.reset();
       
-      // Reload the page to show the new department
       window.location.reload();
     } catch (error) {
       toast({

@@ -1,13 +1,31 @@
 
-import React from 'react';
-import { Button } from '@/components/ui/button';
+import React, { useState, useEffect } from 'react';
 import Header from '@/components/Layout/Header';
 import TeamList from '@/components/Team/TeamList';
-import { teamMembers } from '@/data/mockData';
 import SendWelcomeDialog from '@/components/Team/SendWelcomeDialog';
 import AddTeamMemberDialog from '@/components/Team/AddTeamMemberDialog';
+import { getTeamMembers } from '@/services/teamService';
+import { TeamMember } from '@/data/mockData';
 
 export default function TeamMembers() {
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchTeamMembers = async () => {
+      try {
+        const data = await getTeamMembers();
+        setTeamMembers(data);
+      } catch (error) {
+        console.error('Error fetching team members:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTeamMembers();
+  }, []);
+
   return (
     <>
       <Header title="Team Members" />
@@ -20,7 +38,13 @@ export default function TeamMembers() {
           </div>
         </div>
         
-        <TeamList teamMembers={teamMembers} />
+        {loading ? (
+          <div className="flex h-48 items-center justify-center">
+            <p className="text-muted-foreground">Loading team members...</p>
+          </div>
+        ) : (
+          <TeamList teamMembers={teamMembers} />
+        )}
       </main>
     </>
   );
