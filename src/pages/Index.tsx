@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import Header from '@/components/Layout/Header';
 import DashboardMetrics from '@/components/Dashboard/DashboardMetrics';
@@ -11,10 +11,12 @@ import ProjectCard from '@/components/Projects/ProjectCard';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { TeamMember } from '@/data/mockData';
-import { FileText } from 'lucide-react';
+import { FileText, Download } from 'lucide-react';
+import { ActivityReportDialog } from '@/components/Reports/ActivityReportDialog';
 
 export default function Index() {
   const isMobile = useIsMobile();
+  const [showActivityReport, setShowActivityReport] = useState(false);
   
   // Ensure we're working with arrays
   const safeAllocationData = Array.isArray(allocationData) ? allocationData : [];
@@ -55,12 +57,10 @@ export default function Index() {
               size="sm" 
               variant="outline"
               className="border-[#8B5CF6] text-[#8B5CF6] hover:bg-[#8B5CF6]/10"
-              asChild
+              onClick={() => setShowActivityReport(true)}
             >
-              <Link to="/reports/general">
-                <FileText className="h-4 w-4 mr-1" />
-                Organization Map
-              </Link>
+              <Download className="h-4 w-4 mr-1" />
+              Activity Report
             </Button>
           </div>
         </div>
@@ -73,6 +73,17 @@ export default function Index() {
         
         <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
           <div className="md:col-span-2 xl:col-span-2 rounded-lg bg-gradient-to-br from-white via-[#F1F0FB] to-[#E5DEFF] dark:from-card dark:to-accent/10 p-4 shadow-lg border border-border/50">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold tracking-tight">Recent Activity</h2>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => setShowActivityReport(true)}
+              >
+                <FileText className="h-4 w-4 mr-1" />
+                Generate Report
+              </Button>
+            </div>
             <RecentActivity activities={safeRecentActivities} />
           </div>
           
@@ -111,6 +122,13 @@ export default function Index() {
           </div>
         </div>
       </main>
+
+      <ActivityReportDialog
+        open={showActivityReport}
+        onClose={() => setShowActivityReport(false)}
+        activities={safeRecentActivities}
+        teamMembers={safeTeamMembers}
+      />
     </>
   );
 }

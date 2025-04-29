@@ -30,39 +30,37 @@ export default function RecentActivity({ activities }: RecentActivityProps) {
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Recent Activity</CardTitle>
-      </CardHeader>
-      <CardContent className="pl-2">
-        <div className="space-y-8">
-          {safeActivities.length > 0 ? (
-            safeActivities.map((activity) => {
-              const member = getTeamMemberById(activity.userId);
-              return (
-                <div key={activity.id} className="flex">
-                  <div className="relative mr-4 flex h-6 w-6 flex-none items-center justify-center">
-                    <div className="absolute -bottom-6 top-8 left-2.5 w-px bg-border" />
-                    <div className="bg-background border-primary text-primary flex h-6 w-6 items-center justify-center rounded-full border">
-                      {getActivityIcon(activity.type)}
-                    </div>
-                  </div>
-                  <div className="flex flex-col gap-0.5 pb-8">
-                    <p className="text-sm font-medium">{activity.description}</p>
-                    <time className="text-xs text-muted-foreground">
-                      {format(new Date(activity.timestamp), 'MMM d, yyyy · h:mm a')}
-                    </time>
-                  </div>
+    <div className="space-y-8">
+      {safeActivities.length > 0 ? (
+        safeActivities.map((activity) => {
+          const member = getTeamMemberById(activity.userId);
+          return (
+            <div key={activity.id} className="flex">
+              <div className="relative mr-4 flex h-6 w-6 flex-none items-center justify-center">
+                <div className="absolute -bottom-6 top-8 left-2.5 w-px bg-border" />
+                <div className="bg-background border-primary text-primary flex h-6 w-6 items-center justify-center rounded-full border">
+                  {getActivityIcon(activity.type)}
                 </div>
-              );
-            })
-          ) : (
-            <div className="flex items-center justify-center py-8">
-              <p className="text-muted-foreground">No recent activities</p>
+              </div>
+              <div className="flex flex-col gap-0.5 pb-8">
+                <p className="text-sm font-medium">{activity.description}</p>
+                <time className="text-xs text-muted-foreground">
+                  {format(new Date(activity.timestamp), 'MMM d, yyyy · h:mm a')}
+                </time>
+                {member && (
+                  <span className="text-xs text-muted-foreground">
+                    {member.name} ({member.role})
+                  </span>
+                )}
+              </div>
             </div>
-          )}
+          );
+        })
+      ) : (
+        <div className="flex items-center justify-center py-8">
+          <p className="text-muted-foreground">No recent activities</p>
         </div>
-      </CardContent>
-    </Card>
+      )}
+    </div>
   );
 }
