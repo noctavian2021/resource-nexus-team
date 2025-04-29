@@ -176,6 +176,35 @@ const handleMockRequest = <T>(endpoint: string, method: string, data: any): Prom
     // Mock email sending
     console.log('Sending welcome email to:', data.email);
     return Promise.resolve({ success: true, message: 'Welcome email sent successfully' } as T);
+  } else if (endpoint === '/backup/create') {
+    // Mock backup creation
+    const timestamp = new Date();
+    const filename = `resource-nexus-backup-${timestamp.toISOString().replace(/:/g, '-')}.json`;
+    console.log('Creating backup:', filename);
+    
+    // In mock mode, we don't actually need to do anything as useBackupConfig
+    // handles the backup creation on the client side
+    
+    return Promise.resolve({
+      success: true,
+      message: 'Backup created successfully',
+      filename,
+      timestamp: timestamp.toISOString()
+    } as unknown as T);
+  } else if (endpoint === '/backup/list') {
+    // Mock backup listing
+    const backupHistory = JSON.parse(localStorage.getItem('backupsHistory') || '[]');
+    return Promise.resolve({
+      success: true,
+      backups: backupHistory
+    } as unknown as T);
+  } else if (endpoint.startsWith('/backup/restore')) {
+    // Mock backup restore
+    console.log('Restoring from backup');
+    return Promise.resolve({
+      success: true,
+      message: 'Backup restored successfully'
+    } as unknown as T);
   }
   
   // Default case

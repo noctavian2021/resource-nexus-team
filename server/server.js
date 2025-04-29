@@ -1,10 +1,17 @@
-
 const express = require('express');
 const cors = require('cors');
 const { db, getNextId } = require('./data');
+const fs = require('fs');
+const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+
+// Ensure backups directory exists
+const backupsDir = path.join(__dirname, 'backups');
+if (!fs.existsSync(backupsDir)) {
+  fs.mkdirSync(backupsDir, { recursive: true });
+}
 
 // Middleware
 app.use(cors());
@@ -193,6 +200,155 @@ app.post('/api/email/schedule-report', (req, res) => {
     message: 'Report schedule saved successfully',
     schedule
   });
+});
+
+// --- Backup & Restore API ---
+// Create a backup of all data
+app.post('/api/backup/create', (req, res) => {
+  try {
+    // Create backup object with metadata
+    const timestamp = new Date();
+    const backupData = {
+      metadata: {
+        version: '1.0',
+        createdAt: timestamp.toISOString(),
+        type: 'resource-nexus-backup'
+      },
+      data: db
+    };
+    
+    // Generate unique filename
+    const filename = `backup-${timestamp.toISOString().replace(/:/g, '-')}.json`;
+    const filePath = path.join(backupsDir, filename);
+    
+    // Write backup file
+    fs.writeFileSync(filePath, JSON.stringify(backupData, null, 2));
+    
+    res.status(200).json({
+      success: true,
+      message: 'Backup created successfully',
+      filename,
+      timestamp: timestamp.toISOString(),
+      size: fs.statSync(filePath).size
+    });
+  } catch (error) {
+    console.error('Error creating backup:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to create backup',
+      details: error.message
+    });
+  }
+});
+
+// Get list of available backups
+app.get('/api/backup/list', (req, res) => {
+  try {
+    const files = fs.readdirSync(backupsDir)
+      .filter(file => file.endsWith('.json'))
+      .map(file => {
+        const filePath = path.join(backupsDir, file);
+        const stats = fs.statSync(filePath);
+        return {
+          filename: file,
+          created: stats.birthtime,
+          size: stats.size
+        };
+      })
+      .sort((a, b) => new Date(b.created).getTime() - new Date(a.created).getTime());
+    
+    res.json({
+      success: true,
+      backups: files
+    });
+  } catch (error) {
+    console.error('Error listing backups:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to list backups',
+      details: error.message
+    });
+  }
+});
+
+// Download a specific backup
+app.get('/api/backup/download/:filename', (req, res) => {
+  try {
+    const { filename } = req.params;
+    const filePath = path.join(backupsDir, filename);
+    
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({
+        success: false,
+        error: 'Backup file not found'
+      });
+    }
+    
+    res.download(filePath, filename);
+  } catch (error) {
+    console.error('Error downloading backup:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to download backup',
+      details: error.message
+    });
+  }
+});
+
+// Restore from a backup file
+app.post('/api/backup/restore', express.raw({ type: 'application/json', limit: '50mb' }), (req, res) => {
+  try {
+    // Parse the uploaded backup
+    const backupData = JSON.parse(req.body.toString());
+    
+    // Validate backup file
+    if (!backupData.metadata || backupData.metadata.type !== 'resource-nexus-backup') {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid backup file format'
+      });
+    }
+    
+    // Check that we have data to restore
+    if (!backupData.data) {
+      return res.status(400).json({
+        success: false,
+        error: 'No data found in backup file'
+      });
+    }
+    
+    // Back up the current state before restoring
+    const timestamp = new Date();
+    const preRestoreBackupName = `pre-restore-backup-${timestamp.toISOString().replace(/:/g, '-')}.json`;
+    const preRestoreBackupPath = path.join(backupsDir, preRestoreBackupName);
+    
+    const currentData = {
+      metadata: {
+        version: '1.0',
+        createdAt: timestamp.toISOString(),
+        type: 'resource-nexus-pre-restore-backup'
+      },
+      data: db
+    };
+    
+    fs.writeFileSync(preRestoreBackupPath, JSON.stringify(currentData, null, 2));
+    
+    // Restore the data
+    Object.assign(db, backupData.data);
+    
+    res.status(200).json({
+      success: true,
+      message: 'Backup restored successfully',
+      preRestoreBackup: preRestoreBackupName
+    });
+  } catch (error) {
+    console.error('Error restoring backup:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to restore backup',
+      details: error.message
+    });
+  }
 });
 
 // Start the server
