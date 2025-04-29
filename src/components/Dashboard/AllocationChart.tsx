@@ -1,7 +1,16 @@
 
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer
+} from 'recharts';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AllocationData } from '@/data/mockData';
 
 interface AllocationChartProps {
@@ -9,30 +18,34 @@ interface AllocationChartProps {
 }
 
 export default function AllocationChart({ data }: AllocationChartProps) {
+  // Ensure data is an array to prevent the e.filter is not a function error
+  const safeData = Array.isArray(data) ? data : [];
+  
   return (
-    <Card className="col-span-full">
+    <Card>
       <CardHeader>
         <CardTitle>Resource Allocation by Department</CardTitle>
       </CardHeader>
-      <CardContent className="pt-2">
-        <div className="h-[300px]">
+      <CardContent>
+        <div className="h-80 w-full">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
-              data={data}
+              data={safeData}
               margin={{
-                top: 5,
+                top: 20,
                 right: 30,
                 left: 20,
                 bottom: 5,
               }}
+              barSize={20}
             >
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="department" />
-              <YAxis tickFormatter={(tick) => `${tick}%`} />
-              <Tooltip formatter={(value) => [`${value}%`, 'Allocation']} />
+              <YAxis />
+              <Tooltip />
               <Legend />
-              <Bar dataKey="allocated" name="Allocated" fill="#3b82f6" />
-              <Bar dataKey="available" name="Available" fill="#10b981" />
+              <Bar dataKey="allocated" stackId="a" name="Allocated (%)" fill="#8884d8" />
+              <Bar dataKey="available" stackId="a" name="Available (%)" fill="#82ca9d" />
             </BarChart>
           </ResponsiveContainer>
         </div>

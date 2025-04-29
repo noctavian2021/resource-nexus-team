@@ -14,8 +14,14 @@ import { Link } from 'react-router-dom';
 export default function Index() {
   const isMobile = useIsMobile();
   
-  const featuredMembers = teamMembers.slice(0, 3);
-  const activeProjects = projects
+  // Ensure we're working with arrays
+  const safeAllocationData = Array.isArray(allocationData) ? allocationData : [];
+  const safeRecentActivities = Array.isArray(recentActivities) ? recentActivities : [];
+  const safeTeamMembers = Array.isArray(teamMembers) ? teamMembers : [];
+  const safeProjects = Array.isArray(projects) ? projects : [];
+  
+  const featuredMembers = safeTeamMembers.slice(0, 3);
+  const activeProjects = safeProjects
     .filter(project => project.status === 'Active')
     .slice(0, 2);
     
@@ -40,12 +46,12 @@ export default function Index() {
         <DashboardMetrics metrics={dashboardMetrics} />
         
         <div className="rounded-lg p-4 bg-gradient-to-br from-white to-[#D3E4FD] dark:from-card dark:to-accent/10 shadow-lg backdrop-blur-sm border border-border/50">
-          <AllocationChart data={allocationData} />
+          <AllocationChart data={safeAllocationData} />
         </div>
         
         <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
           <div className="md:col-span-2 xl:col-span-2 rounded-lg bg-gradient-to-br from-white via-[#F1F0FB] to-[#E5DEFF] dark:from-card dark:to-accent/10 p-4 shadow-lg border border-border/50">
-            <RecentActivity activities={recentActivities} />
+            <RecentActivity activities={safeRecentActivities} />
           </div>
           
           <div className="space-y-6 xl:col-span-1">
