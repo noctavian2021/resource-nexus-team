@@ -13,7 +13,10 @@ export default function ProjectList({ projects }: ProjectListProps) {
   const [search, setSearch] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('all');
   
-  const filteredProjects = projects.filter((project) => {
+  // Ensure projects is an array
+  const projectsArray = Array.isArray(projects) ? projects : [];
+  
+  const filteredProjects = projectsArray.filter((project) => {
     const matchesSearch = project.name.toLowerCase().includes(search.toLowerCase()) ||
                         project.description.toLowerCase().includes(search.toLowerCase());
     

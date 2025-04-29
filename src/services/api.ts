@@ -4,7 +4,7 @@
  */
 
 // Import the mock data directly
-import { teamMembers as initialTeamMembers, departments as initialDepartments } from '@/data/mockData';
+import { teamMembers as initialTeamMembers, departments as initialDepartments, projects as initialProjects } from '@/data/mockData';
 
 const API_URL = 'http://localhost:5000/api';
 const USE_MOCK = true; // Enable mock mode since local API server isn't available
@@ -51,6 +51,7 @@ const handleMockRequest = <T>(endpoint: string, method: string, data: any): Prom
   // Get mock team members data from localStorage or initialize with default data
   let mockTeamMembers = JSON.parse(localStorage.getItem('mockTeamMembers') || 'null');
   let mockDepartments = JSON.parse(localStorage.getItem('mockDepartments') || 'null');
+  let mockProjects = JSON.parse(localStorage.getItem('mockProjects') || 'null');
   
   // Initialize with default data if empty
   if (!mockTeamMembers) {
@@ -61,6 +62,11 @@ const handleMockRequest = <T>(endpoint: string, method: string, data: any): Prom
   if (!mockDepartments) {
     mockDepartments = initialDepartments;
     localStorage.setItem('mockDepartments', JSON.stringify(mockDepartments));
+  }
+  
+  if (!mockProjects) {
+    mockProjects = initialProjects;
+    localStorage.setItem('mockProjects', JSON.stringify(mockProjects));
   }
   
   // Handle different endpoints
@@ -131,6 +137,40 @@ const handleMockRequest = <T>(endpoint: string, method: string, data: any): Prom
       mockDepartments = mockDepartments.filter((d: any) => d.id !== id);
       localStorage.setItem('mockDepartments', JSON.stringify(mockDepartments));
       return Promise.resolve({ message: 'Department deleted', department: deletedDepartment } as T);
+    }
+  } else if (endpoint === '/projects') {
+    if (method === 'GET') {
+      return Promise.resolve(mockProjects as T);
+    } else if (method === 'POST') {
+      const newProject = {
+        id: `mock-${Date.now()}`,
+        ...data
+      };
+      mockProjects.push(newProject);
+      localStorage.setItem('mockProjects', JSON.stringify(mockProjects));
+      console.log('Created new project:', newProject);
+      return Promise.resolve(newProject as T);
+    }
+  } else if (endpoint.startsWith('/projects/')) {
+    const id = endpoint.split('/').pop();
+    if (method === 'GET') {
+      const project = mockProjects.find((p: any) => p.id === id);
+      if (!project) {
+        return Promise.reject(new Error('Project not found'));
+      }
+      return Promise.resolve(project as T);
+    } else if (method === 'PUT') {
+      mockProjects = mockProjects.map((p: any) => 
+        p.id === id ? { ...p, ...data } : p
+      );
+      localStorage.setItem('mockProjects', JSON.stringify(mockProjects));
+      const updatedProject = mockProjects.find((p: any) => p.id === id);
+      return Promise.resolve(updatedProject as T);
+    } else if (method === 'DELETE') {
+      const deletedProject = mockProjects.find((p: any) => p.id === id);
+      mockProjects = mockProjects.filter((p: any) => p.id !== id);
+      localStorage.setItem('mockProjects', JSON.stringify(mockProjects));
+      return Promise.resolve({ message: 'Project deleted', project: deletedProject } as T);
     }
   } else if (endpoint === '/email/send-welcome') {
     // Mock email sending
