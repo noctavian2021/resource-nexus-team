@@ -21,6 +21,9 @@ export interface OfficeDays {
   friday: boolean;
 }
 
+// Define user roles
+export type UserRole = 'Director' | 'Department Lead' | 'Team Member';
+
 export const getTeamMembers = () => {
   return apiRequest<TeamMember[]>('/team-members');
 };
@@ -35,9 +38,9 @@ export const getTeamMember = (id: string) => {
   return apiRequest<TeamMember>(`/team-members/${id}`);
 };
 
-export const createTeamMember = async (member: Omit<TeamMember, 'id'> & { isLead?: boolean }) => {
+export const createTeamMember = async (member: Omit<TeamMember, 'id'> & { isLead?: boolean; isDirector?: boolean }) => {
   try {
-    // If the member is a lead, we need to update the department as well
+    // If the member is a lead or director, we need to handle special cases
     const result = await apiRequest<TeamMember>('/team-members', 'POST', member);
     
     // If the member is marked as a lead, update the department with this member as lead
@@ -58,6 +61,9 @@ export const createTeamMember = async (member: Omit<TeamMember, 'id'> & { isLead
         console.error('Error updating department lead:', error);
       }
     }
+    
+    // If member is a director, we don't need special handling for now
+    // Just storing the role in the member object is sufficient
     
     return result;
   } catch (error) {
@@ -81,4 +87,37 @@ export const sendWelcomePackage = (data: {
   requiredResources?: RequiredResource[];
 }) => {
   return apiRequest('/email/send-welcome', 'POST', data);
+};
+
+// New function to get organizational structure
+export const getOrgStructure = async () => {
+  try {
+    const members = await getTeamMembers();
+    const departments = await apiRequest<any[]>('/departments');
+    
+    // Get directors
+    const directors = members.filter(m => m.role === 'Director');
+    
+    // Group members by department
+    const departmentMembers = departments.map(dept => {
+      const lead = members.find(m => m.id === dept.leadId);
+      const teamMembers = members.filter(
+        m => m.department === dept.name && m.id !== dept.leadId
+      );
+      
+      return {
+        department: dept,
+        lead,
+        members: teamMembers
+      };
+    });
+    
+    return {
+      directors,
+      departments: departmentMembers
+    };
+  } catch (error) {
+    console.error('Error getting organization structure:', error);
+    throw error;
+  }
 };

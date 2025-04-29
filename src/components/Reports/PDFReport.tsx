@@ -6,9 +6,10 @@ import {
   Text, 
   View, 
   StyleSheet, 
-  PDFDownloadLink
+  PDFDownloadLink, 
+  PDFViewer
 } from '@react-pdf/renderer';
-import { departments, projects, teamMembers, resourceRequests } from '@/data/mockData';
+import { TeamMember, Department, Project, resourceRequests } from '@/data/mockData';
 
 // Define styles for PDF
 const styles = StyleSheet.create({
@@ -36,6 +37,10 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: 'bold',
     marginBottom: 10,
+    paddingTop: 5,
+    borderTopWidth: 1,
+    borderTopColor: '#CCCCCC',
+    borderTopStyle: 'solid',
   },
   text: {
     fontSize: 10,
@@ -53,44 +58,36 @@ const styles = StyleSheet.create({
     borderBottomStyle: 'solid',
     paddingVertical: 5,
   },
-  table: {
-    width: 'auto',
-    marginVertical: 10,
+  orgItem: {
+    marginLeft: 20,
+    marginBottom: 5,
   },
-  tableRow: {
-    flexDirection: 'row',
+  directorItem: {
+    marginBottom: 10,
+    paddingBottom: 5,
     borderBottomWidth: 1,
-    borderBottomColor: '#DDDDDD',
-    paddingVertical: 5,
+    borderBottomColor: '#CCCCCC',
+    borderBottomStyle: 'solid',
   },
-  tableHeader: {
-    backgroundColor: '#F5F5F5',
+  departmentItem: {
+    marginLeft: 20,
+    marginBottom: 15,
+  },
+  leadItem: {
+    marginLeft: 20,
+    marginBottom: 10,
     fontWeight: 'bold',
   },
-  tableCell: {
-    width: '25%',
-    paddingHorizontal: 5,
-    fontSize: 9,
+  memberItem: {
+    marginLeft: 40,
+    marginBottom: 5,
   },
-  tableCell30: {
-    width: '30%',
-    paddingHorizontal: 5,
-    fontSize: 9,
-  },
-  tableCell20: {
-    width: '20%',
-    paddingHorizontal: 5,
-    fontSize: 9,
-  },
-  tableCell15: {
-    width: '15%',
-    paddingHorizontal: 5,
-    fontSize: 9,
-  },
-  tableCell10: {
-    width: '10%',
-    paddingHorizontal: 5,
-    fontSize: 9,
+  projectItem: {
+    marginBottom: 5,
+    paddingVertical: 3,
+    borderBottomWidth: 1,
+    borderBottomColor: '#EEEEEE',
+    borderBottomStyle: 'solid',
   },
   footer: {
     position: 'absolute',
@@ -104,130 +101,127 @@ const styles = StyleSheet.create({
 });
 
 // Create Document Component
-const PDFDocument = () => {
+const OrgMapDocument = ({ 
+  teamMembers, 
+  departments, 
+  projects 
+}: { 
+  teamMembers: TeamMember[], 
+  departments: Department[], 
+  projects: Project[] 
+}) => {
   const currentDate = new Date().toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'long',
     day: 'numeric'
   });
   
+  // Find directors
+  const directors = teamMembers.filter(member => member.role === 'Director');
+  
+  // Get active projects
+  const activeProjects = projects.filter(project => project.status === 'Active');
+  
   return (
     <Document>
       <Page size="A4" style={styles.page}>
         {/* Header and Overview */}
         <View style={styles.section}>
-          <Text style={styles.header}>Team Management Report</Text>
+          <Text style={styles.header}>Organization Map</Text>
           <Text style={styles.text}>Generated on: {currentDate}</Text>
           
           <View style={{ marginTop: 20 }}>
-            <Text style={styles.subheader}>Overview</Text>
-            <Text style={styles.text}>Total Departments: {departments.length}</Text>
-            <Text style={styles.text}>Total Team Members: {teamMembers.length}</Text>
-            <Text style={styles.text}>Total Projects: {projects.length}</Text>
-            <Text style={styles.text}>Pending Resource Requests: {resourceRequests.filter(req => req.status === 'pending').length}</Text>
+            <Text style={styles.subheader}>Organization Structure</Text>
           </View>
         </View>
         
-        {/* Departments Section */}
+        {/* Directors Section */}
         <View style={styles.section}>
-          <Text style={styles.subheader}>Departments</Text>
-          <View style={styles.table}>
-            <View style={[styles.tableRow, styles.tableHeader]}>
-              <Text style={styles.tableCell30}>Name</Text>
-              <Text style={styles.tableCell30}>Lead</Text>
-              <Text style={styles.tableCell20}>Members</Text>
-              <Text style={styles.tableCell20}>Projects</Text>
-            </View>
+          <Text style={styles.sectionTitle}>Directors</Text>
+          {directors.length > 0 ? (
+            directors.map((director, i) => (
+              <View key={i} style={styles.directorItem}>
+                <Text style={styles.boldText}>{director.name} - Director</Text>
+                <Text style={styles.text}>Email: {director.email}</Text>
+                {director.skills && director.skills.length > 0 && (
+                  <Text style={styles.text}>Skills: {director.skills.join(', ')}</Text>
+                )}
+              </View>
+            ))
+          ) : (
+            <Text style={styles.text}>No directors assigned</Text>
+          )}
+        </View>
+        
+        {/* Departments and Teams Section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Departments</Text>
+          
+          {departments.map((department, i) => {
+            const lead = teamMembers.find(m => m.id === department.leadId);
+            const deptMembers = teamMembers.filter(
+              m => m.department === department.name && (!lead || m.id !== lead.id)
+            );
             
-            {departments.map((department, i) => {
-              const lead = teamMembers.find(m => m.id === department.leadId)?.name || 'Unassigned';
-              const memberCount = department.memberCount;
-              const deptProjects = projects.filter(p => 
-                p.teamMembers.some(tm => 
-                  teamMembers.find(m => m.id === tm)?.department === department.name
-                )
-              );
+            return (
+              <View key={i} style={styles.departmentItem}>
+                <Text style={styles.boldText}>{department.name}</Text>
+                <Text style={styles.text}>{department.description}</Text>
+                
+                {lead ? (
+                  <View style={styles.leadItem}>
+                    <Text style={styles.boldText}>Department Lead: {lead.name}</Text>
+                    <Text style={styles.text}>Email: {lead.email}</Text>
+                    <Text style={styles.text}>Role: {lead.role}</Text>
+                  </View>
+                ) : (
+                  <Text style={styles.text}>No department lead assigned</Text>
+                )}
+                
+                {deptMembers.length > 0 ? (
+                  <View>
+                    <Text style={styles.boldText}>Team Members:</Text>
+                    {deptMembers.map((member, j) => (
+                      <View key={j} style={styles.memberItem}>
+                        <Text style={styles.text}>
+                          {member.name} - {member.role}
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
+                ) : (
+                  <Text style={[styles.text, styles.memberItem]}>No additional team members</Text>
+                )}
+              </View>
+            );
+          })}
+        </View>
+        
+        {/* Active Projects Section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Active Projects</Text>
+          
+          {activeProjects.length > 0 ? (
+            activeProjects.map((project, i) => {
+              const dept = departments.find(d => d.id === project.departmentId);
+              const projectMembers = project.teamMembers.map(
+                memberId => teamMembers.find(m => m.id === memberId)?.name
+              ).filter(Boolean);
               
               return (
-                <View style={styles.tableRow} key={i}>
-                  <Text style={styles.tableCell30}>{department.name}</Text>
-                  <Text style={styles.tableCell30}>{lead}</Text>
-                  <Text style={styles.tableCell20}>{memberCount}</Text>
-                  <Text style={styles.tableCell20}>{deptProjects.length}</Text>
+                <View key={i} style={styles.projectItem}>
+                  <Text style={styles.boldText}>{project.name}</Text>
+                  <Text style={styles.text}>Department: {dept?.name || 'Unassigned'}</Text>
+                  <Text style={styles.text}>Description: {project.description}</Text>
+                  <Text style={styles.text}>
+                    Team: {projectMembers.length > 0 ? projectMembers.join(', ') : 'No team members assigned'}
+                  </Text>
                 </View>
               );
-            })}
-          </View>
-        </View>
-        
-        {/* Resource Allocation */}
-        <View style={styles.section}>
-          <Text style={styles.subheader}>Resource Allocation</Text>
-          <View style={styles.table}>
-            <View style={[styles.tableRow, styles.tableHeader]}>
-              <Text style={styles.tableCell30}>Team Member</Text>
-              <Text style={styles.tableCell15}>Department</Text>
-              <Text style={styles.tableCell15}>Projects</Text>
-              <Text style={styles.tableCell15}>Availability</Text>
-              <Text style={styles.tableCell15}>Office Days</Text>
-              <Text style={styles.tableCell10}>Status</Text>
-            </View>
-            
-            {teamMembers.slice(0, 20).map((member, i) => {
-              const daysCount = Object.values(member.officeDays || {}).filter(Boolean).length;
-              
-              return (
-                <View style={styles.tableRow} key={i}>
-                  <Text style={styles.tableCell30}>{member.name}</Text>
-                  <Text style={styles.tableCell15}>{member.department}</Text>
-                  <Text style={styles.tableCell15}>{member.projects?.length || 0}</Text>
-                  <Text style={styles.tableCell15}>{member.availability}%</Text>
-                  <Text style={styles.tableCell15}>{daysCount}/5 days</Text>
-                  <Text style={styles.tableCell10}>{member.availability >= 70 ? 'Available' : 'Limited'}</Text>
-                </View>
-              );
-            })}
-            
-            {teamMembers.length > 20 && (
-              <View style={styles.tableRow}>
-                <Text style={{ ...styles.tableCell, width: '100%', fontStyle: 'italic' }}>
-                  ... and {teamMembers.length - 20} more team members
-                </Text>
-              </View>
-            )}
-          </View>
-        </View>
-        
-        {/* Resource Requests */}
-        <View style={styles.section}>
-          <Text style={styles.subheader}>Pending Resource Requests</Text>
-          <View style={styles.table}>
-            <View style={[styles.tableRow, styles.tableHeader]}>
-              <Text style={styles.tableCell30}>Request Type</Text>
-              <Text style={styles.tableCell30}>Requested By</Text>
-              <Text style={styles.tableCell20}>Status</Text>
-              <Text style={styles.tableCell20}>Priority</Text>
-            </View>
-            
-            {resourceRequests.filter(req => req.status === 'pending').map((request, i) => (
-              <View style={styles.tableRow} key={i}>
-                <Text style={styles.tableCell30}>{request.type}</Text>
-                <Text style={styles.tableCell30}>
-                  {teamMembers.find(m => m.id === request.requestedBy)?.name || 'Unknown'}
-                </Text>
-                <Text style={styles.tableCell20}>{request.status}</Text>
-                <Text style={styles.tableCell20}>{request.priority}</Text>
-              </View>
-            ))}
-            
-            {resourceRequests.filter(req => req.status === 'pending').length === 0 && (
-              <View style={styles.tableRow}>
-                <Text style={{ ...styles.tableCell, width: '100%', fontStyle: 'italic' }}>
-                  No pending resource requests
-                </Text>
-              </View>
-            )}
-          </View>
+            })
+          ) : (
+            <Text style={styles.text}>No active projects</Text>
+          )}
         </View>
         
         {/* Footer */}
@@ -239,16 +233,73 @@ const PDFDocument = () => {
   );
 };
 
+// PDF Viewer Component
+export const PDFViewer_Component = ({ 
+  teamMembers, 
+  departments, 
+  projects 
+}: { 
+  teamMembers: TeamMember[], 
+  departments: Department[], 
+  projects: Project[], 
+  resourceRequests: any[],
+  allocationData: any[]
+}) => {
+  return (
+    <PDFViewer width="100%" height="100%" className="rounded-md">
+      <OrgMapDocument 
+        teamMembers={teamMembers}
+        departments={departments}
+        projects={projects}
+      />
+    </PDFViewer>
+  );
+};
+
+// PDF Download Button
+export const PDFDownloadButton = ({ 
+  teamMembers, 
+  departments, 
+  projects 
+}: { 
+  teamMembers: TeamMember[], 
+  departments: Department[], 
+  projects: Project[], 
+  resourceRequests: any[],
+  allocationData: any[]
+}) => {
+  return (
+    <PDFDownloadLink
+      document={
+        <OrgMapDocument 
+          teamMembers={teamMembers}
+          departments={departments}
+          projects={projects}
+        />
+      }
+      fileName="organization-map.pdf"
+    >
+      {({ loading }) => (
+        <Button className="gap-2">
+          {loading ? "Generating PDF..." : "Download PDF"}
+        </Button>
+      )}
+    </PDFDownloadLink>
+  );
+};
+
 // Export a component that provides a download link
-export default function PDFReport() {
+const PDFReport = () => {
   return (
     <PDFDownloadLink 
-      document={<PDFDocument />} 
-      fileName="general-report.pdf"
+      document={<OrgMapDocument teamMembers={[]} departments={[]} projects={[]} />} 
+      fileName="organization-map.pdf"
     >
       {({ loading }) => (
         loading ? "Generating PDF..." : "Download PDF"
       )}
     </PDFDownloadLink>
   );
-}
+};
+
+export default PDFReport;

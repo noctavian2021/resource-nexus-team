@@ -36,9 +36,9 @@ export function ViewReportDialog({
       <DialogContent className="max-w-5xl w-full h-[90vh] flex flex-col">
         <DialogHeader className="flex flex-row items-center justify-between">
           <div>
-            <DialogTitle>General Report</DialogTitle>
+            <DialogTitle>Organization Map</DialogTitle>
             <DialogDescription>
-              View and download the full report as PDF
+              View and download the organization structure as PDF
             </DialogDescription>
           </div>
           <div className="flex items-center gap-2">

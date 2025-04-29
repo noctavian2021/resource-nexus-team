@@ -1,9 +1,8 @@
-
 import React from 'react';
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { PlusCircle, Plus, Minus, UserCheck } from 'lucide-react';
+import { PlusCircle, Plus, Minus, UserCheck, Building2 } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -46,6 +45,7 @@ const formSchema = z.object({
   skills: z.string().transform(val => val.split(',').map(skill => skill.trim()).filter(Boolean)),
   availability: z.number().min(0).max(100),
   isLead: z.boolean().default(false),
+  isDirector: z.boolean().default(false),
   projectInvolvements: z.array(
     z.object({
       projectId: z.string().min(1, "Project is required"),
@@ -89,6 +89,7 @@ export default function AddTeamMemberDialog({ onMemberAdded }: AddTeamMemberDial
       skills: [],
       availability: 100,
       isLead: false,
+      isDirector: false,
       projectInvolvements: [{ projectId: "", percentage: 0 }],
       requiredResources: [],
       officeDays: {
@@ -101,6 +102,14 @@ export default function AddTeamMemberDialog({ onMemberAdded }: AddTeamMemberDial
     }
   });
   
+  // Watch for the isDirector field to auto-set the role
+  const isDirector = form.watch('isDirector');
+  React.useEffect(() => {
+    if (isDirector) {
+      form.setValue('role', 'Director');
+    }
+  }, [isDirector, form]);
+
   const { fields: projectFields, append: appendProject, remove: removeProject } = useFieldArray({
     control: form.control,
     name: "projectInvolvements"
@@ -134,23 +143,32 @@ export default function AddTeamMemberDialog({ onMemberAdded }: AddTeamMemberDial
         friday: !!data.officeDays.friday
       };
 
+      // Set the role to "Director" if isDirector is true
+      const role = data.isDirector ? 'Director' : data.role;
+
       const newMember = await createTeamMember({
         name: data.name,
         email: data.email,
-        role: data.role,
+        role,
         department: data.department,
         avatar: avatarUrl,
         skills: Array.isArray(data.skills) ? data.skills : [data.skills],
         availability: data.availability,
         isLead: data.isLead,
+        isDirector: data.isDirector,
         projects: data.projectInvolvements.map(p => p.projectId),
         projectInvolvements,
         requiredResources,
         officeDays
       });
 
-      // Display an appropriate toast message depending on whether the member is a lead
-      if (data.isLead) {
+      // Display an appropriate toast message depending on role
+      if (data.isDirector) {
+        toast({
+          title: "Director added",
+          description: `${data.name} has been added as a Director with full access.`
+        });
+      } else if (data.isLead) {
         toast({
           title: "Team member added as department lead",
           description: `${data.name} has been added as the ${data.department} department lead.`
@@ -229,7 +247,12 @@ export default function AddTeamMemberDialog({ onMemberAdded }: AddTeamMemberDial
                   <FormItem>
                     <FormLabel>Role</FormLabel>
                     <FormControl>
-                      <Input placeholder="Software Engineer" {...field} />
+                      <Input 
+                        placeholder="Software Engineer"
+                        disabled={form.watch('isDirector')} 
+                        {...field}
+                        value={form.watch('isDirector') ? 'Director' : field.value}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -287,29 +310,65 @@ export default function AddTeamMemberDialog({ onMemberAdded }: AddTeamMemberDial
               />
             </div>
 
-            <FormField
-              control={form.control}
-              name="isLead"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                  <FormControl>
-                    <Checkbox
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                  <div className="space-y-1 leading-none">
-                    <FormLabel className="flex items-center">
-                      <UserCheck className="mr-2 h-4 w-4" />
-                      Designate as Department Lead
-                    </FormLabel>
-                    <FormDescription>
-                      This person will be set as the lead for their department.
-                    </FormDescription>
-                  </div>
-                </FormItem>
+            <div className="space-y-4">
+              {/* Director Role Option */}
+              <FormField
+                control={form.control}
+                name="isDirector"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={(checked) => {
+                          field.onChange(checked);
+                          // If setting as Director, unset Lead
+                          if (checked) {
+                            form.setValue('isLead', false);
+                          }
+                        }}
+                      />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel className="flex items-center">
+                        <Building2 className="mr-2 h-4 w-4" />
+                        Designate as Director
+                      </FormLabel>
+                      <FormDescription>
+                        Directors have full access to all departments and projects.
+                      </FormDescription>
+                    </div>
+                  </FormItem>
+                )}
+              />
+
+              {/* Department Lead Option (only visible if not director) */}
+              {!form.watch('isDirector') && (
+                <FormField
+                  control={form.control}
+                  name="isLead"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel className="flex items-center">
+                          <UserCheck className="mr-2 h-4 w-4" />
+                          Designate as Department Lead
+                        </FormLabel>
+                        <FormDescription>
+                          This person will be set as the lead for their department.
+                        </FormDescription>
+                      </div>
+                    </FormItem>
+                  )}
+                />
               )}
-            />
+            </div>
             
             <FormField
               control={form.control}

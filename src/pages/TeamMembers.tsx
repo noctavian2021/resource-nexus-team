@@ -38,10 +38,19 @@ export default function TeamMembers() {
   }, [toast]);
 
   const handleMemberAdded = (newMember: TeamMember) => {
-    toast({
-      title: "Success",
-      description: `${newMember.name} has been added to the team.`,
-    });
+    // Show appropriate toast based on role
+    if (newMember.role === 'Director') {
+      toast({
+        title: "Success",
+        description: `${newMember.name} has been added as a Director with full access.`,
+      });
+    } else {
+      toast({
+        title: "Success",
+        description: `${newMember.name} has been added to the team.`,
+      });
+    }
+    
     setTeamMembers(prev => [...prev, newMember]);
   };
 
