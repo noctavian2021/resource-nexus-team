@@ -7,7 +7,8 @@ import {
   View, 
   StyleSheet, 
   PDFDownloadLink, 
-  PDFViewer
+  PDFViewer,
+  BlobProvider
 } from '@react-pdf/renderer';
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
@@ -258,7 +259,7 @@ export const PDFViewer_Component = ({
   );
 };
 
-// PDF Download Button
+// PDF Download Button - Fixed render prop pattern
 export const PDFDownloadButton = ({ 
   teamMembers, 
   departments, 
@@ -293,15 +294,22 @@ export const PDFDownloadButton = ({
 
 // Export a component that provides a download link
 const PDFReport = () => {
+  // Fixing the render prop pattern here
   return (
-    <PDFDownloadLink 
-      document={<OrgMapDocument teamMembers={[]} departments={[]} projects={[]} />} 
-      fileName="organization-map.pdf"
-    >
-      {({ loading }) => (
-        loading ? "Generating PDF..." : "Download PDF"
+    <BlobProvider document={<OrgMapDocument teamMembers={[]} departments={[]} projects={[]} />}>
+      {({ url, loading }) => (
+        <Button 
+          variant="secondary"
+          disabled={loading}
+          asChild
+        >
+          <a href={url as string} download="organization-map.pdf">
+            <Download className="h-4 w-4 mr-2" />
+            {loading ? "Generating PDF..." : "Download PDF"}
+          </a>
+        </Button>
       )}
-    </PDFDownloadLink>
+    </BlobProvider>
   );
 };
 
