@@ -35,8 +35,14 @@ export const getTeamMember = (id: string) => {
   return apiRequest<TeamMember>(`/team-members/${id}`);
 };
 
-export const createTeamMember = (member: Omit<TeamMember, 'id'>) => {
-  return apiRequest<TeamMember>('/team-members', 'POST', member);
+export const createTeamMember = async (member: Omit<TeamMember, 'id'>) => {
+  try {
+    const result = await apiRequest<TeamMember>('/team-members', 'POST', member);
+    return result;
+  } catch (error) {
+    console.error('Error creating team member:', error);
+    throw error;
+  }
 };
 
 export const updateTeamMember = (id: string, updates: Partial<TeamMember>) => {

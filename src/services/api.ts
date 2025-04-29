@@ -3,6 +3,9 @@
  * API service for the Resource Nexus app
  */
 
+// Import the mock data directly
+import { teamMembers as initialTeamMembers } from '@/data/mockData';
+
 const API_URL = 'http://localhost:5000/api';
 const USE_MOCK = true; // Enable mock mode since local API server isn't available
 
@@ -45,13 +48,12 @@ const apiRequest = async <T>(
 const handleMockRequest = <T>(endpoint: string, method: string, data: any): Promise<T> => {
   console.log(`Mock API request: ${method} ${endpoint}`);
   
-  // Mock team members data
-  let mockTeamMembers = JSON.parse(localStorage.getItem('mockTeamMembers') || '[]');
+  // Get mock team members data from localStorage or initialize with default data
+  let mockTeamMembers = JSON.parse(localStorage.getItem('mockTeamMembers') || 'null');
   
   // Initialize with default data if empty
-  if (mockTeamMembers.length === 0) {
-    const { teamMembers } = require('@/data/mockData');
-    mockTeamMembers = teamMembers;
+  if (!mockTeamMembers) {
+    mockTeamMembers = initialTeamMembers;
     localStorage.setItem('mockTeamMembers', JSON.stringify(mockTeamMembers));
   }
   

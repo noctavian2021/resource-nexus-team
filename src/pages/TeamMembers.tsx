@@ -7,6 +7,7 @@ import AddTeamMemberDialog from '@/components/Team/AddTeamMemberDialog';
 import { getTeamMembers } from '@/services/teamService';
 import { TeamMember } from '@/data/mockData';
 import { useToast } from '@/hooks/use-toast';
+import { toast } from '@/hooks/use-toast';
 
 export default function TeamMembers() {
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
@@ -37,6 +38,14 @@ export default function TeamMembers() {
     fetchTeamMembers();
   }, [toast]);
 
+  const handleMemberAdded = (newMember: TeamMember) => {
+    toast({
+      title: "Success",
+      description: `${newMember.name} has been added to the team.`,
+    });
+    setTeamMembers(prev => [...prev, newMember]);
+  };
+
   return (
     <>
       <Header title="Team Members" />
@@ -45,9 +54,7 @@ export default function TeamMembers() {
           <h1 className="text-2xl font-semibold tracking-tight">Team Members</h1>
           <div className="flex gap-2">
             <SendWelcomeDialog />
-            <AddTeamMemberDialog onMemberAdded={(newMember) => {
-              setTeamMembers(prev => [...prev, newMember]);
-            }} />
+            <AddTeamMemberDialog onMemberAdded={handleMemberAdded} />
           </div>
         </div>
         
