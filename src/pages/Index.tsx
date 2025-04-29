@@ -10,6 +10,7 @@ import TeamMemberCard from '@/components/Team/TeamMemberCard';
 import ProjectCard from '@/components/Projects/ProjectCard';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
+import { TeamMember } from '@/data/mockData';
 
 export default function Index() {
   const isMobile = useIsMobile();
@@ -24,6 +25,14 @@ export default function Index() {
   const activeProjects = safeProjects
     .filter(project => project.status === 'Active')
     .slice(0, 2);
+  
+  const handleMemberUpdated = (updatedMember: TeamMember) => {
+    // On the dashboard we don't need to update the local state as this page
+    // doesn't maintain its own state for team members - it just displays
+    // featured members from the imported mockData
+    console.log('Team member updated:', updatedMember);
+    // In a real app, you might want to refresh the data or update global state here
+  };
     
   return (
     <>
@@ -64,7 +73,11 @@ export default function Index() {
               </div>
               <div className="mt-4 space-y-4">
                 {featuredMembers.map(member => (
-                  <TeamMemberCard key={member.id} member={member} />
+                  <TeamMemberCard 
+                    key={member.id} 
+                    member={member}
+                    onMemberUpdated={handleMemberUpdated}
+                  />
                 ))}
               </div>
             </div>

@@ -51,6 +51,14 @@ export default function DepartmentDetail() {
 
   if (!department) return null;
 
+  const handleMemberUpdated = (updatedMember: TeamMember) => {
+    setTeamMembers(prev => 
+      prev.map(member => 
+        member.id === updatedMember.id ? updatedMember : member
+      )
+    );
+  };
+
   return (
     <>
       <Header title={`${department.name} Department`} />
@@ -93,7 +101,10 @@ export default function DepartmentDetail() {
                 </p>
               </div>
             ) : (
-              <TeamList teamMembers={teamMembers} />
+              <TeamList 
+                teamMembers={teamMembers} 
+                onMemberUpdated={handleMemberUpdated}
+              />
             )
           )}
         </div>
