@@ -6,7 +6,7 @@ import { resourceRequests } from '@/data/mockData';
 import CreateRequestDialog from '@/components/ResourceRequests/CreateRequestDialog';
 import { useEmailConfig } from '@/hooks/useEmailConfig';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle, Settings } from 'lucide-react';
+import { AlertCircle, Settings, Bell, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 
@@ -46,7 +46,16 @@ export default function ResourceRequests() {
         )}
 
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <h1 className="text-2xl font-semibold tracking-tight">Resource Requests</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-semibold tracking-tight">Resource Requests</h1>
+            <div className="flex gap-1 items-center text-sm text-muted-foreground">
+              <Bell className="h-4 w-4" />
+              <span>In-app notifications</span>
+              <span className="mx-1">•</span>
+              <Mail className="h-4 w-4" />
+              <span>Email alerts</span>
+            </div>
+          </div>
           <CreateRequestDialog />
         </div>
         

@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -6,11 +7,13 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { departments, ResourceRequest } from '@/data/mockData';
-import { PlusCircle } from 'lucide-react';
+import { PlusCircle, Mail } from 'lucide-react';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from '@/hooks/use-toast';
 import { useNotifications } from '@/hooks/useNotifications';
+import { useEmailConfig } from '@/hooks/useEmailConfig';
+import apiRequest from '@/services/api';
 
 const requestFormSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -25,7 +28,9 @@ type RequestFormData = z.infer<typeof requestFormSchema>;
 
 export default function CreateRequestDialog() {
   const [open, setOpen] = React.useState(false);
+  const [sending, setSending] = React.useState(false);
   const { addNotification } = useNotifications();
+  const { emailConfig } = useEmailConfig();
   
   const form = useForm<RequestFormData>({
     resolver: zodResolver(requestFormSchema),
@@ -39,38 +44,78 @@ export default function CreateRequestDialog() {
     }
   });
 
-  const onSubmit = (data: RequestFormData) => {
-    // In a real app, this would be an API call
-    console.log('New request:', data);
+  const onSubmit = async (data: RequestFormData) => {
+    setSending(true);
     
-    const targetDepartment = departments.find(dept => dept.id === data.targetDepartmentId);
-    
-    const newRequest: Partial<ResourceRequest> = {
-      title: data.title,
-      description: data.description,
-      targetDepartmentId: data.targetDepartmentId,
-      requiredSkills: data.requiredSkills.split(',').map(skill => skill.trim()),
-      startDate: data.startDate,
-      endDate: data.endDate,
-      status: 'Pending',
-      requestingDepartmentId: '1', // In a real app, this would come from the authenticated user's department
-      createdAt: new Date().toISOString(),
-    };
+    try {
+      // In a real app, this would be an API call
+      console.log('New request:', data);
+      
+      const targetDepartment = departments.find(dept => dept.id === data.targetDepartmentId);
+      const requestingDepartment = departments.find(d => d.id === '1'); // In a real app, this would come from the authenticated user's department
+      
+      const newRequest: Partial<ResourceRequest> = {
+        title: data.title,
+        description: data.description,
+        targetDepartmentId: data.targetDepartmentId,
+        requiredSkills: data.requiredSkills.split(',').map(skill => skill.trim()),
+        startDate: data.startDate,
+        endDate: data.endDate,
+        status: 'Pending',
+        requestingDepartmentId: '1', // In a real app, this would come from the authenticated user's department
+        createdAt: new Date().toISOString(),
+      };
 
-    // Add notification for the department lead
-    addNotification(
-      "New Resource Request",
-      `${data.title} - Resource request from ${departments.find(d => d.id === '1')?.name}`
-    );
-    
-    // Show confirmation toast to the requester
-    toast({
-      title: "Request Sent",
-      description: `Your resource request "${data.title}" has been sent to ${targetDepartment?.name}. They will review it shortly.`,
-    });
-    
-    setOpen(false);
-    form.reset();
+      // Add notification for the department lead
+      addNotification(
+        "New Resource Request",
+        `${data.title} - Resource request from ${requestingDepartment?.name}`
+      );
+      
+      // Send email notification if email is configured
+      if (emailConfig.enabled) {
+        try {
+          // Using the API service to send the email
+          await apiRequest('/email/send-welcome', 'POST', {
+            email: `${targetDepartment?.name?.toLowerCase().replace(/\s+/g, '')}@example.com`, // Mock email address
+            replacingMember: '',
+            additionalNotes: `
+              New Resource Request: ${data.title}
+              From: ${requestingDepartment?.name}
+              Required Skills: ${data.requiredSkills}
+              Start Date: ${data.startDate}
+              End Date: ${data.endDate}
+              
+              Description:
+              ${data.description}
+            `
+          });
+          
+          console.log('Email notification sent to department lead');
+        } catch (error) {
+          console.error('Failed to send email notification:', error);
+        }
+      }
+      
+      // Show confirmation toast to the requester
+      toast({
+        title: "Request Sent",
+        description: `Your resource request "${data.title}" has been sent to ${targetDepartment?.name}. They will review it shortly.`,
+      });
+      
+      setOpen(false);
+      form.reset();
+    } catch (error) {
+      console.error('Error submitting request:', error);
+      
+      toast({
+        title: "Error",
+        description: "Failed to submit resource request. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
@@ -182,7 +227,14 @@ export default function CreateRequestDialog() {
             </div>
             
             <div className="flex justify-end gap-2">
-              <Button type="submit">Submit Request</Button>
+              <Button 
+                type="submit" 
+                disabled={sending}
+                className="flex items-center gap-2"
+              >
+                {sending ? 'Submitting...' : 'Submit Request'}
+                {!sending && <Mail className="h-4 w-4" />}
+              </Button>
             </div>
           </form>
         </Form>

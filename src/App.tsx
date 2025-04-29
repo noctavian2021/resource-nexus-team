@@ -1,5 +1,4 @@
 
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -18,7 +17,14 @@ import AdminSettings from "./pages/AdminSettings";
 import GeneralReport from "./pages/GeneralReport";
 import HelpTab from "./pages/HelpTab";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      retry: 1
+    }
+  }
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -49,4 +55,3 @@ const App = () => (
 );
 
 export default App;
-
