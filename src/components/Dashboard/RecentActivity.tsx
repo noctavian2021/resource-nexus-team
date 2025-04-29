@@ -46,8 +46,9 @@ export default function RecentActivity({ activities }: RecentActivityProps) {
               <div className="relative mr-4 flex h-6 w-6 flex-none items-center justify-center">
                 <div className="absolute -bottom-6 top-8 left-2.5 w-px bg-border" />
                 <div className={`bg-background border-primary flex h-6 w-6 items-center justify-center rounded-full border ${
-                  activity.type === 'absence_start' ? 'text-amber-500' :
-                  activity.type === 'absence_end' ? 'text-green-500' : 'text-primary'
+                  activity.type === 'absence_start' || activity.type === 'absence_end' ? 
+                  (activity.type === 'absence_start' ? 'text-amber-500' : 'text-green-500') : 
+                  'text-primary'
                 }`}>
                   {getActivityIcon(activity.type)}
                 </div>
