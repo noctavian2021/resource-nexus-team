@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { 
   Document, 
@@ -78,6 +79,9 @@ const ActivityReportDocument = ({
     month: 'long',
     day: 'numeric'
   });
+  
+  // Extend the Activity type to include our new absence types
+  type ExtendedActivityType = 'assignment' | 'project_update' | 'department_change' | 'resource_request' | 'absence_start' | 'absence_end';
   
   // Group activities by type for easy reporting
   const absenceActivities = activities.filter(a => 

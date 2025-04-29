@@ -10,6 +10,9 @@ interface RecentActivityProps {
   activities: Activity[];
 }
 
+// Extend the Activity type to include our new absence types
+type ExtendedActivityType = 'assignment' | 'project_update' | 'department_change' | 'resource_request' | 'absence_start' | 'absence_end';
+
 export default function RecentActivity({ activities }: RecentActivityProps) {
   // Ensure activities is an array
   const safeActivities = Array.isArray(activities) ? activities : [];
