@@ -5,12 +5,14 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { TeamMember, getProjectById } from '@/data/mockData';
 import { Calendar } from 'lucide-react';
+import EditTeamMemberDialog from './EditTeamMemberDialog';
 
 interface TeamMemberCardProps {
   member: TeamMember;
+  onMemberUpdated: (updatedMember: TeamMember) => void;
 }
 
-export default function TeamMemberCard({ member }: TeamMemberCardProps) {
+export default function TeamMemberCard({ member, onMemberUpdated }: TeamMemberCardProps) {
   // Get day names for office days
   const getOfficeDays = () => {
     if (!member.officeDays) return "Not specified";
@@ -28,16 +30,19 @@ export default function TeamMemberCard({ member }: TeamMemberCardProps) {
   return (
     <Card className="overflow-hidden">
       <CardHeader className="pb-4">
-        <div className="flex items-center gap-4">
-          <img
-            src={member.avatar}
-            alt={member.name}
-            className="h-14 w-14 rounded-full object-cover"
-          />
-          <div>
-            <CardTitle className="text-lg">{member.name}</CardTitle>
-            <p className="text-sm text-muted-foreground">{member.role}</p>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <img
+              src={member.avatar}
+              alt={member.name}
+              className="h-14 w-14 rounded-full object-cover"
+            />
+            <div>
+              <CardTitle className="text-lg">{member.name}</CardTitle>
+              <p className="text-sm text-muted-foreground">{member.role}</p>
+            </div>
           </div>
+          <EditTeamMemberDialog member={member} onMemberUpdated={onMemberUpdated} />
         </div>
       </CardHeader>
       <CardContent className="space-y-3">

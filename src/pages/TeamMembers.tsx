@@ -7,7 +7,6 @@ import AddTeamMemberDialog from '@/components/Team/AddTeamMemberDialog';
 import { getTeamMembers } from '@/services/teamService';
 import { TeamMember } from '@/data/mockData';
 import { useToast } from '@/hooks/use-toast';
-import { toast } from '@/hooks/use-toast';
 
 export default function TeamMembers() {
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
@@ -46,6 +45,14 @@ export default function TeamMembers() {
     setTeamMembers(prev => [...prev, newMember]);
   };
 
+  const handleMemberUpdated = (updatedMember: TeamMember) => {
+    setTeamMembers(prev => 
+      prev.map(member => 
+        member.id === updatedMember.id ? updatedMember : member
+      )
+    );
+  };
+
   return (
     <>
       <Header title="Team Members" />
@@ -63,7 +70,10 @@ export default function TeamMembers() {
             <p className="text-muted-foreground">Loading team members...</p>
           </div>
         ) : (
-          <TeamList teamMembers={teamMembers} />
+          <TeamList 
+            teamMembers={teamMembers} 
+            onMemberUpdated={handleMemberUpdated} 
+          />
         )}
       </main>
     </>

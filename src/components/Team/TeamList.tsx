@@ -7,9 +7,10 @@ import { TeamMember, departments } from '@/data/mockData';
 
 interface TeamListProps {
   teamMembers: TeamMember[];
+  onMemberUpdated: (updatedMember: TeamMember) => void;
 }
 
-export default function TeamList({ teamMembers }: TeamListProps) {
+export default function TeamList({ teamMembers, onMemberUpdated }: TeamListProps) {
   const [search, setSearch] = useState('');
   const [selectedDepartment, setSelectedDepartment] = useState('all');
   
@@ -61,7 +62,11 @@ export default function TeamList({ teamMembers }: TeamListProps) {
       ) : (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {filteredMembers.map((member) => (
-            <TeamMemberCard key={member.id} member={member} />
+            <TeamMemberCard 
+              key={member.id} 
+              member={member} 
+              onMemberUpdated={onMemberUpdated}
+            />
           ))}
         </div>
       )}
