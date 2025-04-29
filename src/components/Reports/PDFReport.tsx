@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { 
   Document, 
@@ -272,29 +271,25 @@ export const PDFDownloadButton = ({
   allocationData: any[]
 }) => {
   return (
-    <PDFDownloadLink
-      document={
-        <OrgMapDocument 
-          teamMembers={teamMembers}
-          departments={departments}
-          projects={projects}
-        />
-      }
-      fileName="organization-map.pdf"
-    >
-      {({ loading }) => (
-        <Button variant="secondary">
-          <Download className="h-4 w-4 mr-2" />
-          {loading ? "Generating PDF..." : "Download PDF"}
+    <BlobProvider document={<OrgMapDocument teamMembers={teamMembers} departments={departments} projects={projects} />}>
+      {({ url, loading }) => (
+        <Button variant="secondary" disabled={loading}>
+          <a 
+            href={url as string} 
+            download="organization-map.pdf" 
+            className="flex items-center"
+          >
+            <Download className="h-4 w-4 mr-2" />
+            {loading ? "Generating PDF..." : "Download PDF"}
+          </a>
         </Button>
       )}
-    </PDFDownloadLink>
+    </BlobProvider>
   );
 };
 
 // Export a component that provides a download link
 const PDFReport = () => {
-  // Fixing the render prop pattern here
   return (
     <BlobProvider document={<OrgMapDocument teamMembers={[]} departments={[]} projects={[]} />}>
       {({ url, loading }) => (
