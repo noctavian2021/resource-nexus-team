@@ -1,4 +1,3 @@
-
 import React from 'react';
 import {
   Dialog,
@@ -20,6 +19,12 @@ interface ViewReportDialogProps {
   projects: Project[];
   resourceRequests: ResourceRequest[];
   allocationData: AllocationData[];
+}
+
+export interface AllocationData {
+  name: string;
+  allocation: number;
+  value: number;
 }
 
 export function ViewReportDialog({

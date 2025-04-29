@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import Header from '@/components/Layout/Header';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -13,7 +12,7 @@ import { useBackupConfig } from '@/hooks/useBackupConfig';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Drawer, DrawerClose, DrawerContent, DrawerDescription, DrawerFooter, DrawerHeader, DrawerTitle, DrawerTrigger } from '@/components/ui/drawer';
-import { Calendar, database } from 'lucide-react';
+import { Settings, Mail, Download, Upload, Clock, Database, Calendar } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 export default function AdminSettings() {
@@ -489,7 +488,7 @@ export default function AdminSettings() {
                     disabled={isCreatingBackup}
                     className="gap-2"
                   >
-                    <database className="h-4 w-4" />
+                    <Database className="h-5 w-5 mr-2" />
                     {isCreatingBackup ? 'Creating Backup...' : 'Create Backup'}
                   </Button>
                 </div>

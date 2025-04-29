@@ -1,8 +1,4 @@
 import React from 'react';
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { PlusCircle } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -10,256 +6,193 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { departments, teamMembers } from '@/data/mockData';
-import { useToast } from "@/hooks/use-toast";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
-import { createProject } from '@/services/projectService';
-
-const formSchema = z.object({
-  name: z.string().min(2, "Name is required"),
-  description: z.string().min(10, "Please provide a description (min 10 chars)"),
-  status: z.enum(['Active', 'Planning', 'On Hold', 'Completed']),
-  startDate: z.string().min(1, "Start date is required"),
-  endDate: z.string().min(1, "End date is required"),
-  priority: z.enum(['Low', 'Medium', 'High', 'Urgent']),
-  departmentId: z.string().min(1, "Department is required"),
-});
-
-type FormValues = z.infer<typeof formSchema>;
+import { useToast } from "@/hooks/use-toast";
+import { addProject } from '@/services/projectService';
+import { Plus } from 'lucide-react';
+import { DatePicker } from "@/components/ui/date-picker"
+import { Calendar } from 'lucide-react';
 
 export default function AddProjectDialog() {
   const [isOpen, setIsOpen] = React.useState(false);
+  const [isLoading, setIsLoading] = React.useState(false);
   const { toast } = useToast();
-  
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      name: "",
-      description: "",
-      status: "Planning",
-      startDate: new Date().toISOString().split('T')[0],
-      endDate: "",
-      priority: "Medium",
-      departmentId: "",
-    }
+  const [formData, setFormData] = React.useState({
+    name: '',
+    description: '',
+    client: '',
+    startDate: undefined,
+    endDate: undefined,
+    priority: 'Medium',
   });
-  
-  const onSubmit = async (data: FormValues) => {
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    
     try {
-      await createProject({
-        name: data.name,
-        description: data.description,
-        status: data.status,
-        startDate: data.startDate,
-        endDate: data.endDate,
-        priority: data.priority,
-        departmentId: data.departmentId,
-        progress: 0,
-        teamMembers: []
-      });
+      const newProject = {
+        name: formData.name,
+        description: formData.description,
+        client: formData.client,
+        startDate: formData.startDate ? formData.startDate.toISOString() : undefined,
+        endDate: formData.endDate ? formData.endDate.toISOString() : undefined,
+        priority: formData.priority as 'Low' | 'Medium' | 'High' | 'Urgent',
+        status: 'Active', // Default status
+        teamMembers: [], // Initialize with an empty array
+        progress: 0, // Initialize with 0
+      };
+
+      await addProject(newProject);
 
       toast({
         title: "Project added",
-        description: `${data.name} has been created.`
+        description: "The project has been added successfully.",
       });
 
       setIsOpen(false);
-      form.reset();
-      
-      window.location.reload();
+      setFormData({
+        name: '',
+        description: '',
+        client: '',
+        startDate: undefined,
+        endDate: undefined,
+        priority: 'Medium',
+      });
     } catch (error) {
+      console.error("Error adding project:", error);
       toast({
         title: "Error",
         description: "Failed to add project. Please try again.",
-        variant: "destructive"
+        variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
-  
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { id, value } = e.target;
+    setFormData(prev => ({ ...prev, [id]: value }));
+  };
+
+  const handlePriorityChange = (value: string) => {
+    setFormData(prev => ({ ...prev, priority: value }));
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button>
-          <PlusCircle className="mr-2 h-4 w-4" />
+        <Button variant="outline">
+          <Plus className="mr-2 h-4 w-4" />
           Add Project
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Add New Project</DialogTitle>
         </DialogHeader>
-        
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Project Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Website Redesign" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="name">Project Name</Label>
+            <Input
+              id="name"
+              value={formData.name}
+              onChange={handleInputChange}
+              placeholder="Project Name"
+              required
             />
-            
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Description</FormLabel>
-                  <FormControl>
-                    <Textarea 
-                      placeholder="Brief description of the project goals and scope"
-                      className="min-h-[80px]"
-                      {...field} 
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="description">Description</Label>
+            <Textarea
+              id="description"
+              value={formData.description}
+              onChange={handleInputChange}
+              placeholder="Project Description"
+              className="h-24"
             />
-            
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="departmentId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Department</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select department" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {departments.map((department) => (
-                          <SelectItem key={department.id} value={department.id}>
-                            {department.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="status"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Status</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select status" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="Planning">Planning</SelectItem>
-                        <SelectItem value="Active">Active</SelectItem>
-                        <SelectItem value="On Hold">On Hold</SelectItem>
-                        <SelectItem value="Completed">Completed</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="startDate"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Start Date</FormLabel>
-                    <FormControl>
-                      <Input type="date" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="endDate"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>End Date</FormLabel>
-                    <FormControl>
-                      <Input type="date" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            
-            <FormField
-              control={form.control}
-              name="priority"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Priority</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select priority" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="Low">Low</SelectItem>
-                      <SelectItem value="Medium">Medium</SelectItem>
-                      <SelectItem value="High">High</SelectItem>
-                      <SelectItem value="Urgent">Urgent</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="client">Client</Label>
+            <Input
+              id="client"
+              value={formData.client}
+              onChange={handleInputChange}
+              placeholder="Client Name"
+              required
             />
-            
-            <div className="flex justify-end space-x-2 pt-4">
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={() => setIsOpen(false)}
-              >
-                Cancel
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="startDate">Start Date</Label>
+            <DatePicker
+              id="startDate"
+              onSelect={(date) => setFormData(prev => ({ ...prev, startDate: date }))}
+            >
+              <Button variant={"outline"} className="w-[280px] justify-start text-left font-normal">
+                <Calendar className="mr-2 h-4 w-4" />
+                {formData.startDate ? (
+                  formData.startDate.toLocaleDateString()
+                ) : (
+                  <span>Pick a date</span>
+                )}
               </Button>
-              <Button type="submit">Create Project</Button>
-            </div>
-          </form>
-        </Form>
+            </DatePicker>
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="endDate">End Date</Label>
+            <DatePicker
+              id="endDate"
+              onSelect={(date) => setFormData(prev => ({ ...prev, endDate: date }))}
+            >
+              <Button variant={"outline"} className="w-[280px] justify-start text-left font-normal">
+                <Calendar className="mr-2 h-4 w-4" />
+                {formData.endDate ? (
+                  formData.endDate.toLocaleDateString()
+                ) : (
+                  <span>Pick a date</span>
+                )}
+              </Button>
+            </DatePicker>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="priority">Priority</Label>
+            <Select value={formData.priority} onValueChange={handlePriorityChange}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select priority" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Low">Low</SelectItem>
+                <SelectItem value="Medium">Medium</SelectItem>
+                <SelectItem value="High">High</SelectItem>
+                <SelectItem value="Urgent">Urgent</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex justify-end space-x-2">
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={() => setIsOpen(false)}
+              disabled={isLoading}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" disabled={isLoading}>
+              {isLoading ? "Adding..." : "Add Project"}
+            </Button>
+          </div>
+        </form>
       </DialogContent>
     </Dialog>
   );

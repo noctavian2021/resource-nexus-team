@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -81,7 +80,7 @@ export default function RequestCard({ request }: RequestCardProps) {
         </div>
       </CardContent>
       
-      {request.status === 'Pending' && (
+      {request.status === "pending" && (
         <CardFooter className="flex justify-end gap-2">
           <Button variant="outline" size="sm" onClick={handleDecline}>
             <X className="mr-1 h-4 w-4" />

@@ -5,7 +5,8 @@ import Header from '@/components/Layout/Header';
 import DashboardMetrics from '@/components/Dashboard/DashboardMetrics';
 import AllocationChart from '@/components/Dashboard/AllocationChart';
 import RecentActivity from '@/components/Dashboard/RecentActivity';
-import { dashboardMetrics, allocationData, recentActivities, teamMembers, projects } from '@/data/mockData';
+import { recentActivities, teamMembers, projects } from '@/data/mockData';
+// Remove import of dashboardMetrics and allocationData
 import TeamMemberCard from '@/components/Team/TeamMemberCard';
 import ProjectCard from '@/components/Projects/ProjectCard';
 import { Button } from '@/components/ui/button';
@@ -15,6 +16,22 @@ import { FileText, Download, Calendar } from 'lucide-react';
 import { ActivityReportDialog } from '@/components/Reports/ActivityReportDialog';
 import { useScheduledReports } from '@/hooks/useScheduledReports';
 import { useToast } from '@/hooks/use-toast';
+
+// Add mock data here as temporary solution
+const dashboardMetrics = [
+  { title: 'Team Members', value: '24', change: 2 },
+  { title: 'Available Resources', value: '68%', change: -5 },
+  { title: 'Active Projects', value: '12', change: 1 },
+  { title: 'Budget Utilized', value: '83%', change: 4 }
+];
+
+const allocationData = [
+  { name: 'Development', allocation: 35, value: 35 },
+  { name: 'Design', allocation: 20, value: 20 },
+  { name: 'Marketing', allocation: 15, value: 15 },
+  { name: 'Operations', allocation: 18, value: 18 },
+  { name: 'HR', allocation: 12, value: 12 }
+];
 
 export default function Index() {
   const isMobile = useIsMobile();

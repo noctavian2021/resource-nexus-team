@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import Header from '@/components/Layout/Header';
 import { 
@@ -48,6 +47,14 @@ export default function OrgMapPage() {
   // Get active projects
   const activeProjects = projects.filter(p => p.status === 'Active');
   
+  const allocationData = [
+    { name: 'Development', allocation: 35, value: 35 },
+    { name: 'Design', allocation: 20, value: 20 },
+    { name: 'Marketing', allocation: 15, value: 15 },
+    { name: 'Operations', allocation: 18, value: 18 },
+    { name: 'HR', allocation: 12, value: 12 }
+  ];
+
   const handleGeneratePDF = () => {
     setShowPDFViewer(true);
     console.log("Showing PDF viewer dialog");

@@ -1,55 +1,51 @@
-
 import React from 'react';
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer
-} from 'recharts';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { AllocationData } from '@/data/mockData';
+import { PieChart, Pie, Cell, ResponsiveContainer, Legend } from 'recharts';
+
+export interface AllocationData {
+  name: string;
+  allocation: number;
+  value: number;
+}
 
 interface AllocationChartProps {
   data: AllocationData[];
 }
 
-export default function AllocationChart({ data }: AllocationChartProps) {
-  // Ensure data is an array to prevent the e.filter is not a function error
-  const safeData = Array.isArray(data) ? data : [];
-  
+const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
+
+const RADIAN = Math.PI / 180;
+const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, index }: any) => {
+  const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+  const x = cx + radius * Math.cos(-midAngle * RADIAN);
+  const y = cy + radius * Math.sin(-midAngle * RADIAN);
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Resource Allocation by Department</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="h-80 w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart
-              data={safeData}
-              margin={{
-                top: 20,
-                right: 30,
-                left: 20,
-                bottom: 5,
-              }}
-              barSize={20}
-            >
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="department" />
-              <YAxis />
-              <Tooltip />
-              <Legend />
-              <Bar dataKey="allocated" stackId="a" name="Allocated (%)" fill="#8884d8" />
-              <Bar dataKey="available" stackId="a" name="Available (%)" fill="#82ca9d" />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      </CardContent>
-    </Card>
+    <text x={x} y={y} fill="white" textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central">
+      {`${(percent * 100).toFixed(0)}%`}
+    </text>
+  );
+};
+
+export default function AllocationChart({ data }: AllocationChartProps) {
+  return (
+    <ResponsiveContainer width="100%" height={300}>
+      <PieChart width={400} height={300}>
+        <Pie
+          data={data}
+          cx="50%"
+          cy="50%"
+          labelLine={false}
+          label={renderCustomizedLabel}
+          outerRadius={120}
+          fill="#8884d8"
+          dataKey="value"
+        >
+          {data.map((entry, index) => (
+            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+          ))}
+        </Pie>
+        <Legend />
+      </PieChart>
+    </ResponsiveContainer>
   );
 }

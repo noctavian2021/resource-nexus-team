@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -61,7 +60,7 @@ export default function CreateRequestDialog() {
         requiredSkills: data.requiredSkills.split(',').map(skill => skill.trim()),
         startDate: data.startDate,
         endDate: data.endDate,
-        status: 'Pending',
+        status: "pending", // Changed from "Pending" to "pending"
         requestingDepartmentId: '1', // In a real app, this would come from the authenticated user's department
         createdAt: new Date().toISOString(),
       };
