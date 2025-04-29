@@ -3,7 +3,7 @@ import React from 'react';
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { PlusCircle, Plus, Minus } from 'lucide-react';
+import { PlusCircle, Plus, Minus, UserCheck } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -45,6 +45,7 @@ const formSchema = z.object({
   avatar: z.string().url("Must be a valid URL").or(z.literal("")),
   skills: z.string().transform(val => val.split(',').map(skill => skill.trim()).filter(Boolean)),
   availability: z.number().min(0).max(100),
+  isLead: z.boolean().default(false),
   projectInvolvements: z.array(
     z.object({
       projectId: z.string().min(1, "Project is required"),
@@ -87,6 +88,7 @@ export default function AddTeamMemberDialog({ onMemberAdded }: AddTeamMemberDial
       avatar: "",
       skills: [],
       availability: 100,
+      isLead: false,
       projectInvolvements: [{ projectId: "", percentage: 0 }],
       requiredResources: [],
       officeDays: {
@@ -140,16 +142,25 @@ export default function AddTeamMemberDialog({ onMemberAdded }: AddTeamMemberDial
         avatar: avatarUrl,
         skills: Array.isArray(data.skills) ? data.skills : [data.skills],
         availability: data.availability,
+        isLead: data.isLead,
         projects: data.projectInvolvements.map(p => p.projectId),
         projectInvolvements,
         requiredResources,
         officeDays
       });
 
-      toast({
-        title: "Team member added",
-        description: `${data.name} has been added to the team.`
-      });
+      // Display an appropriate toast message depending on whether the member is a lead
+      if (data.isLead) {
+        toast({
+          title: "Team member added as department lead",
+          description: `${data.name} has been added as the ${data.department} department lead.`
+        });
+      } else {
+        toast({
+          title: "Team member added",
+          description: `${data.name} has been added to the team.`
+        });
+      }
 
       setIsOpen(false);
       form.reset();
@@ -275,6 +286,30 @@ export default function AddTeamMemberDialog({ onMemberAdded }: AddTeamMemberDial
                 )}
               />
             </div>
+
+            <FormField
+              control={form.control}
+              name="isLead"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                  <div className="space-y-1 leading-none">
+                    <FormLabel className="flex items-center">
+                      <UserCheck className="mr-2 h-4 w-4" />
+                      Designate as Department Lead
+                    </FormLabel>
+                    <FormDescription>
+                      This person will be set as the lead for their department.
+                    </FormDescription>
+                  </div>
+                </FormItem>
+              )}
+            />
             
             <FormField
               control={form.control}
