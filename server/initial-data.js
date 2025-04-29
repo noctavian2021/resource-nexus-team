@@ -10,7 +10,12 @@ const teamMembers = [
     avatar: 'https://i.pravatar.cc/150?img=1',
     skills: ['React', 'TypeScript', 'Node.js'],
     availability: 25,
-    projects: ['1', '3']
+    projects: ['1', '3'],
+    vacation: {
+      isOnVacation: true,
+      startDate: '2025-05-01',
+      endDate: '2025-05-15'
+    }
   },
   {
     id: '2',
@@ -32,7 +37,12 @@ const teamMembers = [
     avatar: 'https://i.pravatar.cc/150?img=3',
     skills: ['Agile', 'Roadmapping', 'Stakeholder Management'],
     availability: 15,
-    projects: ['1', '2', '4']
+    projects: ['1', '2', '4'],
+    vacation: {
+      isOnVacation: false,
+      startDate: '2025-06-10',
+      endDate: '2025-06-24'
+    }
   },
   {
     id: '4',

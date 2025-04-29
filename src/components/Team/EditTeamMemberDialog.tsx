@@ -10,6 +10,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { updateTeamMember } from "@/services/teamService";
 import { TeamMember, departments } from "@/data/mockData";
 import { useToast } from "@/hooks/use-toast";
@@ -21,6 +22,9 @@ const formSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email." }),
   skills: z.string().optional(),
   availability: z.coerce.number().min(0).max(100),
+  isOnVacation: z.boolean().default(false),
+  vacationStartDate: z.string().optional(),
+  vacationEndDate: z.string().optional(),
 });
 
 interface EditTeamMemberDialogProps {
@@ -41,8 +45,14 @@ export default function EditTeamMemberDialog({ member, onMemberUpdated }: EditTe
       email: member.email,
       skills: member.skills.join(", "),
       availability: member.availability,
+      isOnVacation: member.vacation?.isOnVacation || false,
+      vacationStartDate: member.vacation?.startDate || "",
+      vacationEndDate: member.vacation?.endDate || "",
     },
   });
+  
+  // Watch the isOnVacation field to conditionally show date inputs
+  const isOnVacation = form.watch("isOnVacation");
   
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
@@ -53,6 +63,11 @@ export default function EditTeamMemberDialog({ member, onMemberUpdated }: EditTe
         email: values.email,
         skills: values.skills ? values.skills.split(",").map(skill => skill.trim()) : member.skills,
         availability: values.availability,
+        vacation: {
+          isOnVacation: values.isOnVacation,
+          startDate: values.vacationStartDate || undefined,
+          endDate: values.vacationEndDate || undefined,
+        }
       });
       
       onMemberUpdated(updatedMember);
@@ -178,6 +193,60 @@ export default function EditTeamMemberDialog({ member, onMemberUpdated }: EditTe
                 </FormItem>
               )}
             />
+            
+            <div className="space-y-4 border rounded-md p-4">
+              <h3 className="text-md font-medium">Vacation Information</h3>
+              
+              <FormField
+                control={form.control}
+                name="isOnVacation"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                    <div className="space-y-0.5">
+                      <FormLabel>On Vacation</FormLabel>
+                    </div>
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              
+              {isOnVacation && (
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="vacationStartDate"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Start Date</FormLabel>
+                        <FormControl>
+                          <Input type="date" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="vacationEndDate"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>End Date</FormLabel>
+                        <FormControl>
+                          <Input type="date" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              )}
+            </div>
             
             <div className="flex justify-end space-x-2">
               <Button type="button" variant="outline" onClick={() => setOpen(false)}>

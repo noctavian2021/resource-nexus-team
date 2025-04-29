@@ -1,4 +1,3 @@
-
 import { TeamMember } from '@/data/mockData';
 import apiRequest from './api';
 
@@ -19,6 +18,12 @@ export interface OfficeDays {
   wednesday: boolean;
   thursday: boolean;
   friday: boolean;
+}
+
+export interface VacationInfo {
+  isOnVacation: boolean;
+  startDate?: string;
+  endDate?: string;
 }
 
 // Define user roles
