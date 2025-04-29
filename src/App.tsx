@@ -14,6 +14,7 @@ import NotFound from "./pages/NotFound";
 import Sidebar from "./components/Layout/Sidebar";
 import ResourceRequests from "./pages/ResourceRequests";
 import AdminSettings from "./pages/AdminSettings";
+import GeneralReport from "./pages/GeneralReport";
 
 const queryClient = new QueryClient();
 
@@ -34,6 +35,7 @@ const App = () => (
               <Route path="/projects" element={<Projects />} />
               <Route path="/requests" element={<ResourceRequests />} />
               <Route path="/admin/settings" element={<AdminSettings />} />
+              <Route path="/reports/general" element={<GeneralReport />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </div>

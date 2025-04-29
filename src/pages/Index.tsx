@@ -11,6 +11,7 @@ import ProjectCard from '@/components/Projects/ProjectCard';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { TeamMember } from '@/data/mockData';
+import { FileText } from 'lucide-react';
 
 export default function Index() {
   const isMobile = useIsMobile();
@@ -48,6 +49,17 @@ export default function Index() {
               className="bg-gradient-to-r from-[#8B5CF6] to-[#D946EF] hover:from-[#7C3AED] hover:to-[#C026D3] text-white border-0"
             >
               Generate Report
+            </Button>
+            <Button 
+              size="sm" 
+              variant="outline"
+              className="border-[#8B5CF6] text-[#8B5CF6] hover:bg-[#8B5CF6]/10"
+              asChild
+            >
+              <Link to="/reports/general">
+                <FileText className="h-4 w-4 mr-1" />
+                General Report
+              </Link>
             </Button>
           </div>
         </div>
