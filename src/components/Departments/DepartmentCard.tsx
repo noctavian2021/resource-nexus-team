@@ -3,6 +3,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Department, getTeamMemberById } from '@/data/mockData';
 import { Users } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 interface DepartmentCardProps {
   department: Department;
@@ -10,9 +11,17 @@ interface DepartmentCardProps {
 
 export default function DepartmentCard({ department }: DepartmentCardProps) {
   const lead = getTeamMemberById(department.leadId);
+  const navigate = useNavigate();
+
+  const handleDepartmentClick = () => {
+    navigate(`/departments/${department.id}`);
+  };
 
   return (
-    <Card className="overflow-hidden">
+    <Card 
+      className="overflow-hidden cursor-pointer hover:shadow-md transition-shadow"
+      onClick={handleDepartmentClick}
+    >
       <div className="h-2" style={{ backgroundColor: department.color }}></div>
       <CardHeader className="pb-2">
         <CardTitle>{department.name}</CardTitle>

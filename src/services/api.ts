@@ -48,6 +48,13 @@ const handleMockRequest = <T>(endpoint: string, method: string, data: any): Prom
   // Mock team members data
   let mockTeamMembers = JSON.parse(localStorage.getItem('mockTeamMembers') || '[]');
   
+  // Initialize with default data if empty
+  if (mockTeamMembers.length === 0) {
+    const { teamMembers } = require('@/data/mockData');
+    mockTeamMembers = teamMembers;
+    localStorage.setItem('mockTeamMembers', JSON.stringify(mockTeamMembers));
+  }
+  
   // Handle different endpoints
   if (endpoint === '/team-members') {
     if (method === 'GET') {

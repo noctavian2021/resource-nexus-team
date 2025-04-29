@@ -25,6 +25,12 @@ export const getTeamMembers = () => {
   return apiRequest<TeamMember[]>('/team-members');
 };
 
+export const getTeamMembersByDepartment = (departmentName: string) => {
+  return apiRequest<TeamMember[]>('/team-members').then(members => 
+    members.filter(member => member.department.toLowerCase() === departmentName.toLowerCase())
+  );
+};
+
 export const getTeamMember = (id: string) => {
   return apiRequest<TeamMember>(`/team-members/${id}`);
 };

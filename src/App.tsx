@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -7,6 +8,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import TeamMembers from "./pages/TeamMembers";
 import Departments from "./pages/Departments";
+import DepartmentDetail from "./pages/DepartmentDetail";
 import Projects from "./pages/Projects";
 import NotFound from "./pages/NotFound";
 import Sidebar from "./components/Layout/Sidebar";
@@ -28,6 +30,7 @@ const App = () => (
               <Route path="/" element={<Index />} />
               <Route path="/team" element={<TeamMembers />} />
               <Route path="/departments" element={<Departments />} />
+              <Route path="/departments/:departmentId" element={<DepartmentDetail />} />
               <Route path="/projects" element={<Projects />} />
               <Route path="/requests" element={<ResourceRequests />} />
               <Route path="/admin/settings" element={<AdminSettings />} />
