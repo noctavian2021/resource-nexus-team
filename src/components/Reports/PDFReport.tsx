@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { 
   Document, 
@@ -43,7 +42,6 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   table: {
-    display: 'table',
     width: 'auto',
     marginVertical: 10,
   },
@@ -325,13 +323,8 @@ export const PDFDownloadButton = ({
       />
     } 
     fileName="general-report.pdf"
-    style={{
-      textDecoration: 'none',
-      display: 'inline-block',
-      cursor: 'pointer'
-    }}
   >
-    {({ blob, url, loading, error }) => 
+    {({ loading }) => 
       loading ? 'Generating PDF...' : 'Download PDF'
     }
   </PDFDownloadLink>
