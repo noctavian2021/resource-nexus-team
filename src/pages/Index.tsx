@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import Header from '@/components/Layout/Header';
@@ -47,8 +46,9 @@ export default function Index() {
             <Button 
               size="sm" 
               className="bg-gradient-to-r from-[#8B5CF6] to-[#D946EF] hover:from-[#7C3AED] hover:to-[#C026D3] text-white border-0"
+              asChild
             >
-              Generate Report
+              <Link to="/reports/general">Generate Report</Link>
             </Button>
             <Button 
               size="sm" 

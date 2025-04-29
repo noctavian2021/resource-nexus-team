@@ -50,6 +50,7 @@ export default function OrgMapPage() {
   
   const handleGeneratePDF = () => {
     setShowPDFViewer(true);
+    console.log("Showing PDF viewer dialog");
   };
 
   const handleSendEmail = () => {

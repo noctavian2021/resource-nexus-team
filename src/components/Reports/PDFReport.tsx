@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { 
   Document, 
@@ -5,7 +6,6 @@ import {
   Text, 
   View, 
   StyleSheet, 
-  PDFDownloadLink, 
   PDFViewer,
   BlobProvider
 } from '@react-pdf/renderer';
@@ -239,7 +239,9 @@ const OrgMapDocument = ({
 export const PDFViewer_Component = ({ 
   teamMembers, 
   departments, 
-  projects 
+  projects, 
+  resourceRequests, 
+  allocationData 
 }: { 
   teamMembers: TeamMember[], 
   departments: Department[], 
@@ -258,7 +260,7 @@ export const PDFViewer_Component = ({
   );
 };
 
-// PDF Download Button - Fixed render prop pattern
+// PDF Download Button with correct implementation
 export const PDFDownloadButton = ({ 
   teamMembers, 
   departments, 
@@ -288,7 +290,7 @@ export const PDFDownloadButton = ({
   );
 };
 
-// Export a component that provides a download link
+// Default export component
 const PDFReport = () => {
   return (
     <BlobProvider document={<OrgMapDocument teamMembers={[]} departments={[]} projects={[]} />}>
@@ -298,7 +300,7 @@ const PDFReport = () => {
           disabled={loading}
           asChild
         >
-          <a href={url as string} download="organization-map.pdf">
+          <a href={url as string} download="organization-map.pdf" className="flex items-center">
             <Download className="h-4 w-4 mr-2" />
             {loading ? "Generating PDF..." : "Download PDF"}
           </a>
