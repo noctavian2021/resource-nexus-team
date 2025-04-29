@@ -52,11 +52,13 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
+import { ViewReportDialog } from '@/components/Reports/ViewReportDialog';
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
 
 export default function GeneralReport() {
   const [activeTab, setActiveTab] = useState('overview');
+  const [showPDFViewer, setShowPDFViewer] = useState(false);
   const { toast } = useToast();
   
   // Aggregate data for the report
@@ -100,18 +102,7 @@ export default function GeneralReport() {
   }));
 
   const handleGeneratePDF = () => {
-    toast({
-      title: "Export Started",
-      description: "Your report is being prepared for download.",
-    });
-    
-    // In a real application, this would trigger PDF generation
-    setTimeout(() => {
-      toast({
-        title: "Report Ready",
-        description: "General report has been generated and downloaded.",
-      });
-    }, 2000);
+    setShowPDFViewer(true);
   };
 
   const handleSendEmail = () => {
@@ -489,6 +480,16 @@ export default function GeneralReport() {
           </TabsContent>
         </Tabs>
       </main>
+
+      <ViewReportDialog
+        open={showPDFViewer}
+        onClose={() => setShowPDFViewer(false)}
+        teamMembers={teamMembers}
+        departments={departments}
+        projects={projects}
+        resourceRequests={resourceRequests}
+        allocationData={allocationData}
+      />
     </>
   );
 }
