@@ -7,7 +7,8 @@ import {
   LayoutGrid,
   FileText,
   Settings,
-  Building2
+  Building2,
+  HelpCircle
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
@@ -74,6 +75,7 @@ export default function Sidebar() {
           <SidebarLink to="/departments" icon={Building2} title="Departments" isActive={location.pathname === '/departments'} />
           <SidebarLink to="/projects" icon={LayoutGrid} title="Projects" isActive={location.pathname === '/projects'} />
           <SidebarLink to="/requests" icon={FileText} title="Requests" isActive={location.pathname === '/requests'} />
+          <SidebarLink to="/help" icon={HelpCircle} title="Help" isActive={location.pathname === '/help'} />
         </div>
         <div className="mt-auto">
           <SidebarLink to="/admin/settings" icon={Settings} title="Admin" isActive={location.pathname === '/admin/settings'} />

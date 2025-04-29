@@ -1,4 +1,5 @@
 
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -15,6 +16,7 @@ import Sidebar from "./components/Layout/Sidebar";
 import ResourceRequests from "./pages/ResourceRequests";
 import AdminSettings from "./pages/AdminSettings";
 import GeneralReport from "./pages/GeneralReport";
+import HelpTab from "./pages/HelpTab";
 
 const queryClient = new QueryClient();
 
@@ -36,6 +38,7 @@ const App = () => (
               <Route path="/requests" element={<ResourceRequests />} />
               <Route path="/admin/settings" element={<AdminSettings />} />
               <Route path="/reports/general" element={<GeneralReport />} />
+              <Route path="/help" element={<HelpTab />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </div>
@@ -46,3 +49,4 @@ const App = () => (
 );
 
 export default App;
+
