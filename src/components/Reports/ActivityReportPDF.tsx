@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { 
   Document, 
@@ -56,21 +55,38 @@ const styles = StyleSheet.create({
     fontSize: 8,
     color: '#666',
   },
+  absenceNote: {
+    fontSize: 10,
+    fontStyle: 'italic',
+    marginTop: 5,
+    color: '#666666',
+  },
 });
 
 // Create Document Component
 const ActivityReportDocument = ({ 
   activities,
   teamMembers,
+  reportDate = new Date(),
 }: { 
   activities: Activity[],
-  teamMembers: any[] 
+  teamMembers: any[],
+  reportDate?: Date,
 }) => {
-  const currentDate = new Date().toLocaleDateString('en-US', {
+  const currentDate = reportDate.toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'long',
     day: 'numeric'
   });
+  
+  // Group activities by type for easy reporting
+  const absenceActivities = activities.filter(a => 
+    a.type === 'absence_start' || a.type === 'absence_end'
+  );
+  
+  const otherActivities = activities.filter(a => 
+    a.type !== 'absence_start' && a.type !== 'absence_end'
+  );
   
   return (
     <Document>
@@ -81,12 +97,38 @@ const ActivityReportDocument = ({
           <Text style={styles.text}>Generated on: {currentDate}</Text>
         </View>
         
-        {/* Activities Section */}
+        {/* Absences Section */}
+        {absenceActivities.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.subheader}>Team Member Absences</Text>
+            
+            {absenceActivities.map((activity, i) => {
+              const member = teamMembers.find(m => m.id === activity.userId);
+              return (
+                <View key={i} style={styles.activityItem}>
+                  <Text style={styles.text}>
+                    {format(new Date(activity.timestamp), 'MMM d, yyyy • h:mm a')}
+                  </Text>
+                  <Text style={styles.text}>
+                    {activity.description}
+                  </Text>
+                  {member && (
+                    <Text style={styles.text}>
+                      User: {member.name} ({member.role})
+                    </Text>
+                  )}
+                </View>
+              );
+            })}
+          </View>
+        )}
+        
+        {/* Other Activities Section */}
         <View style={styles.section}>
           <Text style={styles.subheader}>Recent Activities</Text>
           
-          {activities.length > 0 ? (
-            activities.map((activity, i) => {
+          {otherActivities.length > 0 ? (
+            otherActivities.map((activity, i) => {
               const member = teamMembers.find(m => m.id === activity.userId);
               return (
                 <View key={i} style={styles.activityItem}>
@@ -112,6 +154,7 @@ const ActivityReportDocument = ({
         {/* Footer */}
         <View style={styles.footer}>
           <Text>This report was automatically generated. For questions, contact the HR department.</Text>
+          <Text>Daily report sent at 7:00 AM to department leads.</Text>
         </View>
       </Page>
     </Document>

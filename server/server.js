@@ -160,6 +160,41 @@ app.post('/api/email/send-welcome', (req, res) => {
   }, 1000);
 });
 
+// New endpoint for sending activity reports
+app.post('/api/email/send-activity-report', (req, res) => {
+  const { recipients, reportType, activities } = req.body;
+  
+  // In a real app, you would generate the PDF and send it via email here
+  console.log('Sending activity report to:', recipients);
+  console.log('Report type:', reportType);
+  console.log('Activities count:', activities ? activities.length : 0);
+  
+  // Simulate email send
+  setTimeout(() => {
+    res.json({ 
+      success: true, 
+      message: 'Activity report sent successfully',
+      recipientCount: recipients.length,
+      timestamp: new Date().toISOString()
+    });
+  }, 1000);
+});
+
+// New endpoint for managing scheduled reports
+app.post('/api/email/schedule-report', (req, res) => {
+  const { schedule } = req.body;
+  
+  // In a real app, this would save the schedule to a database
+  // and a scheduled task would handle sending the reports
+  console.log('Setting up report schedule:', schedule);
+  
+  res.json({
+    success: true,
+    message: 'Report schedule saved successfully',
+    schedule
+  });
+});
+
 // Start the server
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

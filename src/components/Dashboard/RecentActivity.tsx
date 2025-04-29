@@ -3,7 +3,7 @@ import React from 'react';
 import { Activity } from '@/data/mockData';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getTeamMemberById } from '@/data/mockData';
-import { CalendarClock, UserCircle2, FolderGit2, Building2, LayoutGrid } from 'lucide-react';
+import { CalendarClock, UserCircle2, FolderGit2, Building2, LayoutGrid, Calendar } from 'lucide-react';
 import { format } from 'date-fns';
 
 interface RecentActivityProps {
@@ -24,6 +24,10 @@ export default function RecentActivity({ activities }: RecentActivityProps) {
         return <Building2 className="h-4 w-4" />;
       case 'resource_request':
         return <LayoutGrid className="h-4 w-4" />;
+      case 'absence_start':
+        return <Calendar className="h-4 w-4" />;
+      case 'absence_end':
+        return <Calendar className="h-4 w-4" />;
       default:
         return <CalendarClock className="h-4 w-4" />;
     }
@@ -38,7 +42,10 @@ export default function RecentActivity({ activities }: RecentActivityProps) {
             <div key={activity.id} className="flex">
               <div className="relative mr-4 flex h-6 w-6 flex-none items-center justify-center">
                 <div className="absolute -bottom-6 top-8 left-2.5 w-px bg-border" />
-                <div className="bg-background border-primary text-primary flex h-6 w-6 items-center justify-center rounded-full border">
+                <div className={`bg-background border-primary flex h-6 w-6 items-center justify-center rounded-full border ${
+                  activity.type === 'absence_start' ? 'text-amber-500' :
+                  activity.type === 'absence_end' ? 'text-green-500' : 'text-primary'
+                }`}>
                   {getActivityIcon(activity.type)}
                 </div>
               </div>

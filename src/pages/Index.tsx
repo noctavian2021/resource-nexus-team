@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import Header from '@/components/Layout/Header';
 import DashboardMetrics from '@/components/Dashboard/DashboardMetrics';
@@ -11,12 +11,16 @@ import ProjectCard from '@/components/Projects/ProjectCard';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { TeamMember } from '@/data/mockData';
-import { FileText, Download } from 'lucide-react';
+import { FileText, Download, Calendar } from 'lucide-react';
 import { ActivityReportDialog } from '@/components/Reports/ActivityReportDialog';
+import { useScheduledReports } from '@/hooks/useScheduledReports';
+import { useToast } from '@/hooks/use-toast';
 
 export default function Index() {
   const isMobile = useIsMobile();
   const [showActivityReport, setShowActivityReport] = useState(false);
+  const { scheduleConfig } = useScheduledReports();
+  const { toast } = useToast();
   
   // Ensure we're working with arrays
   const safeAllocationData = Array.isArray(allocationData) ? allocationData : [];
@@ -36,6 +40,16 @@ export default function Index() {
     console.log('Team member updated:', updatedMember);
     // In a real app, you might want to refresh the data or update global state here
   };
+
+  useEffect(() => {
+    // Show a toast when the page loads if report scheduling is enabled
+    if (scheduleConfig.enabled) {
+      toast({
+        title: "Activity Report Scheduled",
+        description: `Daily reports will be sent to ${scheduleConfig.recipients.length} recipients at ${scheduleConfig.sendTime}.`,
+      });
+    }
+  }, []);
     
   return (
     <>
@@ -62,6 +76,16 @@ export default function Index() {
               <Download className="h-4 w-4 mr-1" />
               Activity Report
             </Button>
+            {scheduleConfig.enabled && (
+              <Button 
+                size="sm" 
+                variant="outline" 
+                className="border-green-500 text-green-500 hover:bg-green-500/10"
+              >
+                <Calendar className="h-4 w-4 mr-1" />
+                Reports Scheduled
+              </Button>
+            )}
           </div>
         </div>
         

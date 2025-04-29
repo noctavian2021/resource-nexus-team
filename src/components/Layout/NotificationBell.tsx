@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Bell, CheckCheck, Mail } from 'lucide-react';
+import { Bell, CheckCheck, Mail, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -13,6 +13,7 @@ import { useNotifications } from '@/hooks/useNotifications';
 import { format } from 'date-fns';
 import { useEmailConfig } from '@/hooks/useEmailConfig';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Badge } from '@/components/ui/badge';
 
 export default function NotificationBell() {
   const { notifications, markAsRead, clearNotifications } = useNotifications();
@@ -21,6 +22,20 @@ export default function NotificationBell() {
 
   const handleItemClick = (notificationId: string) => {
     markAsRead(notificationId);
+  };
+
+  // Get the icon for a notification based on its category
+  const getNotificationIcon = (category?: string) => {
+    switch (category) {
+      case 'absence':
+        return <Calendar className="h-4 w-4 text-amber-500" />;
+      case 'report':
+        return <Mail className="h-4 w-4 text-blue-500" />;
+      case 'request':
+        return <Bell className="h-4 w-4 text-purple-500" />;
+      default:
+        return <Bell className="h-4 w-4" />;
+    }
   };
 
   return (
@@ -58,7 +73,17 @@ export default function NotificationBell() {
                   className={`flex flex-col items-start p-4 ${notification.read ? 'bg-muted/40' : ''}`}
                   onClick={() => handleItemClick(notification.id)}
                 >
-                  <div className="font-medium">{notification.title}</div>
+                  <div className="flex w-full items-center justify-between">
+                    <div className="font-medium flex items-center gap-1">
+                      {getNotificationIcon(notification.category)}
+                      {notification.title}
+                    </div>
+                    {notification.category && (
+                      <Badge variant="outline" className="text-xs">
+                        {notification.category}
+                      </Badge>
+                    )}
+                  </div>
                   <div className="text-sm text-muted-foreground">{notification.message}</div>
                   <div className="text-xs text-muted-foreground mt-1 flex items-center justify-between w-full">
                     <span>{format(new Date(notification.timestamp), 'MMM d, yyyy h:mm a')}</span>

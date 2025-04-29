@@ -9,6 +9,7 @@ interface Notification {
   message: string;
   timestamp: string;
   read: boolean;
+  category?: 'general' | 'report' | 'request' | 'absence';
 }
 
 export const useNotifications = () => {
@@ -22,13 +23,14 @@ export const useNotifications = () => {
     }
   }, []);
 
-  const addNotification = (title: string, message: string) => {
+  const addNotification = (title: string, message: string, category: 'general' | 'report' | 'request' | 'absence' = 'general') => {
     const newNotification: Notification = {
       id: Date.now().toString(),
       title,
       message,
       timestamp: new Date().toISOString(),
       read: false,
+      category,
     };
 
     const updatedNotifications = [newNotification, ...notifications];
@@ -61,10 +63,15 @@ export const useNotifications = () => {
     localStorage.removeItem('notifications');
   };
 
+  const getNotificationsByCategory = (category: string) => {
+    return notifications.filter(n => n.category === category);
+  };
+
   return { 
     notifications, 
     addNotification,
     markAsRead,
-    clearNotifications
+    clearNotifications,
+    getNotificationsByCategory
   };
 };
