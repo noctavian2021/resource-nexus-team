@@ -9,6 +9,8 @@ import {
   PDFDownloadLink, 
   PDFViewer
 } from '@react-pdf/renderer';
+import { Button } from "@/components/ui/button";
+import { Download } from "lucide-react";
 import { TeamMember, Department, Project, resourceRequests } from '@/data/mockData';
 
 // Define styles for PDF
@@ -280,7 +282,8 @@ export const PDFDownloadButton = ({
       fileName="organization-map.pdf"
     >
       {({ loading }) => (
-        <Button className="gap-2">
+        <Button variant="secondary">
+          <Download className="h-4 w-4 mr-2" />
           {loading ? "Generating PDF..." : "Download PDF"}
         </Button>
       )}

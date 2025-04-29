@@ -7,7 +7,8 @@ import {
   projects, 
   allocationData,
   ResourceRequest,
-  resourceRequests
+  resourceRequests,
+  TeamMember
 } from '@/data/mockData';
 import { 
   Table, 
