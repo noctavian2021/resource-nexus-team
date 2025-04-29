@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import Header from '@/components/Layout/Header';
@@ -48,7 +49,7 @@ export default function Index() {
               className="bg-gradient-to-r from-[#8B5CF6] to-[#D946EF] hover:from-[#7C3AED] hover:to-[#C026D3] text-white border-0"
               asChild
             >
-              <Link to="/reports/general">Generate Report</Link>
+              <Link to="/reports/general">Organization Map</Link>
             </Button>
             <Button 
               size="sm" 
@@ -58,7 +59,7 @@ export default function Index() {
             >
               <Link to="/reports/general">
                 <FileText className="h-4 w-4 mr-1" />
-                General Report
+                Organization Map
               </Link>
             </Button>
           </div>
