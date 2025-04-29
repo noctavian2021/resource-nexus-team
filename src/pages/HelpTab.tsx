@@ -13,7 +13,7 @@ import {
   CollapsibleTrigger 
 } from '@/components/ui/collapsible';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ChevronDown, BookOpen, HelpCircle, Users, Building2, LayoutGrid, FileText, Settings } from 'lucide-react';
+import { ChevronDown, BookOpen, HelpCircle, Users, Building2, LayoutGrid, FileText, Bell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export default function HelpTab() {
@@ -29,12 +29,13 @@ export default function HelpTab() {
         </div>
 
         <Tabs defaultValue="getting-started" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 lg:grid-cols-5 h-auto">
+          <TabsList className="grid w-full grid-cols-2 md:grid-cols-3 lg:grid-cols-6 h-auto">
             <TabsTrigger value="getting-started">Getting Started</TabsTrigger>
             <TabsTrigger value="team-management">Team Management</TabsTrigger>
             <TabsTrigger value="departments">Departments</TabsTrigger>
             <TabsTrigger value="projects">Projects</TabsTrigger>
             <TabsTrigger value="resource-requests">Resource Requests</TabsTrigger>
+            <TabsTrigger value="notifications">Notifications</TabsTrigger>
           </TabsList>
 
           <TabsContent value="getting-started" className="space-y-4 mt-6">
@@ -51,7 +52,7 @@ export default function HelpTab() {
               <CardContent className="space-y-4">
                 <HelpSection 
                   title="Dashboard Overview"
-                  content="The dashboard provides a high-level overview of your organization's resource allocation, recent activities, and key metrics. Use the charts to understand resource distribution across departments and projects. The Recent Activity section shows the latest changes in resource allocations and team updates."
+                  content="The dashboard provides a high-level overview of your organization's resource allocation, recent activities, and key metrics. Use the charts to understand resource distribution across departments and projects. The Recent Activity section shows the latest changes in resource allocations and team updates. You can also generate and download Activity Reports as PDFs from the dashboard."
                 />
                 
                 <HelpSection 
@@ -65,6 +66,7 @@ export default function HelpTab() {
                         <li><strong>Departments:</strong> Organize and oversee departmental resources</li>
                         <li><strong>Projects:</strong> Track projects and their resource requirements</li>
                         <li><strong>Requests:</strong> Handle resource allocation requests</li>
+                        <li><strong>Help:</strong> Access documentation and guidance</li>
                         <li><strong>Admin:</strong> Configure application settings</li>
                       </ul>
                     </div>
@@ -80,8 +82,9 @@ export default function HelpTab() {
                         <li>Team member availability tracking with vacation management</li>
                         <li>Department structure visualization and management</li>
                         <li>Project resource allocation and monitoring</li>
-                        <li>Resource request workflow management</li>
-                        <li>Email notifications for important updates (when configured)</li>
+                        <li>Resource request workflow management with notifications</li>
+                        <li>Email notifications for important updates and resource requests</li>
+                        <li>Activity reports with PDF generation and email sharing</li>
                         <li>Organizational reporting and analytics</li>
                       </ul>
                     </div>
@@ -224,7 +227,7 @@ export default function HelpTab() {
                         <li><strong>Approved/Rejected:</strong> Final decision made</li>
                         <li><strong>Allocated:</strong> Resources assigned to the project</li>
                       </ol>
-                      <p>Each stage may trigger notifications to relevant stakeholders.</p>
+                      <p>Each stage triggers notifications to relevant stakeholders.</p>
                     </div>
                   }
                 />
@@ -235,8 +238,43 @@ export default function HelpTab() {
                 />
                 
                 <HelpSection 
+                  title="Request Notifications"
+                  content="When a department lead submits a request to another department lead, the system automatically sends in-app notifications and email alerts (if email is configured). This ensures timely responses to resource requests and keeps all stakeholders informed about request status changes."
+                />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="notifications" className="space-y-4 mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Bell className="h-5 w-5" /> 
+                  Notifications & Reports
+                </CardTitle>
+                <CardDescription>
+                  Understand the notification system and reporting features
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <HelpSection 
+                  title="Notification System"
+                  content="The application includes a comprehensive notification system that alerts users about important events. Notifications appear in the bell icon in the sidebar. Clicking the bell icon shows all your notifications, with unread notifications highlighted. You can mark notifications as read individually or all at once."
+                />
+                
+                <HelpSection 
                   title="Email Notifications"
-                  content="The system sends email notifications at key points in the request workflow (creation, status changes, approvals, rejections). For this feature to work, email settings must be configured in the Admin section. If you see an alert about unconfigured email settings, follow the link to set them up."
+                  content="In addition to in-app notifications, the system can send email alerts for critical events such as new resource requests, request status changes, and report sharing. Email notifications require configuration in the Admin Settings. If email settings are not configured, users will see an alert when attempting to use email-related features."
+                />
+                
+                <HelpSection 
+                  title="Activity Reports"
+                  content="The dashboard includes an Activity Report feature that captures all recent activities in the system. You can access this by clicking 'View Activity Report' in the Recent Activity section. This report provides a comprehensive record of changes and actions taken within the system, useful for auditing and tracking changes over time."
+                />
+                
+                <HelpSection 
+                  title="Generating PDF Reports"
+                  content="Activity Reports and other system reports can be exported as PDF documents for sharing or record-keeping. In the report dialog, click the 'Download PDF' button to save a copy to your computer. You can also email reports directly to stakeholders by clicking the 'Email Report' button if email has been configured in Admin Settings."
                 />
               </CardContent>
             </Card>
