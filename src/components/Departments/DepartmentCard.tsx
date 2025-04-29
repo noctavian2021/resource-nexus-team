@@ -17,6 +17,11 @@ export default function DepartmentCard({ department }: DepartmentCardProps) {
     navigate(`/departments/${department.id}`);
   };
 
+  const handleMembersClick = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent triggering the card click
+    navigate(`/departments/${department.id}`);
+  };
+
   return (
     <Card 
       className="overflow-hidden cursor-pointer hover:shadow-md transition-shadow"
@@ -41,7 +46,10 @@ export default function DepartmentCard({ department }: DepartmentCardProps) {
           </div>
         </div>
         
-        <div className="flex items-center gap-2">
+        <div 
+          className="flex items-center gap-2 hover:bg-gray-100 p-1 rounded cursor-pointer"
+          onClick={handleMembersClick}
+        >
           <Users className="h-4 w-4 text-muted-foreground" />
           <p className="text-sm">
             <span className="font-medium">{department.memberCount}</span>

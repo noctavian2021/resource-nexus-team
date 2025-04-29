@@ -7,7 +7,7 @@ import { getTeamMembersByDepartment } from '@/services/teamService';
 import { getDepartmentById } from '@/data/mockData';
 import { Button } from '@/components/ui/button';
 import { TeamMember } from '@/data/mockData';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Users } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 export default function DepartmentDetail() {
@@ -77,7 +77,10 @@ export default function DepartmentDetail() {
         </div>
         
         <div className="mt-6">
-          <h2 className="text-xl font-medium mb-4">Team Members</h2>
+          <h2 className="text-xl font-medium mb-4 flex items-center gap-2">
+            <Users className="h-5 w-5" />
+            Team Members ({teamMembers.length})
+          </h2>
           {loading ? (
             <div className="flex h-48 items-center justify-center">
               <p className="text-muted-foreground">Loading team members...</p>
