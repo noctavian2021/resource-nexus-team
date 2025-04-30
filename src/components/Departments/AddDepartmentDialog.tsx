@@ -1,4 +1,5 @@
-import React from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -9,6 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import {
   Form,
@@ -20,11 +22,12 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { TeamMember, teamMembers } from '@/data/mockData';
+import { TeamMember } from '@/data/mockData';
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { createDepartment } from '@/services/departmentService';
+import { getTeamMembers } from '@/services/teamService';
 
 const formSchema = z.object({
   name: z.string().min(2, "Name is required"),
@@ -38,7 +41,32 @@ type FormValues = z.infer<typeof formSchema>;
 
 export default function AddDepartmentDialog() {
   const [isOpen, setIsOpen] = React.useState(false);
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  
+  useEffect(() => {
+    if (isOpen) {
+      const fetchTeamMembers = async () => {
+        setLoading(true);
+        try {
+          const members = await getTeamMembers();
+          setTeamMembers(members);
+        } catch (error) {
+          console.error("Failed to fetch team members:", error);
+          toast({
+            title: "Error",
+            description: "Failed to load team members. Please try again.",
+            variant: "destructive"
+          });
+        } finally {
+          setLoading(false);
+        }
+      };
+      
+      fetchTeamMembers();
+    }
+  }, [isOpen, toast]);
   
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -90,6 +118,7 @@ export default function AddDepartmentDialog() {
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Add New Department</DialogTitle>
+          <DialogDescription>Create a new department and assign a team lead</DialogDescription>
         </DialogHeader>
         
         <Form {...form}>
@@ -139,7 +168,7 @@ export default function AddDepartmentDialog() {
                     >
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select department lead" />
+                          <SelectValue placeholder={loading ? "Loading team members..." : "Select department lead"} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -208,7 +237,7 @@ export default function AddDepartmentDialog() {
               >
                 Cancel
               </Button>
-              <Button type="submit">Create Department</Button>
+              <Button type="submit" disabled={loading}>Create Department</Button>
             </div>
           </form>
         </Form>
