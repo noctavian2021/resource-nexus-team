@@ -27,7 +27,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { projects, TeamMember } from '@/data/mockData';
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { createTeamMember } from '@/services/teamService';
+import { createTeamMember, ProjectInvolvement, RequiredResource, OfficeDays } from '@/services/teamService';
 import { getDepartments } from '@/services/departmentService';
 
 const resourceTypes = [
@@ -203,7 +203,7 @@ export default function AddTeamMemberDialog({
         isLead: data.isLead,
         isDirector: data.isDirector,
         projects: data.projectInvolvements.map(p => p.projectId),
-        projectInvolvements,
+        status: 'active',
         requiredResources,
         officeDays
       });

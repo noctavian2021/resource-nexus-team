@@ -26,6 +26,7 @@ declare module '@/data/mockData' {
     skills?: string[];
     availability?: number;
     projects?: string[];
+    status?: 'active' | 'disabled';
     officeDays?: {
       monday: boolean;
       tuesday: boolean;
@@ -61,6 +62,12 @@ declare module '@/data/mockData' {
     status: string;
     createdAt: string;
     departmentId?: string;
+    requesterId?: string;
+    projectId?: string;
+    roleNeeded?: string;
+    skillsRequired?: string[];
+    priority?: 'Low' | 'Medium' | 'High';
+    updatedAt?: string;
   }
   
   // Add types for activity

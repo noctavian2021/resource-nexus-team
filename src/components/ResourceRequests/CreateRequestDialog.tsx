@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -53,16 +54,17 @@ export default function CreateRequestDialog() {
       const targetDepartment = departments.find(dept => dept.id === data.targetDepartmentId);
       const requestingDepartment = departments.find(d => d.id === '1'); // In a real app, this would come from the authenticated user's department
       
+      // Modified to match the ResourceRequest interface
       const newRequest: Partial<ResourceRequest> = {
         id: `request-${Date.now()}`,
+        requestingDepartmentId: '1', // In a real app, this would come from the authenticated user's department
+        targetDepartmentId: data.targetDepartmentId,
         title: data.title,
         description: data.description,
-        targetDepartmentId: data.targetDepartmentId,
         requiredSkills: data.requiredSkills.split(',').map(skill => skill.trim()),
         startDate: data.startDate,
         endDate: data.endDate,
-        status: "pending", // Changed from "Pending" to "pending"
-        requestingDepartmentId: '1', // In a real app, this would come from the authenticated user's department
+        status: "pending", 
         createdAt: new Date().toISOString(),
       };
 

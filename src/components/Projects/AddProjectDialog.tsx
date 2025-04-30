@@ -42,7 +42,7 @@ export default function AddProjectDialog() {
         startDate: formData.startDate ? formData.startDate.toISOString() : undefined,
         endDate: formData.endDate ? formData.endDate.toISOString() : undefined,
         priority: formData.priority as 'Low' | 'Medium' | 'High' | 'Urgent',
-        status: 'Active', // Default status
+        status: 'Active' as "Active" | "Planning" | "Completed" | "On Hold", // Properly typed now
         teamMembers: [], // Initialize with an empty array
         progress: 0, // Initialize with 0
         departmentId: '1', // Default department ID (you can change this to make it selectable)
