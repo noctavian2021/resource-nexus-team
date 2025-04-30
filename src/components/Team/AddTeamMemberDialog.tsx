@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -10,6 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import {
   Form,
@@ -236,6 +236,7 @@ export default function AddTeamMemberDialog({ onMemberAdded }: AddTeamMemberDial
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Add New Team Member</DialogTitle>
+          <DialogDescription>Create a new team member and assign them to a department</DialogDescription>
         </DialogHeader>
         
         <Form {...form}>
