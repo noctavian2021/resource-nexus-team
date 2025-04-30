@@ -3,18 +3,29 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Header from '@/components/Layout/Header';
 import TeamList from '@/components/Team/TeamList';
-import { getTeamMembersByDepartment } from '@/services/teamService';
+import { getTeamMembersByDepartment, deleteTeamMember } from '@/services/teamService';
 import { getDepartment } from '@/services/departmentService';
 import { Button } from '@/components/ui/button';
 import { TeamMember, Department } from '@/data/mockData';
 import { ArrowLeft, Users, UserPlus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import AddTeamMemberDialog from '@/components/Team/AddTeamMemberDialog';
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export default function DepartmentDetail() {
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [department, setDepartment] = useState<Department | null>(null);
   const [loading, setLoading] = useState(true);
+  const [memberToRemove, setMemberToRemove] = useState<TeamMember | null>(null);
   const { departmentId } = useParams<{departmentId: string}>();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -63,6 +74,31 @@ export default function DepartmentDetail() {
         member.id === updatedMember.id ? updatedMember : member
       )
     );
+  };
+
+  const handleRemoveMember = async () => {
+    if (!memberToRemove) return;
+    
+    try {
+      await deleteTeamMember(memberToRemove.id);
+      
+      // Remove from local state
+      setTeamMembers(prev => prev.filter(member => member.id !== memberToRemove.id));
+      
+      toast({
+        title: "Team member removed",
+        description: `${memberToRemove.name} has been removed from ${department?.name}.`,
+      });
+    } catch (error) {
+      console.error('Error removing team member:', error);
+      toast({
+        title: "Error",
+        description: "Failed to remove team member. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setMemberToRemove(null);
+    }
   };
 
   if (loading) {
@@ -141,11 +177,31 @@ export default function DepartmentDetail() {
               <TeamList 
                 teamMembers={teamMembers} 
                 onMemberUpdated={handleMemberUpdated}
+                onRemoveMember={setMemberToRemove}
+                allowRemove={true}
               />
             )
           )}
         </div>
       </main>
+
+      <AlertDialog open={!!memberToRemove} onOpenChange={open => !open && setMemberToRemove(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove Team Member</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to remove {memberToRemove?.name} from {department?.name}?
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleRemoveMember} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Remove
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

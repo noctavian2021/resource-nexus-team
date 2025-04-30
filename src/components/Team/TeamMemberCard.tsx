@@ -9,16 +9,35 @@ import MemberSkills from './MemberSkills';
 import ProjectInvolvements from './ProjectInvolvements';
 import RequiredResources from './RequiredResources';
 import OfficeDays from './OfficeDays';
+import { Button } from '@/components/ui/button';
+import { UserX } from 'lucide-react';
 
 interface TeamMemberCardProps {
   member: TeamMember;
   onMemberUpdated: (updatedMember: TeamMember) => void;
+  onRemove?: () => void;
 }
 
-export default function TeamMemberCard({ member, onMemberUpdated }: TeamMemberCardProps) {
+export default function TeamMemberCard({ member, onMemberUpdated, onRemove }: TeamMemberCardProps) {
   return (
     <Card className="overflow-hidden">
-      <TeamMemberHeader member={member} onMemberUpdated={onMemberUpdated} />
+      <TeamMemberHeader 
+        member={member} 
+        onMemberUpdated={onMemberUpdated}
+        rightElement={
+          onRemove && (
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="text-destructive hover:text-destructive hover:bg-destructive/10"
+              onClick={onRemove}
+              title="Remove member"
+            >
+              <UserX className="h-4 w-4" />
+            </Button>
+          )
+        } 
+      />
       <CardContent className="space-y-3">
         <VacationStatus vacation={member.vacation} />
         <AvailabilityIndicator availability={member.availability} />

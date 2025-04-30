@@ -8,9 +8,16 @@ import { TeamMember, departments } from '@/data/mockData';
 interface TeamListProps {
   teamMembers: TeamMember[];
   onMemberUpdated: (updatedMember: TeamMember) => void;
+  onRemoveMember?: (member: TeamMember) => void;
+  allowRemove?: boolean;
 }
 
-export default function TeamList({ teamMembers, onMemberUpdated }: TeamListProps) {
+export default function TeamList({ 
+  teamMembers, 
+  onMemberUpdated, 
+  onRemoveMember,
+  allowRemove = false 
+}: TeamListProps) {
   const [search, setSearch] = useState('');
   const [selectedDepartment, setSelectedDepartment] = useState('all');
   
@@ -66,6 +73,7 @@ export default function TeamList({ teamMembers, onMemberUpdated }: TeamListProps
               key={member.id} 
               member={member} 
               onMemberUpdated={onMemberUpdated}
+              onRemove={allowRemove && onRemoveMember ? () => onRemoveMember(member) : undefined}
             />
           ))}
         </div>
