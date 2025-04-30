@@ -54,6 +54,7 @@ export default function CreateRequestDialog() {
       const requestingDepartment = departments.find(d => d.id === '1'); // In a real app, this would come from the authenticated user's department
       
       const newRequest: Partial<ResourceRequest> = {
+        id: `request-${Date.now()}`,
         title: data.title,
         description: data.description,
         targetDepartmentId: data.targetDepartmentId,

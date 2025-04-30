@@ -4,8 +4,6 @@ import {
   teamMembers, 
   departments, 
   projects, 
-  allocationData,
-  ResourceRequest,
   resourceRequests,
   TeamMember
 } from '@/data/mockData';

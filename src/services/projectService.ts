@@ -10,6 +10,11 @@ export const getProject = (id: string) => {
   return apiRequest<Project>(`/projects/${id}`);
 };
 
+// Add the missing function
+export const addProject = (project: Omit<Project, 'id'>) => {
+  return createProject(project);
+};
+
 export const createProject = (project: Omit<Project, 'id'>) => {
   return apiRequest<Project>('/projects', 'POST', project);
 };

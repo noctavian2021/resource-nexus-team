@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -14,6 +15,7 @@ const getStatusBadge = (status: string) => {
     case 'Declined':
       return <Badge className="bg-red-500">Declined</Badge>;
     case 'Pending':
+    case 'pending':
       return <Badge variant="outline">Pending</Badge>;
     default:
       return <Badge variant="outline">{status}</Badge>;

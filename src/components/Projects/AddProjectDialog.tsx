@@ -1,3 +1,4 @@
+
 import React from 'react';
 import {
   Dialog,
@@ -15,7 +16,6 @@ import { useToast } from "@/hooks/use-toast";
 import { addProject } from '@/services/projectService';
 import { Plus } from 'lucide-react';
 import { DatePicker } from "@/components/ui/date-picker"
-import { Calendar } from 'lucide-react';
 
 export default function AddProjectDialog() {
   const [isOpen, setIsOpen] = React.useState(false);
@@ -25,8 +25,8 @@ export default function AddProjectDialog() {
     name: '',
     description: '',
     client: '',
-    startDate: undefined,
-    endDate: undefined,
+    startDate: undefined as Date | undefined,
+    endDate: undefined as Date | undefined,
     priority: 'Medium',
   });
 
@@ -134,34 +134,18 @@ export default function AddProjectDialog() {
             <Label htmlFor="startDate">Start Date</Label>
             <DatePicker
               id="startDate"
+              date={formData.startDate}
               onSelect={(date) => setFormData(prev => ({ ...prev, startDate: date }))}
-            >
-              <Button variant={"outline"} className="w-[280px] justify-start text-left font-normal">
-                <Calendar className="mr-2 h-4 w-4" />
-                {formData.startDate ? (
-                  formData.startDate.toLocaleDateString()
-                ) : (
-                  <span>Pick a date</span>
-                )}
-              </Button>
-            </DatePicker>
+            />
           </div>
           
           <div className="space-y-2">
             <Label htmlFor="endDate">End Date</Label>
             <DatePicker
               id="endDate"
+              date={formData.endDate}
               onSelect={(date) => setFormData(prev => ({ ...prev, endDate: date }))}
-            >
-              <Button variant={"outline"} className="w-[280px] justify-start text-left font-normal">
-                <Calendar className="mr-2 h-4 w-4" />
-                {formData.endDate ? (
-                  formData.endDate.toLocaleDateString()
-                ) : (
-                  <span>Pick a date</span>
-                )}
-              </Button>
-            </DatePicker>
+            />
           </div>
 
           <div className="space-y-2">

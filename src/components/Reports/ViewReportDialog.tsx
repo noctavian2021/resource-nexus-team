@@ -1,3 +1,4 @@
+
 import React from 'react';
 import {
   Dialog,
@@ -9,7 +10,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
 import { PDFViewer_Component, PDFDownloadButton } from './PDFReport';
-import { TeamMember, Department, Project, ResourceRequest, AllocationData } from '@/data/mockData';
+import { TeamMember, Department, Project, ResourceRequest } from '@/data/mockData';
+
+interface AllocationData {
+  name: string;
+  allocation: number;
+  value: number;
+}
 
 interface ViewReportDialogProps {
   open: boolean;
@@ -19,12 +26,6 @@ interface ViewReportDialogProps {
   projects: Project[];
   resourceRequests: ResourceRequest[];
   allocationData: AllocationData[];
-}
-
-export interface AllocationData {
-  name: string;
-  allocation: number;
-  value: number;
 }
 
 export function ViewReportDialog({
@@ -70,5 +71,5 @@ export function ViewReportDialog({
         </div>
       </DialogContent>
     </Dialog>
-  );
+  )
 }

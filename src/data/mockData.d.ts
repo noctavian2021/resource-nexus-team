@@ -41,10 +41,17 @@ declare module '@/data/mockData' {
   }
 
   export interface ResourceRequest {
+    id: string;
     requestingDepartmentId: string;
-    targetDepartmentId?: string;
+    targetDepartmentId: string;
     title: string;
+    description: string;
     requiredSkills: string[];
+    startDate: string;
+    endDate: string;
+    status: string;
+    createdAt: string;
+    departmentId?: string;
   }
   
   // Add types for activity
@@ -59,4 +66,9 @@ declare module '@/data/mockData' {
 
   export const dashboardMetrics: Metrics[];
   export const allocationData: AllocationData[];
+  export interface AllocationData {
+    name: string;
+    allocation: number;
+    value: number;
+  }
 }
