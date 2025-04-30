@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -57,15 +56,22 @@ export default function CreateRequestDialog() {
       // Modified to match the ResourceRequest interface
       const newRequest: Partial<ResourceRequest> = {
         id: `request-${Date.now()}`,
+        requesterId: '1', // In a real app, this would be the authenticated user's ID
+        projectId: '', // This would be set if the request is for a specific project
+        departmentId: '1', // In a real app, this would come from the authenticated user's department
         requestingDepartmentId: '1', // In a real app, this would come from the authenticated user's department
         targetDepartmentId: data.targetDepartmentId,
         title: data.title,
         description: data.description,
         requiredSkills: data.requiredSkills.split(',').map(skill => skill.trim()),
+        skillsRequired: data.requiredSkills.split(',').map(skill => skill.trim()),
+        roleNeeded: '', // This would be set if the request is for a specific role
         startDate: data.startDate,
         endDate: data.endDate,
         status: "pending", 
+        priority: 'Medium', // Default priority
         createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
       };
 
       // Add notification for the department lead

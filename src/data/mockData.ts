@@ -11,11 +11,28 @@ export interface TeamMember {
   skills: string[];
   availability: number; // percentage available
   projects: string[];
+  status?: 'active' | 'disabled'; // Add status
   vacation?: {
     isOnVacation: boolean;
     startDate: string;
     endDate: string;
   };
+  officeDays?: {
+    monday: boolean;
+    tuesday: boolean;
+    wednesday: boolean;
+    thursday: boolean;
+    friday: boolean;
+  };
+  projectInvolvements?: Array<{
+    projectId: string;
+    percentage: number;
+  }>;
+  requiredResources?: Array<{
+    name: string;
+    type: string;
+    description?: string;
+  }>;
 }
 
 // Project
@@ -27,9 +44,10 @@ export interface Project {
   startDate: string;
   endDate: string;
   progress: number;
-  priority: 'Low' | 'Medium' | 'High';
+  priority: 'Low' | 'Medium' | 'High' | 'Urgent'; // Added 'Urgent'
   teamMembers: string[];
   departmentId: string;
+  client?: string; // Add client
 }
 
 // Department
@@ -58,8 +76,12 @@ export interface ResourceRequest {
   requesterId: string;
   projectId: string;
   departmentId: string;
+  requestingDepartmentId: string; // Added this
+  targetDepartmentId: string; // Added this
+  title: string; // Added this
   roleNeeded: string;
   skillsRequired: string[];
+  requiredSkills: string[]; // Added this
   startDate: string;
   endDate: string;
   status: 'pending' | 'approved' | 'rejected' | 'completed';

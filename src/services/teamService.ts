@@ -1,3 +1,4 @@
+
 import { TeamMember } from '@/data/mockData';
 import apiRequest from './api';
 
@@ -20,12 +21,6 @@ export interface OfficeDays {
   friday: boolean;
 }
 
-export interface VacationInfo {
-  isOnVacation: boolean;
-  startDate?: string;
-  endDate?: string;
-}
-
 // Define user roles
 export type UserRole = 'Director' | 'Department Lead' | 'Team Member';
 
@@ -43,7 +38,16 @@ export const getTeamMember = (id: string) => {
   return apiRequest<TeamMember>(`/team-members/${id}`);
 };
 
-export const createTeamMember = async (member: Omit<TeamMember, 'id'> & { isLead?: boolean; isDirector?: boolean }) => {
+export interface CreateTeamMemberInput extends Omit<TeamMember, 'id'> {
+  isLead?: boolean;
+  isDirector?: boolean;
+  status?: 'active' | 'disabled';
+  projectInvolvements?: ProjectInvolvement[];
+  requiredResources?: RequiredResource[];
+  officeDays?: OfficeDays;
+}
+
+export const createTeamMember = async (member: CreateTeamMemberInput) => {
   try {
     // If the member is a lead or director, we need to handle special cases
     const result = await apiRequest<TeamMember>('/team-members', 'POST', member);

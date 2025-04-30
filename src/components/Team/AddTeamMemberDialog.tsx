@@ -170,18 +170,18 @@ export default function AddTeamMemberDialog({
     try {
       const avatarUrl = data.avatar || `https://i.pravatar.cc/150?img=${Math.floor(Math.random() * 70) + 1}`;
 
-      const projectInvolvements: ProjectInvolvement[] = data.projectInvolvements.map(p => ({
+      const projectInvolvements = data.projectInvolvements.map(p => ({
         projectId: p.projectId,
         percentage: p.percentage
       }));
       
-      const requiredResources: RequiredResource[] = data.requiredResources.map(r => ({
+      const requiredResources = data.requiredResources.map(r => ({
         type: r.type,
         name: r.name,
         description: r.description
       }));
       
-      const officeDays: OfficeDays = {
+      const officeDays = {
         monday: !!data.officeDays.monday,
         tuesday: !!data.officeDays.tuesday,
         wednesday: !!data.officeDays.wednesday,
@@ -205,7 +205,8 @@ export default function AddTeamMemberDialog({
         projects: data.projectInvolvements.map(p => p.projectId),
         status: 'active',
         requiredResources,
-        officeDays
+        officeDays,
+        projectInvolvements
       });
 
       // Display an appropriate toast message depending on role

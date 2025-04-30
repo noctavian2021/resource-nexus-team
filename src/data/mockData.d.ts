@@ -1,5 +1,4 @@
 
-
 import { TeamMember, Project } from '@/data/mockData';
 
 export interface AllocationData {
@@ -53,21 +52,21 @@ declare module '@/data/mockData' {
 
   export interface ResourceRequest {
     id: string;
-    requestingDepartmentId: string;
-    targetDepartmentId: string;
-    title: string;
+    requesterId?: string;
+    projectId?: string;
+    departmentId?: string;
+    requestingDepartmentId: string; // Added this
+    targetDepartmentId: string; // Added this
+    title: string; // Added this
     description: string;
-    requiredSkills: string[];
+    roleNeeded?: string;
+    skillsRequired?: string[];
+    requiredSkills: string[]; // Added this
     startDate: string;
     endDate: string;
     status: string;
-    createdAt: string;
-    departmentId?: string;
-    requesterId?: string;
-    projectId?: string;
-    roleNeeded?: string;
-    skillsRequired?: string[];
     priority?: 'Low' | 'Medium' | 'High';
+    createdAt: string;
     updatedAt?: string;
   }
   
@@ -98,7 +97,7 @@ declare module '@/data/mockData' {
     memberCount: number;
   }
   
-  // Define Project interface with the required fields
+  // Update Project interface to include Urgent priority
   export interface Project {
     id: string;
     name: string;
@@ -107,10 +106,9 @@ declare module '@/data/mockData' {
     startDate?: string;
     endDate?: string;
     status: "Active" | "Planning" | "Completed" | "On Hold";
-    priority: "Low" | "Medium" | "High" | "Urgent";
+    priority: "Low" | "Medium" | "High" | "Urgent"; // Added "Urgent" here
     teamMembers: string[];
     departmentId: string;
     progress: number;
   }
 }
-
