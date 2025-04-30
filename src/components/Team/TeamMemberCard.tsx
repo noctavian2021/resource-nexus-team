@@ -10,7 +10,7 @@ import ProjectInvolvements from './ProjectInvolvements';
 import RequiredResources from './RequiredResources';
 import OfficeDays from './OfficeDays';
 import { Button } from '@/components/ui/button';
-import { UserX } from 'lucide-react';
+import { X } from 'lucide-react';
 
 interface TeamMemberCardProps {
   member: TeamMember;
@@ -33,7 +33,7 @@ export default function TeamMemberCard({ member, onMemberUpdated, onRemove }: Te
               onClick={onRemove}
               title="Remove member"
             >
-              <UserX className="h-4 w-4" />
+              <X className="h-4 w-4" />
             </Button>
           )
         } 
