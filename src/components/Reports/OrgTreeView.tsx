@@ -114,6 +114,26 @@ const TreeNode = ({
 };
 
 export default function OrgTreeView({ directors, departments, teamMembers }: OrgTreeViewProps) {
+  // Find the executive department if it exists
+  const executiveDept = departments.find(dept => 
+    dept.name.toLowerCase() === 'executive' || dept.name.toLowerCase().includes('executive')
+  );
+  
+  // Get executive team members
+  const executiveMembers = executiveDept 
+    ? teamMembers.filter(member => member.department === executiveDept.name)
+    : [];
+  
+  // Get the executive lead if available
+  const executiveLead = executiveDept 
+    ? teamMembers.find(m => m.id === executiveDept.leadId) 
+    : null;
+
+  // Filter out executive department from other departments
+  const otherDepartments = departments.filter(dept => 
+    dept.id !== (executiveDept?.id ?? '')
+  );
+
   return (
     <Card>
       <CardHeader>
@@ -132,6 +152,43 @@ export default function OrgTreeView({ directors, departments, teamMembers }: Org
             icon={<Building className="h-4 w-4" />} 
             defaultExpanded={true}
           >
+            {/* Executive Department - Top Level */}
+            {executiveDept && (
+              <TreeNode 
+                label={`${executiveDept.name} Department`}
+                icon={<Building className="h-4 w-4" />}
+                color={executiveDept.color}
+                defaultExpanded={true}
+              >
+                {/* Executive Lead */}
+                {executiveLead && (
+                  <TreeNode
+                    label={executiveLead.name}
+                    icon={<User className="h-4 w-4" />}
+                    avatar={executiveLead.avatar}
+                    role={`${executiveLead.role} (Lead)`}
+                    email={executiveLead.email}
+                    badges={["Lead"]}
+                  />
+                )}
+                
+                {/* Executive Members */}
+                {executiveMembers
+                  .filter(m => m.id !== executiveLead?.id)
+                  .map((member) => (
+                    <TreeNode
+                      key={member.id}
+                      label={member.name}
+                      icon={<User className="h-4 w-4" />}
+                      avatar={member.avatar}
+                      role={member.role}
+                      email={member.email}
+                    />
+                  ))
+                }
+              </TreeNode>
+            )}
+            
             {/* Directors */}
             {directors.length > 0 && (
               <TreeNode 
@@ -152,47 +209,50 @@ export default function OrgTreeView({ directors, departments, teamMembers }: Org
               </TreeNode>
             )}
             
-            {/* Departments */}
-            {departments.map((department) => {
-              const lead = teamMembers.find(m => m.id === department.leadId);
-              const deptMembers = teamMembers.filter(
-                m => m.department === department.name && (!lead || m.id !== lead.id)
-              );
-              
-              return (
-                <TreeNode
-                  key={department.id}
-                  label={department.name}
-                  icon={<Building className="h-4 w-4" />}
-                  color={department.color}
-                  defaultExpanded={true}
-                >
-                  {/* Department Lead */}
-                  {lead && (
+            {/* Departments - Horizontal Layout */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 mt-2">
+              {otherDepartments.map((department) => {
+                const lead = teamMembers.find(m => m.id === department.leadId);
+                const deptMembers = teamMembers.filter(
+                  m => m.department === department.name && (!lead || m.id !== lead.id)
+                );
+                
+                return (
+                  <div key={department.id} className="border rounded-md p-2 bg-background/80">
                     <TreeNode
-                      label={lead.name}
-                      icon={<User className="h-4 w-4" />}
-                      avatar={lead.avatar}
-                      role={`${lead.role} (Lead)`}
-                      email={lead.email}
-                      badges={["Lead"]}
-                    />
-                  )}
-                  
-                  {/* Department Members */}
-                  {deptMembers.map((member) => (
-                    <TreeNode
-                      key={member.id}
-                      label={member.name}
-                      icon={<User className="h-4 w-4" />}
-                      avatar={member.avatar}
-                      role={member.role}
-                      email={member.email}
-                    />
-                  ))}
-                </TreeNode>
-              );
-            })}
+                      label={department.name}
+                      icon={<Building className="h-4 w-4" />}
+                      color={department.color}
+                      defaultExpanded={true}
+                    >
+                      {/* Department Lead */}
+                      {lead && (
+                        <TreeNode
+                          label={lead.name}
+                          icon={<User className="h-4 w-4" />}
+                          avatar={lead.avatar}
+                          role={`${lead.role} (Lead)`}
+                          email={lead.email}
+                          badges={["Lead"]}
+                        />
+                      )}
+                      
+                      {/* Department Members */}
+                      {deptMembers.map((member) => (
+                        <TreeNode
+                          key={member.id}
+                          label={member.name}
+                          icon={<User className="h-4 w-4" />}
+                          avatar={member.avatar}
+                          role={member.role}
+                          email={member.email}
+                        />
+                      ))}
+                    </TreeNode>
+                  </div>
+                );
+              })}
+            </div>
           </TreeNode>
         </div>
       </CardContent>
