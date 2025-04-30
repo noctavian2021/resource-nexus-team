@@ -45,11 +45,11 @@ export default function TeamMemberHeader({ member, onMemberUpdated, rightElement
       // Update the team member's status to "disabled"
       const updatedMember = {
         ...member,
-        status: 'disabled',
+        status: 'disabled' as const,
         availability: 0 // Set availability to 0 when disabled
       };
       
-      await updateTeamMember(member.id, { status: 'disabled', availability: 0 });
+      await updateTeamMember(member.id, { status: 'disabled' as const, availability: 0 });
       onMemberUpdated(updatedMember);
       
       toast({
