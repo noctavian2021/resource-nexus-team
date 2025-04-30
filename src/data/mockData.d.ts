@@ -1,4 +1,5 @@
 
+
 import { TeamMember, Project } from '@/data/mockData';
 
 export interface AllocationData {
@@ -112,3 +113,4 @@ declare module '@/data/mockData' {
     progress: number;
   }
 }
+

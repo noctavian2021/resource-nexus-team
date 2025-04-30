@@ -16,6 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 import { addProject } from '@/services/projectService';
 import { Plus } from 'lucide-react';
 import { DatePicker } from "@/components/ui/date-picker"
+import { Project } from '@/data/mockData';
 
 export default function AddProjectDialog() {
   const [isOpen, setIsOpen] = React.useState(false);
@@ -35,17 +36,17 @@ export default function AddProjectDialog() {
     setIsLoading(true);
     
     try {
-      const newProject = {
+      const newProject: Omit<Project, 'id'> = {
         name: formData.name,
         description: formData.description,
         client: formData.client,
         startDate: formData.startDate ? formData.startDate.toISOString() : undefined,
         endDate: formData.endDate ? formData.endDate.toISOString() : undefined,
         priority: formData.priority as 'Low' | 'Medium' | 'High' | 'Urgent',
-        status: 'Active' as "Active" | "Planning" | "Completed" | "On Hold", // Properly typed now
-        teamMembers: [], // Initialize with an empty array
-        progress: 0, // Initialize with 0
-        departmentId: '1', // Default department ID (you can change this to make it selectable)
+        status: 'Active' as "Active" | "Planning" | "Completed" | "On Hold",
+        teamMembers: [], 
+        progress: 0,
+        departmentId: '1',
       };
 
       await addProject(newProject);

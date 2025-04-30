@@ -7,9 +7,9 @@ export interface ProjectInvolvement {
 }
 
 export interface RequiredResource {
-  type: string; // 'account', 'permission', 'url', 'vpn', 'other'
+  type: string;
   name: string;
-  description: string;
+  description?: string;
 }
 
 export interface OfficeDays {
