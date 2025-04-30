@@ -12,7 +12,7 @@ export default function ProjectInvolvements({ member }: ProjectInvolvementsProps
     <div>
       <p className="mb-1 text-sm font-medium">Projects</p>
       <div className="space-y-1">
-        {member.projectInvolvements ? (
+        {member.projectInvolvements && member.projectInvolvements.length > 0 ? (
           member.projectInvolvements.map((involvement, index) => {
             const project = getProjectById(involvement.projectId);
             return project ? (

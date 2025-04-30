@@ -24,6 +24,8 @@ declare module '@/data/mockData' {
     department: string;
     avatar: string;
     skills?: string[];
+    availability?: number;
+    projects?: string[];
     officeDays?: {
       monday: boolean;
       tuesday: boolean;
