@@ -1,4 +1,5 @@
-import React from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -23,10 +24,11 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
-import { departments, projects, TeamMember } from '@/data/mockData';
+import { projects, TeamMember, Department } from '@/data/mockData';
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { createTeamMember, ProjectInvolvement, RequiredResource, OfficeDays } from '@/services/teamService';
+import { getDepartments } from '@/services/departmentService';
 
 const resourceTypes = [
   { value: 'account', label: 'Account' },
@@ -76,7 +78,34 @@ interface AddTeamMemberDialogProps {
 
 export default function AddTeamMemberDialog({ onMemberAdded }: AddTeamMemberDialogProps) {
   const [isOpen, setIsOpen] = React.useState(false);
+  const [departments, setDepartments] = React.useState<Department[]>([]);
+  const [isLoadingDepartments, setIsLoadingDepartments] = React.useState(false);
   const { toast } = useToast();
+  
+  // Fetch departments when dialog is opened
+  React.useEffect(() => {
+    if (isOpen) {
+      const fetchDepartments = async () => {
+        setIsLoadingDepartments(true);
+        try {
+          const data = await getDepartments();
+          setDepartments(Array.isArray(data) ? data : []);
+        } catch (error) {
+          console.error('Error fetching departments:', error);
+          toast({
+            title: "Error",
+            description: "Failed to load departments. Please try again.",
+            variant: "destructive"
+          });
+          setDepartments([]);
+        } finally {
+          setIsLoadingDepartments(false);
+        }
+      };
+      
+      fetchDepartments();
+    }
+  }, [isOpen, toast]);
   
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -273,7 +302,7 @@ export default function AddTeamMemberDialog({ onMemberAdded }: AddTeamMemberDial
                     >
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select department" />
+                          <SelectValue placeholder={isLoadingDepartments ? "Loading..." : "Select department"} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
