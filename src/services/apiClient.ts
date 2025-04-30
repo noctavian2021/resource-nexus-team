@@ -4,8 +4,8 @@
  */
 
 // Configuration
-export const API_URL = process.env.API_URL || 'http://localhost:5000'; 
-export const USE_MOCK = process.env.NODE_ENV === 'development' ? false : true;
+export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000'; 
+export const USE_MOCK = import.meta.env.MODE === 'development' ? false : true;
 
 // Generic API request function
 const apiRequest = async <T>(
