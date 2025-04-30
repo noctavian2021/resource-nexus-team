@@ -39,7 +39,7 @@ export default function TeamMemberCard({ member, onMemberUpdated, onRemove }: Te
           )
         } 
       />
-      <CardContent className="space-y-3">
+      <CardContent className="space-y-3 pt-2">
         <VacationStatus vacation={member.vacation} />
         <AvailabilityIndicator availability={member.availability} />
         

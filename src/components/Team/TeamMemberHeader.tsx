@@ -3,7 +3,7 @@ import React from 'react';
 import { CardHeader } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { FileEdit } from 'lucide-react';
+import { FileEdit, UserX } from 'lucide-react';
 import { TeamMember } from '@/data/mockData';
 import EditTeamMemberDialog from './EditTeamMemberDialog';
 
@@ -36,17 +36,29 @@ export default function TeamMemberHeader({ member, onMemberUpdated, rightElement
           <div className="text-sm text-muted-foreground">{member.role}</div>
         </div>
       </div>
-      <div className="flex items-center space-x-2">
-        {rightElement}
+      <div className="flex flex-col items-end space-y-2">
+        <div className="flex items-center space-x-2">
+          {rightElement}
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={() => setShowEditDialog(true)} 
+            className="text-muted-foreground hover:text-foreground"
+            aria-label="Edit team member"
+            title="Edit team member"
+          >
+            <FileEdit className="h-4 w-4" />
+          </Button>
+        </div>
         <Button 
-          variant="ghost" 
-          size="icon" 
-          onClick={() => setShowEditDialog(true)} 
-          className="text-muted-foreground hover:text-foreground"
-          aria-label="Edit team member"
-          title="Edit team member"
+          variant="outline" 
+          size="sm"
+          className="text-destructive hover:text-destructive hover:bg-destructive/10"
+          aria-label="Disable team member"
+          title="Disable team member"
         >
-          <FileEdit className="h-4 w-4" />
+          <UserX className="h-4 w-4 mr-1" />
+          <span>Disable</span>
         </Button>
       </div>
       <EditTeamMemberDialog
