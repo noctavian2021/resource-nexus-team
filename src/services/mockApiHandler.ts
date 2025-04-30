@@ -118,7 +118,9 @@ function handleDepartmentsEndpoint<T>(method: string, data: any, mockDepartments
   } else if (method === 'POST') {
     const newDepartment = {
       id: `mock-${Date.now()}`,
-      ...data
+      ...data,
+      // Handle leadId properly (don't transform undefined to empty string)
+      leadId: data.leadId ?? ''
     };
     mockDepartments.push(newDepartment);
     localStorage.setItem('mockDepartments', JSON.stringify(mockDepartments));

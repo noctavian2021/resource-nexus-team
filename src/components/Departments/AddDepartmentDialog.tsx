@@ -29,11 +29,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { createDepartment } from '@/services/departmentService';
 import { getTeamMembers } from '@/services/teamService';
 
-// Modified schema to make leadId optional
+// Modified schema to make leadId truly optional
 const formSchema = z.object({
   name: z.string().min(2, "Name is required"),
   description: z.string().min(10, "Please provide a description (min 10 chars)"),
-  leadId: z.string().optional(), // Changed from required to optional
+  leadId: z.string().optional(), // Optional leadId
   memberCount: z.number().min(1, "At least one member is required"),
   color: z.string().min(4, "Color is required"),
 });
@@ -73,7 +73,7 @@ export default function AddDepartmentDialog() {
     defaultValues: {
       name: "",
       description: "",
-      leadId: undefined, // Changed from empty string to undefined
+      leadId: undefined, // Use undefined for optional leadId
       memberCount: 1,
       color: "#3b82f6", // Default blue color
     }
@@ -81,10 +81,11 @@ export default function AddDepartmentDialog() {
   
   const onSubmit = async (data: FormValues) => {
     try {
+      // No need to handle empty leadId specially - just pass the data as is
       await createDepartment({
         name: data.name,
         description: data.description,
-        leadId: data.leadId || '', // Use empty string if leadId is undefined
+        leadId: data.leadId, // This can be undefined/empty and that's fine
         memberCount: data.memberCount,
         color: data.color
       });
@@ -99,6 +100,7 @@ export default function AddDepartmentDialog() {
       
       window.location.reload();
     } catch (error) {
+      console.error("Error creating department:", error);
       toast({
         title: "Error",
         description: "Failed to add department. Please try again.",

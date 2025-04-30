@@ -4,8 +4,8 @@
  */
 
 // Configuration
-export const API_URL = 'http://localhost:5000'; 
-export const USE_MOCK = false;
+export const API_URL = process.env.API_URL || 'http://localhost:5000'; 
+export const USE_MOCK = process.env.NODE_ENV === 'development' ? false : true;
 
 // Generic API request function
 const apiRequest = async <T>(
@@ -20,7 +20,7 @@ const apiRequest = async <T>(
     return handleMockRequest<T>(endpoint, method, data);
   }
   
-  const url = `${API_URL}${endpoint}`;
+  const url = `${API_URL}/api${endpoint}`;
   console.log(`Making API request to: ${url}`);
   
   const options: RequestInit = {
@@ -35,8 +35,19 @@ const apiRequest = async <T>(
     const response = await fetch(url, options);
     
     if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || 'An error occurred');
+      const errorText = await response.text();
+      let errorMessage;
+      
+      try {
+        // Try to parse as JSON
+        const errorData = JSON.parse(errorText);
+        errorMessage = errorData.error || 'An error occurred';
+      } catch (e) {
+        // If not JSON, use the text directly
+        errorMessage = errorText || `HTTP error ${response.status}`;
+      }
+      
+      throw new Error(errorMessage);
     }
     
     return await response.json();

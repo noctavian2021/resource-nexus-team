@@ -10,15 +10,11 @@ export const getDepartment = (id: string) => {
   return apiRequest<Department>(`/departments/${id}`);
 };
 
-// Updated to accept optional leadId
+// Make leadId properly optional
 export const createDepartment = (department: Omit<Department, 'id'>) => {
-  // Ensure department has a leadId property (can be empty string)
-  const departmentData = {
-    ...department,
-    leadId: department.leadId || ''
-  };
-  
-  return apiRequest<Department>('/departments', 'POST', departmentData);
+  // We don't need to explicitly set leadId to empty string here
+  // as the server will handle undefined/null leadId values
+  return apiRequest<Department>('/departments', 'POST', department);
 };
 
 export const updateDepartment = (id: string, updates: Partial<Department>) => {
