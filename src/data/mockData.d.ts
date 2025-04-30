@@ -71,4 +71,19 @@ declare module '@/data/mockData' {
     allocation: number;
     value: number;
   }
+  
+  // Extend the Project interface to include departmentId
+  export interface Project {
+    id: string;
+    name: string;
+    description: string;
+    client: string;
+    startDate?: string;
+    endDate?: string;
+    status: string;
+    priority: "Low" | "Medium" | "High" | "Urgent";
+    teamMembers: string[];
+    departmentId: string;
+    progress: number;
+  }
 }

@@ -45,6 +45,7 @@ export default function AddProjectDialog() {
         status: 'Active', // Default status
         teamMembers: [], // Initialize with an empty array
         progress: 0, // Initialize with 0
+        departmentId: '1', // Default department ID (you can change this to make it selectable)
       };
 
       await addProject(newProject);
