@@ -19,8 +19,10 @@ interface TeamMemberCardProps {
 }
 
 export default function TeamMemberCard({ member, onMemberUpdated, onRemove }: TeamMemberCardProps) {
+  const isDisabled = member.status === 'disabled';
+  
   return (
-    <Card className="overflow-hidden">
+    <Card className={`overflow-hidden ${isDisabled ? 'opacity-70' : ''}`}>
       <TeamMemberHeader 
         member={member} 
         onMemberUpdated={onMemberUpdated}
@@ -40,6 +42,11 @@ export default function TeamMemberCard({ member, onMemberUpdated, onRemove }: Te
         } 
       />
       <CardContent className="space-y-3 pt-2">
+        {isDisabled && (
+          <div className="bg-destructive/10 text-destructive font-medium text-sm rounded px-2 py-1 inline-block">
+            Disabled
+          </div>
+        )}
         <VacationStatus vacation={member.vacation} />
         <AvailabilityIndicator availability={member.availability} />
         
