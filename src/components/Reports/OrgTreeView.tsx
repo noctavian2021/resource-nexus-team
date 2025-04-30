@@ -125,7 +125,7 @@ export default function OrgTreeView({ directors, departments, teamMembers }: Org
     : [];
   
   // Get the executive lead if available
-  const executiveLead = executiveDept 
+  const executiveLead = executiveDept && executiveDept.leadId
     ? teamMembers.find(m => m.id === executiveDept.leadId) 
     : null;
 
@@ -209,50 +209,56 @@ export default function OrgTreeView({ directors, departments, teamMembers }: Org
               </TreeNode>
             )}
             
-            {/* Departments - Horizontal Layout */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 mt-2">
-              {otherDepartments.map((department) => {
-                const lead = teamMembers.find(m => m.id === department.leadId);
-                const deptMembers = teamMembers.filter(
-                  m => m.department === department.name && (!lead || m.id !== lead.id)
-                );
-                
-                return (
-                  <div key={department.id} className="border rounded-md p-2 bg-background/80">
-                    <TreeNode
-                      label={department.name}
-                      icon={<Building className="h-4 w-4" />}
-                      color={department.color}
-                      defaultExpanded={true}
-                    >
-                      {/* Department Lead */}
-                      {lead && (
-                        <TreeNode
-                          label={lead.name}
-                          icon={<User className="h-4 w-4" />}
-                          avatar={lead.avatar}
-                          role={`${lead.role} (Lead)`}
-                          email={lead.email}
-                          badges={["Lead"]}
-                        />
-                      )}
-                      
-                      {/* Department Members */}
-                      {deptMembers.map((member) => (
-                        <TreeNode
-                          key={member.id}
-                          label={member.name}
-                          icon={<User className="h-4 w-4" />}
-                          avatar={member.avatar}
-                          role={member.role}
-                          email={member.email}
-                        />
-                      ))}
-                    </TreeNode>
-                  </div>
-                );
-              })}
-            </div>
+            {/* Departments - Vertical Layout with better spacing */}
+            <TreeNode 
+              label="Departments" 
+              icon={<Building className="h-4 w-4" />} 
+              defaultExpanded={true}
+            >
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2 pr-2">
+                {otherDepartments.map((department) => {
+                  const lead = teamMembers.find(m => m.id === department.leadId);
+                  const deptMembers = teamMembers.filter(
+                    m => m.department === department.name && (!lead || m.id !== lead.id)
+                  );
+                  
+                  return (
+                    <div key={department.id} className="border rounded-md p-2 bg-background/80">
+                      <TreeNode
+                        label={department.name}
+                        icon={<Building className="h-4 w-4" />}
+                        color={department.color}
+                        defaultExpanded={true}
+                      >
+                        {/* Department Lead */}
+                        {lead && (
+                          <TreeNode
+                            label={lead.name}
+                            icon={<User className="h-4 w-4" />}
+                            avatar={lead.avatar}
+                            role={`${lead.role} (Lead)`}
+                            email={lead.email}
+                            badges={["Lead"]}
+                          />
+                        )}
+                        
+                        {/* Department Members */}
+                        {deptMembers.map((member) => (
+                          <TreeNode
+                            key={member.id}
+                            label={member.name}
+                            icon={<User className="h-4 w-4" />}
+                            avatar={member.avatar}
+                            role={member.role}
+                            email={member.email}
+                          />
+                        ))}
+                      </TreeNode>
+                    </div>
+                  );
+                })}
+              </div>
+            </TreeNode>
           </TreeNode>
         </div>
       </CardContent>

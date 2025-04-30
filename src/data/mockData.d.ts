@@ -17,6 +17,13 @@ export interface Metrics {
 // Extend TeamMember interface with the new properties
 declare module '@/data/mockData' {
   export interface TeamMember {
+    id: string;
+    name: string;
+    role: string;
+    email: string;
+    department: string;
+    avatar: string;
+    skills?: string[];
     officeDays?: {
       monday: boolean;
       tuesday: boolean;
@@ -72,7 +79,16 @@ declare module '@/data/mockData' {
     value: number;
   }
   
-  // Extend the Project interface to include departmentId
+  export interface Department {
+    id: string;
+    name: string;
+    description: string;
+    color: string;
+    leadId: string;
+    memberCount: number;
+  }
+  
+  // Define Project interface with the required fields
   export interface Project {
     id: string;
     name: string;

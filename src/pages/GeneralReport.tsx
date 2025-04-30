@@ -1,13 +1,16 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Header from '@/components/Layout/Header';
 import { 
-  teamMembers, 
-  departments, 
-  projects, 
+  teamMembers as initialTeamMembers, 
+  departments as initialDepartments, 
+  projects as initialProjects, 
   resourceRequests,
   TeamMember
 } from '@/data/mockData';
+import { getTeamMembers } from '@/services/teamService';
+import { getDepartments } from '@/services/departmentService';
+import { getProjects } from '@/services/projectService';
 import { 
   Table, 
   TableBody, 
@@ -43,13 +46,43 @@ import OrgTreeView from '@/components/Reports/OrgTreeView';
 export default function OrgMapPage() {
   const [showPDFViewer, setShowPDFViewer] = useState(false);
   const [viewMode, setViewMode] = useState<'table' | 'tree'>('table');
+  const [teamMembersData, setTeamMembersData] = useState(initialTeamMembers);
+  const [departmentsData, setDepartmentsData] = useState(initialDepartments);
+  const [projectsData, setProjectsData] = useState(initialProjects);
+  const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
   
+  // Fetch latest data
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
+        // Fetch latest data from API/mock services
+        const [members, depts, projs] = await Promise.all([
+          getTeamMembers(),
+          getDepartments(),
+          getProjects()
+        ]);
+        
+        if (members) setTeamMembersData(members);
+        if (depts) setDepartmentsData(depts);
+        if (projs) setProjectsData(projs);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+        // Fallback to initial mock data if API fails
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchData();
+  }, []);
+  
   // Find directors
-  const directors = teamMembers.filter(member => member.role === 'Director');
+  const directors = teamMembersData.filter(member => member.role === 'Director');
   
   // Get active projects
-  const activeProjects = projects.filter(p => p.status === 'Active');
+  const activeProjects = projectsData.filter(p => p.status === 'Active');
   
   const allocationData = [
     { name: 'Development', allocation: 35, value: 35 },
@@ -119,11 +152,15 @@ export default function OrgMapPage() {
           </div>
         </div>
 
-        {viewMode === 'tree' ? (
+        {isLoading ? (
+          <div className="flex justify-center items-center h-64">
+            <p>Loading organization data...</p>
+          </div>
+        ) : viewMode === 'tree' ? (
           <OrgTreeView 
             directors={directors}
-            departments={departments}
-            teamMembers={teamMembers}
+            departments={departmentsData}
+            teamMembers={teamMembersData}
           />
         ) : (
           // Original Table View
@@ -192,9 +229,9 @@ export default function OrgMapPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {departments.map((dept) => {
-                      const lead = teamMembers.find(member => member.id === dept.leadId);
-                      const deptMembers = teamMembers.filter(
+                    {departmentsData.map((dept) => {
+                      const lead = teamMembersData.find(member => member.id === dept.leadId);
+                      const deptMembers = teamMembersData.filter(
                         member => member.department === dept.name && member.id !== dept.leadId
                       );
                       
@@ -339,9 +376,9 @@ export default function OrgMapPage() {
       <ViewReportDialog
         open={showPDFViewer}
         onClose={() => setShowPDFViewer(false)}
-        teamMembers={teamMembers}
-        departments={departments}
-        projects={projects}
+        teamMembers={teamMembersData}
+        departments={departmentsData}
+        projects={projectsData}
         resourceRequests={resourceRequests}
         allocationData={allocationData}
       />
