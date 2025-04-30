@@ -31,11 +31,22 @@ const formSchema = z.object({
 interface EditTeamMemberDialogProps {
   member: TeamMember;
   onMemberUpdated: (updatedMember: TeamMember) => void;
+  open?: boolean; 
+  onOpenChange?: (open: boolean) => void;
 }
 
-export default function EditTeamMemberDialog({ member, onMemberUpdated }: EditTeamMemberDialogProps) {
-  const [open, setOpen] = React.useState(false);
+export default function EditTeamMemberDialog({ 
+  member, 
+  onMemberUpdated, 
+  open, 
+  onOpenChange 
+}: EditTeamMemberDialogProps) {
+  const [internalOpen, setInternalOpen] = React.useState(false);
   const { toast } = useToast();
+  
+  // Determine which open state to use (controlled or uncontrolled)
+  const isOpen = open !== undefined ? open : internalOpen;
+  const setIsOpen = onOpenChange || setInternalOpen;
   
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -76,7 +87,7 @@ export default function EditTeamMemberDialog({ member, onMemberUpdated }: EditTe
         title: "Success",
         description: `${values.name}'s profile has been updated.`,
       });
-      setOpen(false);
+      setIsOpen(false);
     } catch (error) {
       console.error('Error updating team member:', error);
       toast({
@@ -88,12 +99,7 @@ export default function EditTeamMemberDialog({ member, onMemberUpdated }: EditTe
   }
 
   return (
-    <Sheet open={open} onOpenChange={setOpen}>
-      <SheetTrigger asChild>
-        <Button variant="outline" size="sm">
-          <Edit className="h-4 w-4 mr-1" /> Edit
-        </Button>
-      </SheetTrigger>
+    <Sheet open={isOpen} onOpenChange={setIsOpen}>
       <SheetContent className="overflow-y-auto w-full sm:max-w-md">
         <SheetHeader>
           <SheetTitle>Edit Team Member</SheetTitle>
@@ -255,7 +261,7 @@ export default function EditTeamMemberDialog({ member, onMemberUpdated }: EditTe
               </div>
               
               <div className="flex justify-end space-x-2 pt-4">
-                <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+                <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>
                   Cancel
                 </Button>
                 <Button type="submit">

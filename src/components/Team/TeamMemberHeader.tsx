@@ -43,6 +43,8 @@ export default function TeamMemberHeader({ member, onMemberUpdated, rightElement
           size="icon" 
           onClick={() => setShowEditDialog(true)} 
           className="text-muted-foreground hover:text-foreground"
+          aria-label="Edit team member"
+          title="Edit team member"
         >
           <Pencil className="h-4 w-4" />
         </Button>
