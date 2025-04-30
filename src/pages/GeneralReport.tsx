@@ -306,9 +306,9 @@ export default function OrgMapPage() {
                   </TableHeader>
                   <TableBody>
                     {activeProjects.map((project) => {
-                      const dept = departments.find(d => d.id === project.departmentId);
+                      const dept = departmentsData.find(d => d.id === project.departmentId);
                       const projectMembers = project.teamMembers
-                        .map(id => teamMembers.find(m => m.id === id))
+                        .map(id => teamMembersData.find(m => m.id === id))
                         .filter(Boolean) as TeamMember[];
                       
                       return (
@@ -385,3 +385,4 @@ export default function OrgMapPage() {
     </>
   );
 }
+
