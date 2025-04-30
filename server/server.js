@@ -17,6 +17,11 @@ if (!fs.existsSync(backupsDir)) {
 app.use(cors());
 app.use(express.json());
 
+// Root API route for testing connection
+app.get('/api', (req, res) => {
+  res.json({ message: 'Resource Nexus API is running' });
+});
+
 // --- Team Members Endpoints ---
 // Get all team members
 app.get('/api/team-members', (req, res) => {
@@ -354,4 +359,5 @@ app.post('/api/backup/restore', express.raw({ type: 'application/json', limit: '
 // Start the server
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+  console.log(`API available at http://localhost:${PORT}/api`);
 });

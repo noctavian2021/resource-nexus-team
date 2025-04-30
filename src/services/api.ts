@@ -6,8 +6,8 @@
 // Import the mock data directly
 import { teamMembers as initialTeamMembers, departments as initialDepartments, projects as initialProjects } from '@/data/mockData';
 
-const API_URL = 'http://localhost:5000/api';
-const USE_MOCK = true; // Enable mock mode since local API server isn't available
+const API_URL = 'http://localhost:5000';  // Changed from 'http://localhost:5000/api'
+const USE_MOCK = false; // Changed to false to use the actual API server
 
 // Generic API request function
 const apiRequest = async <T>(
@@ -21,6 +21,8 @@ const apiRequest = async <T>(
   }
   
   const url = `${API_URL}${endpoint}`;
+  console.log(`Making API request to: ${url}`);
+  
   const options: RequestInit = {
     method,
     headers: {
