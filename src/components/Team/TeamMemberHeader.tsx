@@ -36,7 +36,7 @@ export default function TeamMemberHeader({ member, onMemberUpdated, rightElement
           <div className="text-sm text-muted-foreground">{member.role}</div>
         </div>
       </div>
-      <div className="flex items-center space-x-1">
+      <div className="flex items-center space-x-2">
         {rightElement}
         <Button 
           variant="ghost" 
