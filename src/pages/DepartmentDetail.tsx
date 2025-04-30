@@ -7,8 +7,9 @@ import { getTeamMembersByDepartment } from '@/services/teamService';
 import { getDepartment } from '@/services/departmentService';
 import { Button } from '@/components/ui/button';
 import { TeamMember, Department } from '@/data/mockData';
-import { ArrowLeft, Users } from 'lucide-react';
+import { ArrowLeft, Users, UserPlus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import AddTeamMemberDialog from '@/components/Team/AddTeamMemberDialog';
 
 export default function DepartmentDetail() {
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
@@ -48,6 +49,22 @@ export default function DepartmentDetail() {
     fetchDepartment();
   }, [departmentId, navigate, toast]);
 
+  const handleMemberAdded = (newMember: TeamMember) => {
+    setTeamMembers(prev => [...prev, newMember]);
+    toast({
+      title: "Team member added",
+      description: `${newMember.name} has been added to ${department?.name}.`,
+    });
+  };
+
+  const handleMemberUpdated = (updatedMember: TeamMember) => {
+    setTeamMembers(prev => 
+      prev.map(member => 
+        member.id === updatedMember.id ? updatedMember : member
+      )
+    );
+  };
+
   if (loading) {
     return (
       <>
@@ -62,14 +79,6 @@ export default function DepartmentDetail() {
   }
   
   if (!department) return null;
-
-  const handleMemberUpdated = (updatedMember: TeamMember) => {
-    setTeamMembers(prev => 
-      prev.map(member => 
-        member.id === updatedMember.id ? updatedMember : member
-      )
-    );
-  };
 
   return (
     <>
@@ -97,20 +106,36 @@ export default function DepartmentDetail() {
         </div>
         
         <div className="mt-6">
-          <h2 className="text-xl font-medium mb-4 flex items-center gap-2">
-            <Users className="h-5 w-5" />
-            Team Members ({teamMembers.length})
-          </h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-medium flex items-center gap-2">
+              <Users className="h-5 w-5" />
+              Team Members ({teamMembers.length})
+            </h2>
+            {department && (
+              <AddTeamMemberDialog 
+                onMemberAdded={handleMemberAdded} 
+                preselectedDepartment={department.name}
+              />
+            )}
+          </div>
+          
           {loading ? (
             <div className="flex h-48 items-center justify-center">
               <p className="text-muted-foreground">Loading team members...</p>
             </div>
           ) : (
             teamMembers.length === 0 ? (
-              <div className="flex h-48 items-center justify-center rounded-lg border border-dashed">
-                <p className="text-center text-muted-foreground">
+              <div className="flex flex-col h-48 items-center justify-center rounded-lg border border-dashed p-8">
+                <p className="text-center text-muted-foreground mb-4">
                   No team members found in this department.
                 </p>
+                <AddTeamMemberDialog 
+                  onMemberAdded={handleMemberAdded} 
+                  preselectedDepartment={department.name}
+                  buttonText="Add First Team Member"
+                  buttonIcon={<UserPlus className="mr-2 h-4 w-4" />}
+                  buttonVariant="default"
+                />
               </div>
             ) : (
               <TeamList 

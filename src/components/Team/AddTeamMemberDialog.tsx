@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { PlusCircle, Plus, Minus, UserCheck, Building2 } from 'lucide-react';
+import { PlusCircle, Plus, Minus, UserCheck, Building2, UserPlus } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -24,10 +24,10 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
-import { projects, TeamMember, Department } from '@/data/mockData';
+import { projects, TeamMember } from '@/data/mockData';
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { createTeamMember, ProjectInvolvement, RequiredResource, OfficeDays } from '@/services/teamService';
+import { createTeamMember } from '@/services/teamService';
 import { getDepartments } from '@/services/departmentService';
 
 const resourceTypes = [
@@ -74,11 +74,21 @@ type FormValues = z.infer<typeof formSchema>;
 
 interface AddTeamMemberDialogProps {
   onMemberAdded?: (member: TeamMember) => void;
+  preselectedDepartment?: string;
+  buttonText?: string;
+  buttonIcon?: React.ReactNode;
+  buttonVariant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link";
 }
 
-export default function AddTeamMemberDialog({ onMemberAdded }: AddTeamMemberDialogProps) {
+export default function AddTeamMemberDialog({ 
+  onMemberAdded, 
+  preselectedDepartment,
+  buttonText = "Add Team Member",
+  buttonIcon = <PlusCircle className="mr-2 h-4 w-4" />,
+  buttonVariant = "default"
+}: AddTeamMemberDialogProps) {
   const [isOpen, setIsOpen] = React.useState(false);
-  const [departments, setDepartments] = React.useState<Department[]>([]);
+  const [departments, setDepartments] = React.useState<any[]>([]);
   const [isLoadingDepartments, setIsLoadingDepartments] = React.useState(false);
   const { toast } = useToast();
   
@@ -113,7 +123,7 @@ export default function AddTeamMemberDialog({ onMemberAdded }: AddTeamMemberDial
       name: "",
       email: "",
       role: "",
-      department: "",
+      department: preselectedDepartment || "",
       avatar: "",
       skills: [],
       availability: 100,
@@ -130,6 +140,13 @@ export default function AddTeamMemberDialog({ onMemberAdded }: AddTeamMemberDial
       }
     }
   });
+  
+  // Reset form when preselectedDepartment changes or dialog opens
+  React.useEffect(() => {
+    if (isOpen && preselectedDepartment) {
+      form.setValue('department', preselectedDepartment);
+    }
+  }, [isOpen, preselectedDepartment, form]);
   
   // Watch for the isDirector field to auto-set the role
   const isDirector = form.watch('isDirector');
@@ -228,9 +245,9 @@ export default function AddTeamMemberDialog({ onMemberAdded }: AddTeamMemberDial
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button>
-          <PlusCircle className="mr-2 h-4 w-4" />
-          Add Team Member
+        <Button variant={buttonVariant}>
+          {buttonIcon}
+          {buttonText}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
@@ -299,6 +316,7 @@ export default function AddTeamMemberDialog({ onMemberAdded }: AddTeamMemberDial
                     <FormLabel>Department</FormLabel>
                     <Select
                       onValueChange={field.onChange}
+                      value={field.value}
                       defaultValue={field.value}
                     >
                       <FormControl>
