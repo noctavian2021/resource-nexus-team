@@ -3,7 +3,7 @@ import React from 'react';
 import { CardHeader } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Pencil } from 'lucide-react';
+import { FileEdit } from 'lucide-react';
 import { TeamMember } from '@/data/mockData';
 import EditTeamMemberDialog from './EditTeamMemberDialog';
 
@@ -46,7 +46,7 @@ export default function TeamMemberHeader({ member, onMemberUpdated, rightElement
           aria-label="Edit team member"
           title="Edit team member"
         >
-          <Pencil className="h-4 w-4" />
+          <FileEdit className="h-4 w-4" />
         </Button>
       </div>
       <EditTeamMemberDialog
