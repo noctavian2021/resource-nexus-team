@@ -29,10 +29,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { createDepartment } from '@/services/departmentService';
 import { getTeamMembers } from '@/services/teamService';
 
+// Modified schema to make leadId optional
 const formSchema = z.object({
   name: z.string().min(2, "Name is required"),
   description: z.string().min(10, "Please provide a description (min 10 chars)"),
-  leadId: z.string().min(1, "Department lead is required"),
+  leadId: z.string().optional(), // Changed from required to optional
   memberCount: z.number().min(1, "At least one member is required"),
   color: z.string().min(4, "Color is required"),
 });
@@ -55,9 +56,8 @@ export default function AddDepartmentDialog() {
         } catch (error) {
           console.error("Failed to fetch team members:", error);
           toast({
-            title: "Error",
-            description: "Failed to load team members. Please try again.",
-            variant: "destructive"
+            title: "Notice",
+            description: "No team members found. You can add a department without a lead for now.",
           });
         } finally {
           setLoading(false);
@@ -73,7 +73,7 @@ export default function AddDepartmentDialog() {
     defaultValues: {
       name: "",
       description: "",
-      leadId: "",
+      leadId: undefined, // Changed from empty string to undefined
       memberCount: 1,
       color: "#3b82f6", // Default blue color
     }
@@ -84,7 +84,7 @@ export default function AddDepartmentDialog() {
       await createDepartment({
         name: data.name,
         description: data.description,
-        leadId: data.leadId,
+        leadId: data.leadId || '', // Use empty string if leadId is undefined
         memberCount: data.memberCount,
         color: data.color
       });
@@ -161,10 +161,13 @@ export default function AddDepartmentDialog() {
                 name="leadId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Department Lead</FormLabel>
+                    <FormLabel className="flex items-center gap-1">
+                      Department Lead
+                      <span className="text-xs text-muted-foreground">(Optional)</span>
+                    </FormLabel>
                     <Select
                       onValueChange={field.onChange}
-                      defaultValue={field.value}
+                      value={field.value}
                     >
                       <FormControl>
                         <SelectTrigger>
@@ -172,11 +175,17 @@ export default function AddDepartmentDialog() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {teamMembers.map((member: TeamMember) => (
-                          <SelectItem key={member.id} value={member.id}>
-                            {member.name}
+                        {teamMembers.length > 0 ? (
+                          teamMembers.map((member: TeamMember) => (
+                            <SelectItem key={member.id} value={member.id}>
+                              {member.name}
+                            </SelectItem>
+                          ))
+                        ) : (
+                          <SelectItem value="" disabled>
+                            No team members available
                           </SelectItem>
-                        ))}
+                        )}
                       </SelectContent>
                     </Select>
                     <FormMessage />

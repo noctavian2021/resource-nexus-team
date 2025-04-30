@@ -50,12 +50,12 @@ export interface Project {
   client?: string; // Add client
 }
 
-// Department
+// Department - Updated to reflect that leadId can be empty
 export interface Department {
   id: string;
   name: string;
   description: string;
-  leadId: string;
+  leadId: string; // Can be an empty string if no lead is assigned
   memberCount: number;
   color: string;
 }

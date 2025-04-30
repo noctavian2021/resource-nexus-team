@@ -79,11 +79,13 @@ app.get('/api/departments/:id', (req, res) => {
   res.json(department);
 });
 
-// Create department
+// Create department - Modified to make leadId optional
 app.post('/api/departments', (req, res) => {
   const newDepartment = {
     id: getNextId('departments'),
-    ...req.body
+    ...req.body,
+    // Use empty string if leadId is not provided
+    leadId: req.body.leadId || '' 
   };
   
   db.departments.push(newDepartment);
