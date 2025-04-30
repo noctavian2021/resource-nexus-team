@@ -32,6 +32,7 @@ export default function TeamMemberCard({ member, onMemberUpdated, onRemove }: Te
               className="text-destructive hover:text-destructive hover:bg-destructive/10"
               onClick={onRemove}
               title="Remove member"
+              aria-label="Remove team member"
             >
               <X className="h-4 w-4" />
             </Button>

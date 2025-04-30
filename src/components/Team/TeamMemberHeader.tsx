@@ -3,7 +3,7 @@ import React from 'react';
 import { CardHeader } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { FileEdit, X } from 'lucide-react';
+import { FileEdit } from 'lucide-react';
 import { TeamMember } from '@/data/mockData';
 import EditTeamMemberDialog from './EditTeamMemberDialog';
 
