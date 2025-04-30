@@ -4,51 +4,63 @@ import { useParams, useNavigate } from 'react-router-dom';
 import Header from '@/components/Layout/Header';
 import TeamList from '@/components/Team/TeamList';
 import { getTeamMembersByDepartment } from '@/services/teamService';
-import { getDepartmentById } from '@/data/mockData';
+import { getDepartment } from '@/services/departmentService';
 import { Button } from '@/components/ui/button';
-import { TeamMember } from '@/data/mockData';
+import { TeamMember, Department } from '@/data/mockData';
 import { ArrowLeft, Users } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 export default function DepartmentDetail() {
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const [department, setDepartment] = useState<Department | null>(null);
   const [loading, setLoading] = useState(true);
   const { departmentId } = useParams<{departmentId: string}>();
   const navigate = useNavigate();
   const { toast } = useToast();
   
-  const department = departmentId ? getDepartmentById(departmentId) : undefined;
-  
   useEffect(() => {
-    if (!department) {
-      toast({
-        title: "Department not found",
-        description: "The requested department could not be found.",
-        variant: "destructive",
-      });
-      navigate("/departments");
-      return;
-    }
-    
-    const fetchTeamMembers = async () => {
+    const fetchDepartment = async () => {
+      if (!departmentId) {
+        navigate("/departments");
+        return;
+      }
+      
       try {
-        const data = await getTeamMembersByDepartment(department.name);
-        setTeamMembers(data);
+        const departmentData = await getDepartment(departmentId);
+        setDepartment(departmentData);
+        
+        // Fetch team members for this department
+        const teamMembersData = await getTeamMembersByDepartment(departmentData.name);
+        setTeamMembers(teamMembersData);
       } catch (error) {
-        console.error('Error fetching team members:', error);
+        console.error('Error fetching department data:', error);
         toast({
-          title: "Error",
-          description: "Failed to fetch team members for this department.",
-          variant: "destructive"
+          title: "Department not found",
+          description: "The requested department could not be found.",
+          variant: "destructive",
         });
+        navigate("/departments");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchTeamMembers();
-  }, [department, departmentId, navigate, toast]);
+    fetchDepartment();
+  }, [departmentId, navigate, toast]);
 
+  if (loading) {
+    return (
+      <>
+        <Header title="Department Detail" />
+        <main className="flex-1 p-6">
+          <div className="flex justify-center items-center h-64">
+            <p className="text-muted-foreground">Loading department data...</p>
+          </div>
+        </main>
+      </>
+    );
+  }
+  
   if (!department) return null;
 
   const handleMemberUpdated = (updatedMember: TeamMember) => {
