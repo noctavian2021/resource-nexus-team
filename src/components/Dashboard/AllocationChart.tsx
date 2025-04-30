@@ -1,5 +1,6 @@
+
 import React from 'react';
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Text } from 'recharts';
 
 export interface AllocationData {
   name: string;
@@ -9,6 +10,7 @@ export interface AllocationData {
 
 interface AllocationChartProps {
   data: AllocationData[];
+  title?: string;
 }
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
@@ -26,26 +28,29 @@ const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, per
   );
 };
 
-export default function AllocationChart({ data }: AllocationChartProps) {
+export default function AllocationChart({ data, title = "Department Resource Allocation" }: AllocationChartProps) {
   return (
-    <ResponsiveContainer width="100%" height={300}>
-      <PieChart width={400} height={300}>
-        <Pie
-          data={data}
-          cx="50%"
-          cy="50%"
-          labelLine={false}
-          label={renderCustomizedLabel}
-          outerRadius={120}
-          fill="#8884d8"
-          dataKey="value"
-        >
-          {data.map((entry, index) => (
-            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-          ))}
-        </Pie>
-        <Legend />
-      </PieChart>
-    </ResponsiveContainer>
+    <div className="flex flex-col">
+      <h3 className="text-lg font-medium text-center mb-4">{title}</h3>
+      <ResponsiveContainer width="100%" height={300}>
+        <PieChart width={400} height={300}>
+          <Pie
+            data={data}
+            cx="50%"
+            cy="50%"
+            labelLine={false}
+            label={renderCustomizedLabel}
+            outerRadius={120}
+            fill="#8884d8"
+            dataKey="value"
+          >
+            {data.map((entry, index) => (
+              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+            ))}
+          </Pie>
+          <Legend />
+        </PieChart>
+      </ResponsiveContainer>
+    </div>
   );
 }

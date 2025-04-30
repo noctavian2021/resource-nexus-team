@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import Header from '@/components/Layout/Header';
@@ -109,7 +108,10 @@ export default function Index() {
         <DashboardMetrics metrics={dashboardMetrics} />
         
         <div className="rounded-lg p-4 bg-gradient-to-br from-white to-[#D3E4FD] dark:from-card dark:to-accent/10 shadow-lg backdrop-blur-sm border border-border/50">
-          <AllocationChart data={safeAllocationData} />
+          <AllocationChart 
+            data={safeAllocationData} 
+            title="Department Resource Allocation" 
+          />
         </div>
         
         <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
