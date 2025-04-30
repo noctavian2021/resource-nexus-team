@@ -100,6 +100,26 @@ const styles = StyleSheet.create({
     fontSize: 8,
     color: '#666',
   },
+  treeContainer: {
+    marginLeft: 10,
+  },
+  treeNode: {
+    marginBottom: 5,
+  },
+  treeParent: {
+    fontWeight: 'bold',
+  },
+  treeIcon: {
+    marginRight: 5,
+    fontSize: 10,
+  },
+  treeChildren: {
+    marginLeft: 15,
+    borderLeftWidth: 1,
+    borderLeftColor: '#CCCCCC',
+    borderLeftStyle: 'solid',
+    paddingLeft: 10,
+  },
 });
 
 // Create Document Component
@@ -134,6 +154,65 @@ const OrgMapDocument = ({
           
           <View style={{ marginTop: 20 }}>
             <Text style={styles.subheader}>Organization Structure</Text>
+          </View>
+        </View>
+        
+        {/* Organization Tree Structure */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Organization Tree</Text>
+          
+          <View style={styles.treeContainer}>
+            {/* Organization Root */}
+            <View style={styles.treeNode}>
+              <Text style={styles.treeParent}>Organization</Text>
+              
+              <View style={styles.treeChildren}>
+                {/* Directors Section */}
+                {directors.length > 0 && (
+                  <View style={styles.treeNode}>
+                    <Text style={styles.treeParent}>Directors</Text>
+                    
+                    <View style={styles.treeChildren}>
+                      {directors.map((director, i) => (
+                        <View key={i} style={styles.treeNode}>
+                          <Text style={styles.boldText}>{director.name} - {director.role}</Text>
+                          <Text style={styles.text}>Email: {director.email}</Text>
+                        </View>
+                      ))}
+                    </View>
+                  </View>
+                )}
+                
+                {/* Departments and Teams */}
+                {departments.map((department, i) => {
+                  const lead = teamMembers.find(m => m.id === department.leadId);
+                  const deptMembers = teamMembers.filter(
+                    m => m.department === department.name && (!lead || m.id !== lead.id)
+                  );
+                  
+                  return (
+                    <View key={i} style={styles.treeNode}>
+                      <Text style={styles.treeParent}>{department.name} Department</Text>
+                      
+                      <View style={styles.treeChildren}>
+                        {lead && (
+                          <View style={styles.treeNode}>
+                            <Text style={styles.boldText}>{lead.name} - Department Lead</Text>
+                            <Text style={styles.text}>Email: {lead.email}</Text>
+                          </View>
+                        )}
+                        
+                        {deptMembers.length > 0 && deptMembers.map((member, j) => (
+                          <View key={j} style={styles.treeNode}>
+                            <Text style={styles.text}>{member.name} - {member.role}</Text>
+                          </View>
+                        ))}
+                      </View>
+                    </View>
+                  );
+                })}
+              </View>
+            </View>
           </View>
         </View>
         

@@ -80,7 +80,7 @@ declare module '@/data/mockData' {
     client: string;
     startDate?: string;
     endDate?: string;
-    status: string;
+    status: "Active" | "Planning" | "Completed" | "On Hold";
     priority: "Low" | "Medium" | "High" | "Urgent";
     teamMembers: string[];
     departmentId: string;
