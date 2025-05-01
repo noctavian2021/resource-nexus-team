@@ -1,6 +1,6 @@
-
 import { Project } from '@/data/mockData';
 import apiRequest from './api';
+import { getMockProjects } from './mockApiHandler';
 
 // Cache invalidation for projects
 let projectsLastFetched = 0;
@@ -23,7 +23,13 @@ export const getProjects = async () => {
     return projects;
   } catch (error) {
     console.error("Error fetching projects:", error);
-    throw error;
+    
+    // Fall back to mock data if API request fails
+    console.log("Falling back to mock data for projects");
+    const mockProjects = await getMockProjects();
+    projectsCache = mockProjects;
+    projectsLastFetched = now;
+    return mockProjects;
   }
 };
 
