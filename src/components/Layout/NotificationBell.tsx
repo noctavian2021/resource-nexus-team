@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Bell, CheckCheck, Mail, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -14,11 +14,30 @@ import { format } from 'date-fns';
 import { useEmailConfig } from '@/hooks/useEmailConfig';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Badge } from '@/components/ui/badge';
+import { playNotificationSound } from '@/utils/sound';
 
 export default function NotificationBell() {
   const { notifications, markAsRead, clearNotifications } = useNotifications();
   const { emailConfig } = useEmailConfig();
   const unreadCount = notifications.filter(n => !n.read).length;
+
+  // Listen for incoming notifications from other components/users
+  useEffect(() => {
+    const handleNotification = (event: CustomEvent) => {
+      // Play sound when receiving a notification
+      playNotificationSound().catch(err => {
+        console.log('Error playing notification sound in NotificationBell:', err);
+      });
+    };
+
+    // Add event listener
+    window.addEventListener('receive-notification', handleNotification as EventListener);
+    
+    // Clean up
+    return () => {
+      window.removeEventListener('receive-notification', handleNotification as EventListener);
+    };
+  }, []);
 
   const handleItemClick = (notificationId: string) => {
     markAsRead(notificationId);

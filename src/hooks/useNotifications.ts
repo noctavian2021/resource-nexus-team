@@ -1,7 +1,7 @@
-
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { toast } from '@/hooks/use-toast';
 import { useEmailConfig } from '@/hooks/useEmailConfig';
+import { playNotificationSound } from '@/utils/sound';
 
 interface Notification {
   id: string;
@@ -15,7 +15,6 @@ interface Notification {
 export const useNotifications = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const { emailConfig } = useEmailConfig();
-  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     const stored = localStorage.getItem('notifications');
@@ -23,8 +22,16 @@ export const useNotifications = () => {
       setNotifications(JSON.parse(stored));
     }
     
-    // Initialize audio element
-    audioRef.current = new Audio('/notification-sound.mp3');
+    // Set up event listener for receiving notifications
+    window.addEventListener('receive-notification', () => {
+      playNotificationSound().catch(err => {
+        console.log('Error playing notification sound (receiver):', err);
+      });
+    });
+    
+    return () => {
+      window.removeEventListener('receive-notification', () => {});
+    };
   }, []);
 
   const addNotification = (title: string, message: string, category: 'general' | 'report' | 'request' | 'absence' = 'general') => {
@@ -41,13 +48,10 @@ export const useNotifications = () => {
     setNotifications(updatedNotifications);
     localStorage.setItem('notifications', JSON.stringify(updatedNotifications));
 
-    // Play notification sound
-    if (audioRef.current) {
-      audioRef.current.currentTime = 0; // Reset to start
-      audioRef.current.play().catch(err => {
-        console.log('Error playing notification sound:', err);
-      });
-    }
+    // Play notification sound for the sender
+    playNotificationSound().catch(err => {
+      console.log('Error playing notification sound (sender):', err);
+    });
 
     // Show toast for new notification
     toast({
@@ -62,6 +66,12 @@ export const useNotifications = () => {
       console.log('Would send email notification using:', emailConfig);
       // In a real app, we would make an API call to send the email here
     }
+    
+    // Dispatch custom event for other users/tabs to play the sound
+    const event = new CustomEvent('receive-notification', { 
+      detail: { notification: newNotification } 
+    });
+    window.dispatchEvent(event);
   };
 
   const markAsRead = (notificationId: string) => {

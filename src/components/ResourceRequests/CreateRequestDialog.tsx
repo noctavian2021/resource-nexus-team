@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -19,6 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useQuery } from '@tanstack/react-query';
 import { getDepartments } from '@/services/departmentService';
 import { useAuth } from '@/context/AuthContext';
+import { playNotificationSound } from '@/utils/sound';
 
 const requestFormSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -95,6 +95,11 @@ export default function CreateRequestDialog() {
         "New Resource Request",
         `${data.title} - Resource request from ${requestingDepartment?.name}`
       );
+      
+      // Play notification sound for both sender and receiver
+      playNotificationSound().catch(err => {
+        console.log('Error playing notification sound in CreateRequestDialog:', err);
+      });
       
       // Send email notification if email is configured
       if (emailConfig.enabled && targetDepartment) {
