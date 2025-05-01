@@ -11,6 +11,8 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { user, isLoading } = useAuth();
   const location = useLocation();
 
+  console.log("ProtectedRoute check - User:", user, "Path:", location.pathname);
+
   // Show loading state while checking auth
   if (isLoading) {
     return (
@@ -22,18 +24,19 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
 
   // Redirect to login if not authenticated
   if (!user) {
+    console.log("No user found, redirecting to login");
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   // For role-based restrictions
-  // Admin can access everything
-  // Team leads can only access their department data or common pages
   const isRestrictedAdminRoute = location.pathname.includes('/admin') && user.role !== 'admin';
   
   if (isRestrictedAdminRoute) {
+    console.log("User doesn't have admin access, redirecting to dashboard");
     return <Navigate to="/" replace />;
   }
 
   // Render children if authenticated and authorized
+  console.log("User authorized, rendering protected content");
   return <>{children}</>;
 }

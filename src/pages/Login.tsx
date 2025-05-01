@@ -29,13 +29,15 @@ export default function Login() {
   });
 
   useEffect(() => {
-    // Only redirect if user is logged in and we're not dealing with a force reload
-    if (user && !location.search.includes('forceHideBadge')) {
+    // If user is already logged in, redirect to dashboard
+    if (user) {
+      console.log("User already logged in, redirecting to dashboard");
       navigate('/', { replace: true });
     }
-  }, [user, navigate, location]);
+  }, [user, navigate]);
 
   const onSubmit = async (data: LoginFormData) => {
+    console.log("Attempting login with:", data.email);
     const success = await login(data.email, data.password);
     
     if (success) {
@@ -53,7 +55,7 @@ export default function Login() {
     }
   };
 
-  // If already logged in, don't render form (handled by useEffect)
+  // If already logged in, don't render form
   if (user) {
     return null;
   }

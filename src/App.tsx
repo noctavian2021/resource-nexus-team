@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/Auth/ProtectedRoute";
+import Layout from "./components/Layout/Layout";
 import Login from "./pages/Login";
 import Index from "./pages/Index";
 import TeamMembers from "./pages/TeamMembers";
@@ -14,7 +15,6 @@ import Departments from "./pages/Departments";
 import DepartmentDetail from "./pages/DepartmentDetail";
 import Projects from "./pages/Projects";
 import NotFound from "./pages/NotFound";
-import Sidebar from "./components/Layout/Sidebar";
 import ResourceRequests from "./pages/ResourceRequests";
 import AdminSettings from "./pages/AdminSettings";
 import GeneralReport from "./pages/GeneralReport";
@@ -40,29 +40,20 @@ const App = () => (
           <Routes>
             <Route path="/login" element={<Login />} />
             
-            {/* Protected routes with sidebar layout */}
-            <Route path="/" element={
-              <ProtectedRoute>
-                <div className="flex min-h-screen w-full">
-                  <Sidebar />
-                  <div className="flex flex-col flex-1 overflow-hidden">
-                    <Routes>
-                      <Route index element={<Index />} />
-                      <Route path="team" element={<TeamMembers />} />
-                      <Route path="departments" element={<Departments />} />
-                      <Route path="departments/:departmentId" element={<DepartmentDetail />} />
-                      <Route path="projects" element={<Projects />} />
-                      <Route path="requests" element={<ResourceRequests />} />
-                      <Route path="admin/settings" element={<AdminSettings />} />
-                      <Route path="reports/general" element={<GeneralReport />} />
-                      <Route path="help" element={<HelpTab />} />
-                      <Route path="profile" element={<UserProfile />} />
-                      <Route path="*" element={<NotFound />} />
-                    </Routes>
-                  </div>
-                </div>
-              </ProtectedRoute>
-            } />
+            {/* Protected routes wrapped in Layout component */}
+            <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
+              <Route index element={<Index />} />
+              <Route path="team" element={<TeamMembers />} />
+              <Route path="departments" element={<Departments />} />
+              <Route path="departments/:departmentId" element={<DepartmentDetail />} />
+              <Route path="projects" element={<Projects />} />
+              <Route path="requests" element={<ResourceRequests />} />
+              <Route path="admin/settings" element={<AdminSettings />} />
+              <Route path="reports/general" element={<GeneralReport />} />
+              <Route path="help" element={<HelpTab />} />
+              <Route path="profile" element={<UserProfile />} />
+              <Route path="*" element={<NotFound />} />
+            </Route>
             
             {/* Catch all route - redirect to login if not authenticated */}
             <Route path="*" element={<Navigate to="/login" />} />

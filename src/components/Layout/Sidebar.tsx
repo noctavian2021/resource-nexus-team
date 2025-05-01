@@ -18,25 +18,24 @@ import NotificationBell from "./NotificationBell";
 import { useAuth } from "@/context/AuthContext";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
-const SidebarLink = ({
-  to,
-  icon: Icon,
-  title,
-  isActive,
-}: {
+// Define sidebar link props
+interface SidebarLinkProps {
   to: string;
   icon: React.ElementType;
   title: string;
-  isActive: boolean;
-}) => (
+}
+
+// SidebarLink component
+const SidebarLink = ({ to, icon: Icon, title }: SidebarLinkProps) => (
   <NavLink
     to={to}
-    className={cn(
+    className={({ isActive }) => cn(
       'flex items-center gap-3 rounded-lg px-3 py-2 transition-all text-white/80',
       isActive
         ? 'bg-white/15 text-white'
         : 'hover:bg-white/15 hover:text-white'
     )}
+    end={to === "/" ? true : false}
   >
     <Icon className="h-5 w-5" />
     <span className="font-medium">{title}</span>
@@ -46,8 +45,9 @@ const SidebarLink = ({
 export default function Sidebar() {
   const isMobile = useIsMobile();
   const [isOpen, setIsOpen] = React.useState(true);
-  const location = useLocation();
   const { user, logout } = useAuth();
+  
+  console.log("Sidebar rendered, user:", user);
 
   // Get user initials for avatar
   const getInitials = (name: string) => {
@@ -119,17 +119,17 @@ export default function Sidebar() {
         )}
         
         <div className="flex flex-col gap-y-2">
-          <SidebarLink to="/" icon={BarChart3} title="Dashboard" isActive={location.pathname === '/'} />
-          <SidebarLink to="/team" icon={Users} title="Team" isActive={location.pathname.includes('/team')} />
-          <SidebarLink to="/departments" icon={Building2} title="Departments" isActive={location.pathname.includes('/departments')} />
-          <SidebarLink to="/projects" icon={LayoutGrid} title="Projects" isActive={location.pathname.includes('/projects')} />
-          <SidebarLink to="/requests" icon={FileText} title="Requests" isActive={location.pathname.includes('/requests')} />
-          <SidebarLink to="/help" icon={HelpCircle} title="Help" isActive={location.pathname.includes('/help')} />
-          <SidebarLink to="/profile" icon={User} title="Profile" isActive={location.pathname.includes('/profile')} />
+          <SidebarLink to="/" icon={BarChart3} title="Dashboard" />
+          <SidebarLink to="/team" icon={Users} title="Team" />
+          <SidebarLink to="/departments" icon={Building2} title="Departments" />
+          <SidebarLink to="/projects" icon={LayoutGrid} title="Projects" />
+          <SidebarLink to="/requests" icon={FileText} title="Requests" />
+          <SidebarLink to="/help" icon={HelpCircle} title="Help" />
+          <SidebarLink to="/profile" icon={User} title="Profile" />
         </div>
         <div className="mt-auto">
           {user?.role === 'admin' && (
-            <SidebarLink to="/admin/settings" icon={Settings} title="Admin" isActive={location.pathname.includes('/admin')} />
+            <SidebarLink to="/admin/settings" icon={Settings} title="Admin" />
           )}
           
           {/* Logout button */}
