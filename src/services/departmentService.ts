@@ -21,6 +21,11 @@ export const updateDepartment = (id: string, updates: Partial<Department>) => {
   return apiRequest<Department>(`/departments/${id}`, 'PUT', updates);
 };
 
+export const hideDepartment = (id: string, isHidden: boolean) => {
+  // We'll update the department with an isHidden property
+  return updateDepartment(id, { isHidden });
+};
+
 export const deleteDepartment = (id: string) => {
   return apiRequest(`/departments/${id}`, 'DELETE');
 };

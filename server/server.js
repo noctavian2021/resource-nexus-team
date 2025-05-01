@@ -1,4 +1,3 @@
-
 const express = require('express');
 const cors = require('cors');
 const { db, getNextId } = require('./data');
@@ -86,7 +85,8 @@ app.post('/api/departments', (req, res) => {
     id: getNextId('departments'),
     ...req.body,
     // Only set leadId if it's provided in the request body
-    leadId: req.body.leadId ?? '' // Use nullish coalescing to handle null/undefined
+    leadId: req.body.leadId ?? '', // Use nullish coalescing to handle null/undefined
+    isHidden: false // Set default value for isHidden
   };
   
   db.departments.push(newDepartment);

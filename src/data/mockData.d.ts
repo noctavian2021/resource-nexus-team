@@ -1,4 +1,3 @@
-
 import { TeamMember, Project } from '@/data/mockData';
 
 export interface AllocationData {
@@ -95,6 +94,7 @@ declare module '@/data/mockData' {
     color: string;
     leadId: string;
     memberCount: number;
+    isHidden?: boolean;
   }
   
   // Update Project interface to include Urgent priority

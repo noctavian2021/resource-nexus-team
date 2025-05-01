@@ -59,6 +59,7 @@ export interface Department {
   leadId: string; // Can be an empty string if no lead is assigned
   memberCount: number;
   color: string;
+  isHidden?: boolean; // Add isHidden flag
 }
 
 // Activity
@@ -169,6 +170,7 @@ export const departments: Department[] = [
     leadId: '1',
     memberCount: 12,
     color: '#3b82f6', // blue-500
+    isHidden: false
   },
   {
     id: '2',
@@ -177,6 +179,7 @@ export const departments: Department[] = [
     leadId: '2',
     memberCount: 8,
     color: '#8b5cf6', // violet-500
+    isHidden: false
   },
   {
     id: '3',
@@ -185,6 +188,7 @@ export const departments: Department[] = [
     leadId: '3',
     memberCount: 6,
     color: '#10b981', // emerald-500
+    isHidden: false
   },
   {
     id: '4',
@@ -193,6 +197,7 @@ export const departments: Department[] = [
     leadId: '4',
     memberCount: 7,
     color: '#f59e0b', // amber-500
+    isHidden: false
   },
   {
     id: '5',
@@ -201,6 +206,7 @@ export const departments: Department[] = [
     leadId: '5',
     memberCount: 10,
     color: '#ef4444', // red-500
+    isHidden: false
   }
 ];
 
