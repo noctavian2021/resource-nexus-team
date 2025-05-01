@@ -5,7 +5,29 @@
 
 // Configuration
 export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000'; 
-export const USE_MOCK = import.meta.env.MODE === 'development' ? false : true;
+let USE_MOCK = import.meta.env.MODE === 'development' ? false : true;
+
+// Function to toggle mock data
+export const toggleMockData = (showMock: boolean) => {
+  USE_MOCK = showMock;
+  // Save preference to localStorage for persistence
+  localStorage.setItem('useMockData', showMock.toString());
+  return USE_MOCK;
+};
+
+// Initialize from localStorage if available
+const initializeMockSetting = () => {
+  const savedSetting = localStorage.getItem('useMockData');
+  if (savedSetting !== null) {
+    USE_MOCK = savedSetting === 'true';
+  }
+};
+
+// Initialize on load
+initializeMockSetting();
+
+// Get current mock data setting
+export const isMockDataEnabled = () => USE_MOCK;
 
 // Generic API request function
 const apiRequest = async <T>(

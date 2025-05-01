@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Header from '@/components/Layout/Header';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -12,8 +12,9 @@ import { useBackupConfig } from '@/hooks/useBackupConfig';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Drawer, DrawerClose, DrawerContent, DrawerDescription, DrawerFooter, DrawerHeader, DrawerTitle, DrawerTrigger } from '@/components/ui/drawer';
-import { Settings, Mail, Download, Upload, Clock, Database, Calendar } from 'lucide-react';
+import { Settings, Mail, Download, Upload, Clock, Database } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { toggleMockData, isMockDataEnabled } from '@/services/apiClient';
 
 export default function AdminSettings() {
   const { emailConfig, updateEmailConfig, sendTestEmail } = useEmailConfig();
@@ -23,7 +24,25 @@ export default function AdminSettings() {
   const [isCreatingBackup, setIsCreatingBackup] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [backupFile, setBackupFile] = useState<File | null>(null);
+  const [useMockData, setUseMockData] = useState(false);
   const isMobile = useIsMobile();
+  
+  // Initialize mock data state
+  useEffect(() => {
+    setUseMockData(isMockDataEnabled());
+  }, []);
+  
+  // Handle mock data toggle
+  const handleMockDataToggle = (checked: boolean) => {
+    const newSetting = toggleMockData(checked);
+    setUseMockData(newSetting);
+    toast({
+      title: checked ? "Mock Data Enabled" : "Mock Data Disabled",
+      description: checked ? 
+        "Application is now using mock data instead of API calls." : 
+        "Application is now using real API endpoints.",
+    });
+  };
 
   const handleProviderChange = (provider: EmailConfig['provider']) => {
     updateEmailConfig({ provider });
@@ -332,6 +351,7 @@ export default function AdminSettings() {
           <TabsList>
             <TabsTrigger value="email">Email Configuration</TabsTrigger>
             <TabsTrigger value="backup">Data Backup</TabsTrigger>
+            <TabsTrigger value="system">System</TabsTrigger>
           </TabsList>
           
           <TabsContent value="email" className="space-y-4">
@@ -526,6 +546,49 @@ export default function AdminSettings() {
                         {isImporting ? 'Importing...' : 'Import & Restore'}
                       </Button>
                     </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="system" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>System Settings</CardTitle>
+                <CardDescription>
+                  Configure system-wide settings and behaviors.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="space-y-1">
+                    <h3 className="font-medium">Mock Data</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Toggle between mock data and real API endpoints.
+                    </p>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="mock-data"
+                      checked={useMockData}
+                      onCheckedChange={handleMockDataToggle}
+                    />
+                    <Label htmlFor="mock-data">
+                      {useMockData ? 'Using Mock Data' : 'Using Real Data'}
+                    </Label>
+                  </div>
+                </div>
+                
+                <div className="rounded-md bg-muted p-4">
+                  <div className="flex items-center space-x-2">
+                    <Database className="h-5 w-5 text-muted-foreground" />
+                    <p className="text-sm text-muted-foreground">
+                      {useMockData ? 
+                        "The application is currently using mock data stored locally. Changes won't affect any real data." :
+                        "The application is connected to real data sources. Changes will affect real data."
+                      }
+                    </p>
                   </div>
                 </div>
               </CardContent>
