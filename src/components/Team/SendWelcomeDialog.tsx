@@ -15,9 +15,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from "@/hooks/use-toast";
 import { useEmailConfig } from "@/hooks/useEmailConfig";
 import { teamMembers } from '@/data/mockData';
-import { Mail } from 'lucide-react';
+import { Mail, AlertTriangle } from 'lucide-react';
 import { sendWelcomePackage, RequiredResource } from '@/services/teamService';
 import { Checkbox } from "@/components/ui/checkbox";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 interface ResourceWithSelection extends RequiredResource {
   selected: boolean;
@@ -57,10 +58,20 @@ export default function SendWelcomeDialog() {
     setIsLoading(true);
     
     try {
-      if (!emailConfig.enabled) {
+      if (!email) {
         toast({
-          title: "Email not configured",
-          description: "Please configure email settings in the admin panel first.",
+          title: "Email Required",
+          description: "Please enter an email address for the team member.",
+          variant: "destructive",
+        });
+        setIsLoading(false);
+        return;
+      }
+      
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        toast({
+          title: "Invalid Email",
+          description: "Please enter a valid email address.",
           variant: "destructive",
         });
         setIsLoading(false);
@@ -73,16 +84,20 @@ export default function SendWelcomeDialog() {
         .filter(resource => resource.selected)
         .map(({ selected, ...resource }) => resource);
 
+      // Pass email config to the API to enable actual email sending
       await sendWelcomePackage({
         email,
         replacingMember,
         additionalNotes,
-        requiredResources: selectedResources
+        requiredResources: selectedResources,
+        emailConfig: emailConfig.enabled ? emailConfig : undefined
       });
 
       toast({
         title: "Welcome package sent",
-        description: "The welcome package has been sent successfully.",
+        description: emailConfig.enabled 
+          ? "The welcome package has been sent via email."
+          : "The welcome package has been processed (email notifications disabled).",
       });
 
       setIsOpen(false);
@@ -91,11 +106,11 @@ export default function SendWelcomeDialog() {
       setAdditionalNotes("");
       setSelectedMember(null);
       setRequiredResources([]);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error sending welcome package:", error);
       toast({
         title: "Error",
-        description: "Failed to send welcome package. Please try again.",
+        description: error.message || "Failed to send welcome package. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -136,6 +151,18 @@ export default function SendWelcomeDialog() {
         <DialogHeader>
           <DialogTitle>Send Welcome Package</DialogTitle>
         </DialogHeader>
+        
+        {!emailConfig.enabled && (
+          <Alert variant="warning" className="mb-4">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle>Email Notifications Disabled</AlertTitle>
+            <AlertDescription>
+              Email notifications are currently disabled. The welcome package will be processed but no email will be sent.
+              You can enable email notifications in the Admin Settings.
+            </AlertDescription>
+          </Alert>
+        )}
+        
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="member">Team Member</Label>

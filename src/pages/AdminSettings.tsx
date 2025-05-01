@@ -5,19 +5,27 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { useEmailConfig, EmailConfig } from '@/hooks/useEmailConfig';
+import { useEmailConfig } from '@/hooks/useEmailConfig';
 import { toast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useBackupConfig } from '@/hooks/useBackupConfig';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Drawer, DrawerClose, DrawerContent, DrawerDescription, DrawerFooter, DrawerHeader, DrawerTitle, DrawerTrigger } from '@/components/ui/drawer';
-import { Settings, Mail, Download, Upload, Clock, Database } from 'lucide-react';
+import { Settings, Mail, Download, Upload, Clock, Database, AlertTriangle, CheckCircle, Info } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { toggleMockData, isMockDataEnabled } from '@/services/apiClient';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 export default function AdminSettings() {
-  const { emailConfig, updateEmailConfig, sendTestEmail } = useEmailConfig();
+  const { 
+    emailConfig, 
+    updateEmailConfig, 
+    sendTestEmail, 
+    getProviderHelp,
+    error: emailConfigError,
+    isLoading: emailConfigLoading
+  } = useEmailConfig();
   const { backupConfig, updateBackupConfig, createBackup, importBackup } = useBackupConfig();
   const [testEmailRecipient, setTestEmailRecipient] = useState('');
   const [isSendingTest, setIsSendingTest] = useState(false);
@@ -44,8 +52,18 @@ export default function AdminSettings() {
     });
   };
 
-  const handleProviderChange = (provider: EmailConfig['provider']) => {
+  const handleProviderChange = (provider: typeof emailConfig.provider) => {
     updateEmailConfig({ provider });
+    
+    // Show provider-specific help tips
+    const helpText = getProviderHelp(provider);
+    if (helpText) {
+      toast({
+        title: `${provider.charAt(0).toUpperCase() + provider.slice(1)} Setup Tip`,
+        description: helpText,
+        duration: 8000,
+      });
+    }
   };
 
   const handleTestEmail = async () => {
@@ -60,23 +78,24 @@ export default function AdminSettings() {
 
     setIsSendingTest(true);
     try {
-      const success = await sendTestEmail(testEmailRecipient);
-      if (success) {
+      const result = await sendTestEmail(testEmailRecipient);
+      if (result.success) {
         toast({
           title: "Test Email Sent",
           description: `A test email was sent to ${testEmailRecipient}`,
+          variant: "default",
         });
       } else {
         toast({
-          title: "Error",
-          description: "Failed to send test email. Please check your SMTP settings.",
+          title: "Email Sending Failed",
+          description: result.error || "Failed to send test email. Please check your SMTP settings.",
           variant: "destructive",
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "An unexpected error occurred while sending the test email.",
+        description: error.message || "An unexpected error occurred while sending the test email.",
         variant: "destructive",
       });
     } finally {
@@ -85,11 +104,13 @@ export default function AdminSettings() {
   };
 
   const handleSaveConfig = () => {
-    updateEmailConfig(emailConfig);
-    toast({
-      title: "Settings Saved",
-      description: "Email configuration has been saved.",
-    });
+    const updated = updateEmailConfig(emailConfig);
+    if (updated) {
+      toast({
+        title: "Settings Saved",
+        description: "Email configuration has been saved.",
+      });
+    }
   };
 
   const handleCreateBackup = async () => {
@@ -341,6 +362,60 @@ export default function AdminSettings() {
     );
   };
 
+  // Get a visual indicator for email configuration status
+  const getEmailStatusIndicator = () => {
+    if (!emailConfig.enabled) {
+      return (
+        <Alert variant="default" className="mb-4">
+          <Info className="h-4 w-4" />
+          <AlertTitle>Email notifications are disabled</AlertTitle>
+          <AlertDescription>
+            Enable email notifications to send welcome packages and activity reports.
+          </AlertDescription>
+        </Alert>
+      );
+    }
+    
+    const validationErrors = !emailConfig.host || !emailConfig.port || 
+                           !emailConfig.username || !emailConfig.password ||
+                           !emailConfig.fromEmail;
+                           
+    if (validationErrors) {
+      return (
+        <Alert variant="warning" className="mb-4">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Incomplete email configuration</AlertTitle>
+          <AlertDescription>
+            Please complete the email configuration to enable sending emails.
+          </AlertDescription>
+        </Alert>
+      );
+    }
+    
+    return (
+      <Alert variant="success" className="mb-4 bg-green-50 border-green-200">
+        <CheckCircle className="h-4 w-4 text-green-600" />
+        <AlertTitle className="text-green-800">Email configuration ready</AlertTitle>
+        <AlertDescription className="text-green-700">
+          Email notifications are properly configured and enabled.
+        </AlertDescription>
+      </Alert>
+    );
+  };
+
+  const getProviderNote = () => {
+    const help = getProviderHelp(emailConfig.provider);
+    if (!help) return null;
+    
+    return (
+      <Alert variant="default" className="mt-4">
+        <Info className="h-4 w-4" />
+        <AlertTitle>{emailConfig.provider.charAt(0).toUpperCase() + emailConfig.provider.slice(1)} Setup Note</AlertTitle>
+        <AlertDescription>{help}</AlertDescription>
+      </Alert>
+    );
+  };
+
   return (
     <>
       <Header title="Admin Settings" />
@@ -363,6 +438,16 @@ export default function AdminSettings() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
+                {getEmailStatusIndicator()}
+                
+                {emailConfigError && (
+                  <Alert variant="destructive" className="mb-4">
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertTitle>Configuration Error</AlertTitle>
+                    <AlertDescription>{emailConfigError}</AlertDescription>
+                  </Alert>
+                )}
+
                 <div className="flex flex-col space-y-1.5">
                   <Label htmlFor="emailProvider">Email Provider</Label>
                   <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
@@ -379,6 +464,8 @@ export default function AdminSettings() {
                     ))}
                   </div>
                 </div>
+
+                {getProviderNote()}
 
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="flex flex-col space-y-1.5">
@@ -478,6 +565,9 @@ export default function AdminSettings() {
                         {isSendingTest ? "Sending..." : "Send Test"}
                       </Button>
                     </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Send a test email to verify your SMTP configuration.
+                    </p>
                   </div>
                 </div>
               </CardContent>

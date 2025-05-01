@@ -1,8 +1,10 @@
+
 const express = require('express');
 const cors = require('cors');
 const { db, getNextId } = require('./data');
 const fs = require('fs');
 const path = require('path');
+const nodemailer = require('nodemailer');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -159,41 +161,207 @@ app.delete('/api/projects/:id', (req, res) => {
 });
 
 // --- Email API ---
-app.post('/api/email/send-welcome', (req, res) => {
-  const { email, replacingMember, additionalNotes } = req.body;
-  
-  // In a real app, you would connect to an email service here
-  console.log('Sending welcome email to:', email);
-  console.log('Replacing member:', replacingMember);
-  console.log('Additional notes:', additionalNotes);
-  
-  // Simulate email send
-  setTimeout(() => {
+// New endpoint for sending test emails
+app.post('/api/email/send-test', async (req, res) => {
+  try {
+    const { config, recipient, subject, text, html } = req.body;
+    
+    if (!config || !recipient) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Email configuration and recipient are required' 
+      });
+    }
+
+    // Create a transporter with the provided configuration
+    const transporter = nodemailer.createTransport({
+      host: config.host,
+      port: parseInt(config.port),
+      secure: config.secure,
+      auth: {
+        user: config.username,
+        pass: config.password,
+      },
+      // Add connection timeout and debug options
+      connectionTimeout: 10000,
+      greetingTimeout: 5000,
+      debug: true,
+      logger: true,
+    });
+
+    // Verify connection configuration
+    try {
+      await transporter.verify();
+      console.log('SMTP connection verified successfully');
+    } catch (verifyError) {
+      console.error('SMTP verification failed:', verifyError);
+      return res.status(400).json({ 
+        success: false, 
+        error: `Failed to connect to SMTP server: ${verifyError.message}` 
+      });
+    }
+
+    // Send mail
+    const mailOptions = {
+      from: `"${config.fromName}" <${config.fromEmail}>`,
+      to: recipient,
+      subject,
+      text,
+      html,
+    };
+
+    const info = await transporter.sendMail(mailOptions);
+    console.log('Email sent successfully:', info);
+
     res.json({ 
       success: true, 
-      message: 'Welcome email sent successfully' 
+      message: 'Test email sent successfully',
+      messageId: info.messageId 
     });
-  }, 1000);
+  } catch (error) {
+    console.error('Email sending error:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: `Failed to send email: ${error.message}` 
+    });
+  }
+});
+
+app.post('/api/email/send-welcome', async (req, res) => {
+  try {
+    const { email, replacingMember, additionalNotes, emailConfig } = req.body;
+    
+    // Check if we have email configuration
+    if (!emailConfig || !emailConfig.enabled) {
+      // Fall back to the simulated email if no config
+      console.log('Sending welcome email to:', email);
+      console.log('Replacing member:', replacingMember);
+      console.log('Additional notes:', additionalNotes);
+      
+      // Simulate email send
+      setTimeout(() => {
+        res.json({ 
+          success: true, 
+          message: 'Welcome email sent successfully (simulated)' 
+        });
+      }, 1000);
+      return;
+    }
+    
+    // If we have email config, try to send a real email
+    const transporter = nodemailer.createTransport({
+      host: emailConfig.host,
+      port: parseInt(emailConfig.port),
+      secure: emailConfig.secure,
+      auth: {
+        user: emailConfig.username,
+        pass: emailConfig.password,
+      },
+    });
+
+    const mailOptions = {
+      from: `"${emailConfig.fromName}" <${emailConfig.fromEmail}>`,
+      to: email,
+      subject: 'Welcome to the Team!',
+      text: `Welcome to the team! ${additionalNotes || ''}`,
+      html: `
+        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2>Welcome to the Team!</h2>
+          <p>We're excited to have you join us.</p>
+          ${replacingMember && replacingMember !== 'none' ? 
+            `<p>You'll be replacing ${replacingMember}. They'll help with the transition.</p>` : ''}
+          ${additionalNotes ? `<p>${additionalNotes}</p>` : ''}
+          <hr>
+          <p style="color: #666; font-size: 12px;">Resource Management System</p>
+        </div>
+      `,
+    };
+
+    const info = await transporter.sendMail(mailOptions);
+    console.log('Welcome email sent successfully:', info);
+
+    res.json({ 
+      success: true, 
+      message: 'Welcome email sent successfully',
+      messageId: info.messageId 
+    });
+  } catch (error) {
+    console.error('Welcome email sending error:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: `Failed to send welcome email: ${error.message}` 
+    });
+  }
 });
 
 // New endpoint for sending activity reports
-app.post('/api/email/send-activity-report', (req, res) => {
-  const { recipients, reportType, activities } = req.body;
-  
-  // In a real app, you would generate the PDF and send it via email here
-  console.log('Sending activity report to:', recipients);
-  console.log('Report type:', reportType);
-  console.log('Activities count:', activities ? activities.length : 0);
-  
-  // Simulate email send
-  setTimeout(() => {
+app.post('/api/email/send-activity-report', async (req, res) => {
+  try {
+    const { recipients, reportType, activities, emailConfig } = req.body;
+    
+    // Check if we have email configuration
+    if (!emailConfig || !emailConfig.enabled) {
+      // Fall back to the simulated email if no config
+      console.log('Sending activity report to:', recipients);
+      console.log('Report type:', reportType);
+      console.log('Activities count:', activities ? activities.length : 0);
+      
+      // Simulate email send
+      setTimeout(() => {
+        res.json({ 
+          success: true, 
+          message: 'Activity report sent successfully (simulated)',
+          recipientCount: recipients.length,
+          timestamp: new Date().toISOString()
+        });
+      }, 1000);
+      return;
+    }
+    
+    // If we have email config, try to send a real email
+    const transporter = nodemailer.createTransport({
+      host: emailConfig.host,
+      port: parseInt(emailConfig.port),
+      secure: emailConfig.secure,
+      auth: {
+        user: emailConfig.username,
+        pass: emailConfig.password,
+      },
+    });
+
+    const mailOptions = {
+      from: `"${emailConfig.fromName}" <${emailConfig.fromEmail}>`,
+      to: recipients.join(', '),
+      subject: `${reportType} Activity Report`,
+      text: `Here is your ${reportType} activity report with ${activities.length} activities.`,
+      html: `
+        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2>${reportType} Activity Report</h2>
+          <p>This report contains ${activities ? activities.length : 0} activities.</p>
+          <hr>
+          <p style="color: #666; font-size: 12px;">Resource Management System</p>
+        </div>
+      `,
+      // In a real implementation, attach the PDF report here
+    };
+
+    const info = await transporter.sendMail(mailOptions);
+    console.log('Activity report email sent successfully:', info);
+
     res.json({ 
       success: true, 
       message: 'Activity report sent successfully',
       recipientCount: recipients.length,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      messageId: info.messageId
     });
-  }, 1000);
+  } catch (error) {
+    console.error('Activity report email sending error:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: `Failed to send activity report: ${error.message}` 
+    });
+  }
 });
 
 // New endpoint for managing scheduled reports
