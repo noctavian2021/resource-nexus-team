@@ -12,6 +12,13 @@ export const teamMemberFormSchema = z.object({
   vacationStartDate: z.string().optional(),
   vacationEndDate: z.string().optional(),
   avatar: z.string().optional(),
+  projectInvolvements: z.array(
+    z.object({
+      projectId: z.string().optional(),
+      projectName: z.string().optional(),
+      percentage: z.number().min(0).max(100, "Percentage must be between 0 and 100")
+    })
+  ).optional(),
 });
 
 export type TeamMemberFormValues = z.infer<typeof teamMemberFormSchema>;

@@ -24,11 +24,13 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
-import { projects, TeamMember } from '@/data/mockData';
+import { TeamMember } from '@/data/mockData';
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { createTeamMember, ProjectInvolvement, RequiredResource, OfficeDays } from '@/services/teamService';
 import { getDepartments } from '@/services/departmentService';
+import { getProjects } from '@/services/projectService';
+import { Combobox } from "@/components/ui/combobox";
 
 const resourceTypes = [
   { value: 'account', label: 'Account' },
@@ -50,7 +52,8 @@ const formSchema = z.object({
   isDirector: z.boolean().default(false),
   projectInvolvements: z.array(
     z.object({
-      projectId: z.string().min(1, "Project is required"),
+      projectId: z.string().optional(),
+      projectName: z.string().optional(),
       percentage: z.number().min(0).max(100, "Percentage must be between 0 and 100")
     })
   ),
@@ -89,10 +92,12 @@ export default function AddTeamMemberDialog({
 }: AddTeamMemberDialogProps) {
   const [isOpen, setIsOpen] = React.useState(false);
   const [departments, setDepartments] = React.useState<any[]>([]);
+  const [projects, setProjects] = React.useState<any[]>([]);
   const [isLoadingDepartments, setIsLoadingDepartments] = React.useState(false);
+  const [isLoadingProjects, setIsLoadingProjects] = React.useState(false);
   const { toast } = useToast();
   
-  // Fetch departments when dialog is opened
+  // Fetch departments and projects when dialog is opened
   React.useEffect(() => {
     if (isOpen) {
       const fetchDepartments = async () => {
@@ -113,7 +118,26 @@ export default function AddTeamMemberDialog({
         }
       };
       
+      const fetchProjects = async () => {
+        setIsLoadingProjects(true);
+        try {
+          const data = await getProjects();
+          setProjects(Array.isArray(data) ? data : []);
+        } catch (error) {
+          console.error('Error fetching projects:', error);
+          toast({
+            title: "Error",
+            description: "Failed to load projects. Please try again.",
+            variant: "destructive"
+          });
+          setProjects([]);
+        } finally {
+          setIsLoadingProjects(false);
+        }
+      };
+      
       fetchDepartments();
+      fetchProjects();
     }
   }, [isOpen, toast]);
   
@@ -129,7 +153,7 @@ export default function AddTeamMemberDialog({
       availability: 100,
       isLead: false,
       isDirector: false,
-      projectInvolvements: [{ projectId: "", percentage: 0 }],
+      projectInvolvements: [{ projectId: "", projectName: "", percentage: 0 }],
       requiredResources: [],
       officeDays: {
         monday: false,
@@ -170,10 +194,13 @@ export default function AddTeamMemberDialog({
     try {
       const avatarUrl = data.avatar || `https://i.pravatar.cc/150?img=${Math.floor(Math.random() * 70) + 1}`;
 
-      const projectInvolvements = data.projectInvolvements.map(p => ({
-        projectId: p.projectId,
-        percentage: p.percentage
-      }));
+      const projectInvolvements = data.projectInvolvements
+        .filter(p => p.projectId || p.projectName) // Filter out empty project entries
+        .map(p => ({
+          projectId: p.projectId || "", // Use projectId if available
+          projectName: p.projectName || "", // Otherwise use projectName
+          percentage: p.percentage
+        }));
       
       const requiredResources = data.requiredResources.map(r => ({
         type: r.type,
@@ -192,6 +219,11 @@ export default function AddTeamMemberDialog({
       // Set the role to "Director" if isDirector is true
       const role = data.isDirector ? 'Director' : data.role;
 
+      // Extract project IDs - use existing IDs or create placeholder IDs for custom project names
+      const projectIds = data.projectInvolvements
+        .filter(p => p.projectId || p.projectName)
+        .map(p => p.projectId || `custom-${p.projectName?.replace(/\s+/g, '-').toLowerCase()}`);
+
       const newMember = await createTeamMember({
         name: data.name,
         email: data.email,
@@ -202,7 +234,7 @@ export default function AddTeamMemberDialog({
         availability: data.availability,
         isLead: data.isLead,
         isDirector: data.isDirector,
-        projects: data.projectInvolvements.map(p => p.projectId),
+        projects: projectIds,
         status: 'active',
         requiredResources,
         officeDays,
@@ -467,7 +499,7 @@ export default function AddTeamMemberDialog({
                   type="button" 
                   size="sm" 
                   variant="outline"
-                  onClick={() => appendProject({ projectId: "", percentage: 0 })}
+                  onClick={() => appendProject({ projectId: "", projectName: "", percentage: 0 })}
                 >
                   <Plus className="h-4 w-4 mr-1" /> Add Project
                 </Button>
@@ -478,26 +510,49 @@ export default function AddTeamMemberDialog({
                   <FormField
                     control={form.control}
                     name={`projectInvolvements.${index}.projectId`}
-                    render={({ field }) => (
+                    render={({ field: projectField }) => (
                       <FormItem className="flex-1">
                         <FormLabel className={index !== 0 ? "sr-only" : ""}>Project</FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select project" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {projects.map((project) => (
-                              <SelectItem key={project.id} value={project.id}>
-                                {project.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <div className="flex gap-2">
+                          <Select
+                            onValueChange={(value) => {
+                              projectField.onChange(value);
+                              // Clear the custom project name if selecting from dropdown
+                              form.setValue(`projectInvolvements.${index}.projectName`, "");
+                            }}
+                            value={projectField.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select project" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="">Custom Project</SelectItem>
+                              {projects.map((project) => (
+                                <SelectItem key={project.id} value={project.id}>
+                                  {project.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          
+                          {/* Show custom project name input if "Custom Project" is selected */}
+                          {projectField.value === "" && (
+                            <FormField
+                              control={form.control}
+                              name={`projectInvolvements.${index}.projectName`}
+                              render={({ field: customField }) => (
+                                <FormControl>
+                                  <Input
+                                    placeholder="Enter custom project name"
+                                    {...customField}
+                                  />
+                                </FormControl>
+                              )}
+                            />
+                          )}
+                        </div>
                         <FormMessage />
                       </FormItem>
                     )}

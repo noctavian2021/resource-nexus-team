@@ -4,6 +4,7 @@ import apiRequest from './api';
 
 export interface ProjectInvolvement {
   projectId: string;
+  projectName?: string;
   percentage: number;
 }
 
