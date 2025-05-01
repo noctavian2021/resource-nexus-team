@@ -11,15 +11,17 @@ import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { getDepartments } from '@/services/departmentService';
+import { useAuth } from '@/context/AuthContext';
 
 export default function ResourceRequests() {
   const { emailConfig } = useEmailConfig();
+  const { user } = useAuth();
   const [showEmailAlert, setShowEmailAlert] = useState(false);
   const [showAllDepartments, setShowAllDepartments] = useState(false);
   
-  // In a real app, you would get the current user's department ID from auth context
-  // For now, we'll just use a mock value
-  const [currentDepartmentId, setCurrentDepartmentId] = useState('1');
+  // Get current user's department ID from auth context
+  const currentDepartmentId = user?.departmentId || '';
+  const isAdmin = user?.role === 'admin';
   
   // Fetch departments for displaying department name
   const { data: departments = [] } = useQuery({
@@ -85,15 +87,17 @@ export default function ResourceRequests() {
           
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
             {/* Toggle for admin users to see all departments */}
-            <Button 
-              variant={showAllDepartments ? "default" : "outline"} 
-              size="sm"
-              onClick={() => setShowAllDepartments(!showAllDepartments)}
-              className="flex items-center gap-1"
-            >
-              <Filter className="h-4 w-4" />
-              {showAllDepartments ? "My Department" : "All Departments"}
-            </Button>
+            {isAdmin && (
+              <Button 
+                variant={showAllDepartments ? "default" : "outline"} 
+                size="sm"
+                onClick={() => setShowAllDepartments(!showAllDepartments)}
+                className="flex items-center gap-1"
+              >
+                <Filter className="h-4 w-4" />
+                {showAllDepartments ? "My Department" : "All Departments"}
+              </Button>
+            )}
             
             <CreateRequestDialog />
           </div>
@@ -102,7 +106,7 @@ export default function ResourceRequests() {
         <RequestList 
           requests={resourceRequests} 
           currentDepartmentId={currentDepartmentId}
-          showAll={showAllDepartments}
+          showAll={isAdmin && showAllDepartments}
         />
       </main>
     </>

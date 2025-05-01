@@ -18,7 +18,7 @@ import { useEffect, useState } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useQuery } from '@tanstack/react-query';
 import { getDepartments } from '@/services/departmentService';
-import { Department } from '@/data/mockData';
+import { useAuth } from '@/context/AuthContext';
 
 const requestFormSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -36,6 +36,7 @@ export default function CreateRequestDialog() {
   const [sending, setSending] = React.useState(false);
   const { addNotification } = useNotifications();
   const { emailConfig } = useEmailConfig();
+  const { user } = useAuth();
   
   // Fetch departments using React Query
   const { data: departmentList = [], isLoading: isLoadingDepartments } = useQuery({
@@ -43,9 +44,8 @@ export default function CreateRequestDialog() {
     queryFn: getDepartments
   });
 
-  // Get current user's department (in a real app, this would come from auth context)
-  // For now, we'll just assume department ID '1' for demo purposes
-  const currentUserDepartmentId = '1';
+  // Get current user's department ID from auth context
+  const currentUserDepartmentId = user?.departmentId || '';
   
   const form = useForm<RequestFormData>({
     resolver: zodResolver(requestFormSchema),
@@ -72,10 +72,10 @@ export default function CreateRequestDialog() {
       // Modified to match the ResourceRequest interface
       const newRequest: Partial<ResourceRequest> = {
         id: `request-${Date.now()}`,
-        requesterId: currentUserDepartmentId, // In a real app, this would be the authenticated user's ID
+        requesterId: user?.id || '',
         projectId: '', // This would be set if the request is for a specific project
-        departmentId: currentUserDepartmentId, // In a real app, this would come from the authenticated user's department
-        requestingDepartmentId: currentUserDepartmentId, // In a real app, this would come from the authenticated user's department
+        departmentId: currentUserDepartmentId, 
+        requestingDepartmentId: currentUserDepartmentId,
         targetDepartmentId: data.targetDepartmentId,
         title: data.title,
         description: data.description,

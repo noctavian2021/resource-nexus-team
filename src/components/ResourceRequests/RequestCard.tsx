@@ -7,6 +7,7 @@ import { ResourceRequest, getDepartmentById } from '@/data/mockData';
 import { CalendarDays, Check, X, ArrowRight } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/context/AuthContext';
 
 const getStatusBadge = (status: string) => {
   switch (status) {
@@ -30,11 +31,14 @@ interface RequestCardProps {
 
 export default function RequestCard({ request }: RequestCardProps) {
   const { toast } = useToast();
+  const { user } = useAuth();
   const requestingDepartment = getDepartmentById(request.requestingDepartmentId);
   const targetDepartment = getDepartmentById(request.targetDepartmentId);
 
-  // In a real app, this would come from auth context
-  const currentUserDepartmentId = '1';
+  // Get current user's department ID from auth context
+  const currentUserDepartmentId = user?.departmentId || '';
+  
+  // Check if current user is an approver for this request (target department lead)
   const isApprover = request.targetDepartmentId === currentUserDepartmentId;
   
   const handleApprove = () => {
