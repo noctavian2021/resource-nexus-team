@@ -9,7 +9,8 @@ import {
   Settings,
   Building2,
   HelpCircle,
-  LogOut
+  LogOut,
+  User
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
@@ -91,10 +92,14 @@ export default function Sidebar() {
         {/* User info section */}
         {user && (
           <div className="border-b border-white/10 pb-2 mb-2">
-            <div className={cn(
-              "flex items-center gap-2 px-3 py-2",
-              !isOpen && "justify-center"
-            )}>
+            <NavLink 
+              to="/profile"
+              className={({ isActive }) => cn(
+                "flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-white/10",
+                !isOpen && "justify-center",
+                isActive && "bg-white/15"
+              )}
+            >
               <Avatar className="h-7 w-7 bg-white/20 text-sm">
                 <AvatarFallback className="text-white bg-blue-600">
                   {getInitials(user.name)}
@@ -111,7 +116,7 @@ export default function Sidebar() {
                   {user.role === 'admin' ? 'Administrator' : 'Team Lead'}
                 </div>
               </div>
-            </div>
+            </NavLink>
           </div>
         )}
         
@@ -122,6 +127,7 @@ export default function Sidebar() {
           <SidebarLink to="/projects" icon={LayoutGrid} title="Projects" isActive={location.pathname === '/projects'} />
           <SidebarLink to="/requests" icon={FileText} title="Requests" isActive={location.pathname === '/requests'} />
           <SidebarLink to="/help" icon={HelpCircle} title="Help" isActive={location.pathname === '/help'} />
+          <SidebarLink to="/profile" icon={User} title="Profile" isActive={location.pathname === '/profile'} />
         </div>
         <div className="mt-auto">
           {user?.role === 'admin' && (

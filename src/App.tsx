@@ -19,6 +19,7 @@ import ResourceRequests from "./pages/ResourceRequests";
 import AdminSettings from "./pages/AdminSettings";
 import GeneralReport from "./pages/GeneralReport";
 import HelpTab from "./pages/HelpTab";
+import UserProfile from "./pages/UserProfile";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -55,6 +56,7 @@ const App = () => (
                       <Route path="/admin/settings" element={<AdminSettings />} />
                       <Route path="/reports/general" element={<GeneralReport />} />
                       <Route path="/help" element={<HelpTab />} />
+                      <Route path="/profile" element={<UserProfile />} />
                       <Route path="*" element={<NotFound />} />
                     </Routes>
                   </div>

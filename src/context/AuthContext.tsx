@@ -17,6 +17,7 @@ interface AuthContextType {
   logout: () => void;
   isLoading: boolean;
   error: string | null;
+  changePassword: (currentPassword: string, newPassword: string) => Promise<boolean>;
 }
 
 // Create the context
@@ -54,6 +55,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [users, setUsers] = useState(MOCK_USERS);
 
   // Check if user is already logged in (via localStorage)
   useEffect(() => {
@@ -81,7 +83,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       await new Promise(resolve => setTimeout(resolve, 800));
       
       // Find user by email and password
-      const foundUser = MOCK_USERS.find(
+      const foundUser = users.find(
         u => u.email.toLowerCase() === email.toLowerCase() && u.password === password
       );
       
@@ -112,8 +114,50 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     localStorage.removeItem('authUser');
   };
 
+  const changePassword = async (currentPassword: string, newPassword: string): Promise<boolean> => {
+    setError(null);
+    
+    if (!user) {
+      setError('Not logged in');
+      return false;
+    }
+    
+    try {
+      // Simulate API call delay
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
+      // Find user in our "database"
+      const userIndex = users.findIndex(u => u.id === user.id);
+      
+      if (userIndex === -1) {
+        setError('User not found');
+        return false;
+      }
+      
+      // Check current password
+      if (users[userIndex].password !== currentPassword) {
+        setError('Current password is incorrect');
+        return false;
+      }
+      
+      // Update password
+      const updatedUsers = [...users];
+      updatedUsers[userIndex] = {
+        ...updatedUsers[userIndex],
+        password: newPassword
+      };
+      
+      setUsers(updatedUsers);
+      return true;
+    } catch (err) {
+      setError('An error occurred while changing password');
+      console.error('Password change error:', err);
+      return false;
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, login, logout, isLoading, error }}>
+    <AuthContext.Provider value={{ user, login, logout, isLoading, error, changePassword }}>
       {children}
     </AuthContext.Provider>
   );

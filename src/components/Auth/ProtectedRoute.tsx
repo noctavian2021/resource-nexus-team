@@ -25,6 +25,15 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // Render children if authenticated
+  // For role-based restrictions
+  // Admin can access everything
+  // Team leads can only access their department data or common pages
+  const isRestrictedAdminRoute = location.pathname.startsWith('/admin') && user.role !== 'admin';
+  
+  if (isRestrictedAdminRoute) {
+    return <Navigate to="/" replace />;
+  }
+
+  // Render children if authenticated and authorized
   return <>{children}</>;
 }
