@@ -59,10 +59,10 @@ export default function ProjectInvolvements({ member }: ProjectInvolvementsProps
             console.log(`Fetching project with ID: ${id}`);
             const project = await getProject(id);
             console.log(`Project fetched: ${project?.name || 'unknown'}`);
-            return [id, project];
+            return [id, project] as [string, Project | null];
           } catch (error) {
             console.error(`Failed to fetch project ${id}:`, error);
-            return [id, null];
+            return [id, null] as [string, null];
           }
         });
         
@@ -87,7 +87,9 @@ export default function ProjectInvolvements({ member }: ProjectInvolvementsProps
         
         const projectEntries = await Promise.all(projectPromises);
         projectEntries.forEach(([id, project]) => {
-          projectMap[id as string] = project;
+          if (typeof id === 'string') {
+            projectMap[id] = project;
+          }
         });
         
         setProjectsData(projectMap);
