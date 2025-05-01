@@ -91,7 +91,7 @@ export default function Sidebar() {
         {user && (
           <div className="border-b border-white/10 pb-2 mb-2">
             <NavLink 
-              to="profile"
+              to="/profile"
               className={({ isActive }) => cn(
                 "flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-white/10",
                 !isOpen && "justify-center",
@@ -120,16 +120,16 @@ export default function Sidebar() {
         
         <div className="flex flex-col gap-y-2">
           <SidebarLink to="/" icon={BarChart3} title="Dashboard" isActive={location.pathname === '/'} />
-          <SidebarLink to="team" icon={Users} title="Team" isActive={location.pathname === '/team'} />
-          <SidebarLink to="departments" icon={Building2} title="Departments" isActive={location.pathname.startsWith('/departments')} />
-          <SidebarLink to="projects" icon={LayoutGrid} title="Projects" isActive={location.pathname === '/projects'} />
-          <SidebarLink to="requests" icon={FileText} title="Requests" isActive={location.pathname === '/requests'} />
-          <SidebarLink to="help" icon={HelpCircle} title="Help" isActive={location.pathname === '/help'} />
-          <SidebarLink to="profile" icon={User} title="Profile" isActive={location.pathname === '/profile'} />
+          <SidebarLink to="/team" icon={Users} title="Team" isActive={location.pathname.includes('/team')} />
+          <SidebarLink to="/departments" icon={Building2} title="Departments" isActive={location.pathname.includes('/departments')} />
+          <SidebarLink to="/projects" icon={LayoutGrid} title="Projects" isActive={location.pathname.includes('/projects')} />
+          <SidebarLink to="/requests" icon={FileText} title="Requests" isActive={location.pathname.includes('/requests')} />
+          <SidebarLink to="/help" icon={HelpCircle} title="Help" isActive={location.pathname.includes('/help')} />
+          <SidebarLink to="/profile" icon={User} title="Profile" isActive={location.pathname.includes('/profile')} />
         </div>
         <div className="mt-auto">
           {user?.role === 'admin' && (
-            <SidebarLink to="admin/settings" icon={Settings} title="Admin" isActive={location.pathname === '/admin/settings'} />
+            <SidebarLink to="/admin/settings" icon={Settings} title="Admin" isActive={location.pathname.includes('/admin')} />
           )}
           
           {/* Logout button */}
