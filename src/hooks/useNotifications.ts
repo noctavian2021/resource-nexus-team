@@ -41,6 +41,8 @@ export const useNotifications = () => {
     toast({
       title,
       description: message,
+      variant: "default",
+      duration: 5000,
     });
 
     // If email is configured, simulate sending an email notification
