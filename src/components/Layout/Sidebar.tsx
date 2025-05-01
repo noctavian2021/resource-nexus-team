@@ -13,12 +13,10 @@ import {
   User
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { buttonVariants } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
 import NotificationBell from "./NotificationBell";
 import { useAuth } from "@/context/AuthContext";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 const SidebarLink = ({
   to,
@@ -123,7 +121,7 @@ export default function Sidebar() {
         <div className="flex flex-col gap-y-2">
           <SidebarLink to="/" icon={BarChart3} title="Dashboard" isActive={location.pathname === '/'} />
           <SidebarLink to="/team" icon={Users} title="Team" isActive={location.pathname === '/team'} />
-          <SidebarLink to="/departments" icon={Building2} title="Departments" isActive={location.pathname === '/departments'} />
+          <SidebarLink to="/departments" icon={Building2} title="Departments" isActive={location.pathname.startsWith('/departments')} />
           <SidebarLink to="/projects" icon={LayoutGrid} title="Projects" isActive={location.pathname === '/projects'} />
           <SidebarLink to="/requests" icon={FileText} title="Requests" isActive={location.pathname === '/requests'} />
           <SidebarLink to="/help" icon={HelpCircle} title="Help" isActive={location.pathname === '/help'} />
