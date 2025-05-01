@@ -18,7 +18,11 @@ import { Plus } from 'lucide-react';
 import { DatePicker } from "@/components/ui/date-picker"
 import { Project } from '@/data/mockData';
 
-export default function AddProjectDialog() {
+interface AddProjectDialogProps {
+  onProjectAdded: () => void;
+}
+
+export default function AddProjectDialog({ onProjectAdded }: AddProjectDialogProps) {
   const [isOpen, setIsOpen] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(false);
   const { toast } = useToast();
@@ -65,6 +69,9 @@ export default function AddProjectDialog() {
         endDate: undefined,
         priority: 'Medium',
       });
+      
+      // Call the callback to notify parent component
+      onProjectAdded();
     } catch (error) {
       console.error("Error adding project:", error);
       toast({

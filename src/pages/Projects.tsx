@@ -33,7 +33,7 @@ export default function Projects() {
 
   useEffect(() => {
     fetchProjects();
-  }, [toast]);
+  }, []);
 
   const handleProjectUpdated = () => {
     fetchProjects();
