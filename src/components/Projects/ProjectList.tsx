@@ -2,16 +2,20 @@
 import React, { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import ProjectCard from './ProjectCard';
 import { Project } from '@/data/mockData';
 
 interface ProjectListProps {
   projects: Project[];
+  onProjectUpdated: () => void;
 }
 
-export default function ProjectList({ projects }: ProjectListProps) {
+export default function ProjectList({ projects, onProjectUpdated }: ProjectListProps) {
   const [search, setSearch] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('all');
+  const [showHidden, setShowHidden] = useState(false);
   
   // Ensure projects is an array
   const projectsArray = Array.isArray(projects) ? projects : [];
@@ -23,7 +27,10 @@ export default function ProjectList({ projects }: ProjectListProps) {
     const matchesStatus = selectedStatus === 'all' || 
                         project.status.toLowerCase() === selectedStatus.toLowerCase();
     
-    return matchesSearch && matchesStatus;
+    // Only show hidden projects if the toggle is on
+    const matchesVisibility = showHidden || !project.isHidden;
+    
+    return matchesSearch && matchesStatus && matchesVisibility;
   });
 
   return (
@@ -35,22 +42,32 @@ export default function ProjectList({ projects }: ProjectListProps) {
           onChange={(e) => setSearch(e.target.value)}
           className="max-w-sm"
         />
-        <div className="w-full md:w-[200px]">
-          <Select
-            value={selectedStatus}
-            onValueChange={setSelectedStatus}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Filter by status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Statuses</SelectItem>
-              <SelectItem value="active">Active</SelectItem>
-              <SelectItem value="planning">Planning</SelectItem>
-              <SelectItem value="on hold">On Hold</SelectItem>
-              <SelectItem value="completed">Completed</SelectItem>
-            </SelectContent>
-          </Select>
+        <div className="flex items-center gap-4">
+          <div className="w-full md:w-[200px]">
+            <Select
+              value={selectedStatus}
+              onValueChange={setSelectedStatus}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Filter by status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Statuses</SelectItem>
+                <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="planning">Planning</SelectItem>
+                <SelectItem value="on hold">On Hold</SelectItem>
+                <SelectItem value="completed">Completed</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Switch 
+              id="show-hidden" 
+              checked={showHidden}
+              onCheckedChange={setShowHidden}
+            />
+            <Label htmlFor="show-hidden">Show Hidden</Label>
+          </div>
         </div>
       </div>
       
@@ -63,7 +80,11 @@ export default function ProjectList({ projects }: ProjectListProps) {
       ) : (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {filteredProjects.map((project) => (
-            <ProjectCard key={project.id} project={project} />
+            <ProjectCard 
+              key={project.id} 
+              project={project} 
+              onProjectUpdated={onProjectUpdated}
+            />
           ))}
         </div>
       )}

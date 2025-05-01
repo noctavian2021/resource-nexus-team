@@ -1,3 +1,4 @@
+
 const express = require('express');
 const cors = require('cors');
 const { db, getNextId } = require('./data');
@@ -124,20 +125,21 @@ app.get('/api/projects/:id', (req, res) => {
   res.json(project);
 });
 
-// Create project
+// Create project - Now setting default isHidden to false
 app.post('/api/projects', (req, res) => {
   const newProject = {
     id: getNextId('projects'),
     ...req.body,
     teamMembers: req.body.teamMembers || [],
-    progress: req.body.progress || 0
+    progress: req.body.progress || 0,
+    isHidden: false // Set default value for isHidden
   };
   
   db.projects.push(newProject);
   res.status(201).json(newProject);
 });
 
-// Update project
+// Update project - Now properly handling isHidden property
 app.put('/api/projects/:id', (req, res) => {
   const index = db.projects.findIndex(p => p.id === req.params.id);
   if (index === -1) return res.status(404).json({ error: 'Project not found' });

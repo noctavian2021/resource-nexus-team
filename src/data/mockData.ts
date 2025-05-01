@@ -48,6 +48,7 @@ export interface Project {
   teamMembers: string[];
   departmentId: string;
   client?: string; // Add client
+  isHidden?: boolean; // Add isHidden flag
 }
 
 // Department - Updated to reflect that leadId can be empty
@@ -214,7 +215,8 @@ export const projects: Project[] = [
     progress: 35,
     priority: 'High',
     teamMembers: ['1', '3'],
-    departmentId: '2'
+    departmentId: '2',
+    isHidden: false
   },
   {
     id: '2',
@@ -226,7 +228,8 @@ export const projects: Project[] = [
     progress: 20,
     priority: 'Medium',
     teamMembers: ['2', '3'],
-    departmentId: '1'
+    departmentId: '1',
+    isHidden: false
   },
   {
     id: '3',
@@ -238,7 +241,8 @@ export const projects: Project[] = [
     progress: 10,
     priority: 'Medium',
     teamMembers: ['1', '4'],
-    departmentId: '4'
+    departmentId: '4',
+    isHidden: false
   },
   {
     id: '4',
@@ -250,7 +254,8 @@ export const projects: Project[] = [
     progress: 5,
     priority: 'Low',
     teamMembers: ['3', '5'],
-    departmentId: '1'
+    departmentId: '1',
+    isHidden: false
   },
   {
     id: '5',
@@ -262,7 +267,8 @@ export const projects: Project[] = [
     progress: 0,
     priority: 'High',
     teamMembers: [],
-    departmentId: '3'
+    departmentId: '3',
+    isHidden: false
   }
 ];
 

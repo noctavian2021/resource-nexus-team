@@ -1,111 +1,124 @@
 
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Project, departments, getTeamMemberById } from '@/data/mockData';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Project, getTeamMemberById, getDepartmentById } from '@/data/mockData';
-import { CalendarDays } from 'lucide-react';
-import { format } from 'date-fns';
-
-const getPriorityColor = (priority: string) => {
-  switch (priority) {
-    case 'Low':
-      return 'bg-green-500';
-    case 'Medium':
-      return 'bg-blue-500';
-    case 'High':
-      return 'bg-amber-500';
-    case 'Urgent':
-      return 'bg-red-500';
-    default:
-      return 'bg-gray-500';
-  }
-};
-
-const getStatusBadge = (status: string) => {
-  switch (status) {
-    case 'Active':
-      return <Badge className="bg-green-500">Active</Badge>;
-    case 'Planning':
-      return <Badge className="bg-blue-500">Planning</Badge>;
-    case 'On Hold':
-      return <Badge variant="outline">On Hold</Badge>;
-    case 'Completed':
-      return <Badge className="bg-gray-500">Completed</Badge>;
-    default:
-      return <Badge variant="outline">{status}</Badge>;
-  }
-};
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import ProjectActions from './ProjectActions';
 
 interface ProjectCardProps {
   project: Project;
+  onProjectUpdated?: () => void;
 }
 
-export default function ProjectCard({ project }: ProjectCardProps) {
-  const department = getDepartmentById(project.departmentId);
+export default function ProjectCard({ project, onProjectUpdated = () => {} }: ProjectCardProps) {
+  // Don't render if project is hidden
+  if (project.isHidden) return null;
+
+  const department = departments.find(d => d.id === project.departmentId);
+  
+  const startDate = new Date(project.startDate).toLocaleDateString();
+  const endDate = new Date(project.endDate).toLocaleDateString();
+  
+  // Get status color
+  const getStatusColor = () => {
+    switch (project.status) {
+      case 'Active': return 'bg-green-500';
+      case 'Planning': return 'bg-blue-500';
+      case 'Completed': return 'bg-gray-500';
+      case 'On Hold': return 'bg-orange-500';
+      default: return 'bg-gray-500';
+    }
+  };
+  
+  // Get priority color
+  const getPriorityClass = () => {
+    switch (project.priority) {
+      case 'Low': return 'bg-slate-200 text-slate-700';
+      case 'Medium': return 'bg-blue-200 text-blue-700';
+      case 'High': return 'bg-orange-200 text-orange-700';
+      case 'Urgent': return 'bg-red-200 text-red-700';
+      default: return 'bg-slate-200 text-slate-700';
+    }
+  };
 
   return (
-    <Card>
+    <Card className="relative overflow-hidden transition-all hover:shadow-md">
+      <ProjectActions project={project} onProjectUpdated={onProjectUpdated} />
+      
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
-          <div className="space-y-1">
-            <CardTitle>{project.name}</CardTitle>
-            <p className="text-sm text-muted-foreground">{department?.name || 'Unknown Department'}</p>
-          </div>
-          {getStatusBadge(project.status)}
+          <h3 className="font-semibold">{project.name}</h3>
+        </div>
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <span className={`inline-block h-2 w-2 rounded-full ${getStatusColor()}`}></span>
+          {project.status}
+          <span className="mx-1">•</span>
+          <Badge variant="outline" className={getPriorityClass()}>
+            {project.priority}
+          </Badge>
         </div>
       </CardHeader>
+      
       <CardContent className="space-y-4">
-        <div>
-          <p className="text-sm text-muted-foreground">{project.description}</p>
-        </div>
+        <p className="text-sm text-muted-foreground line-clamp-2">{project.description}</p>
         
-        <div>
-          <div className="mb-1 flex items-center justify-between">
-            <span className="text-sm font-medium">Progress</span>
-            <span className="text-sm text-muted-foreground">{project.progress}%</span>
+        <div className="space-y-1">
+          <div className="flex justify-between text-xs text-muted-foreground">
+            <span>Progress</span>
+            <span>{project.progress}%</span>
           </div>
-          <Progress value={project.progress} className="h-2" />
+          <Progress value={project.progress} className="h-1" />
         </div>
         
-        <div className="flex items-center text-sm text-muted-foreground">
-          <CalendarDays className="mr-1 h-4 w-4" />
-          <span>
-            {format(new Date(project.startDate), 'MMM d, yyyy')} - {format(new Date(project.endDate), 'MMM d, yyyy')}
-          </span>
+        <div className="flex justify-between text-xs text-muted-foreground">
+          <div>
+            <p className="font-medium">Start Date</p>
+            <p>{startDate}</p>
+          </div>
+          <div className="text-right">
+            <p className="font-medium">End Date</p>
+            <p>{endDate}</p>
+          </div>
         </div>
         
-        <div>
-          <div className="mb-2 flex items-center justify-between">
-            <span className="text-sm font-medium">Priority</span>
-            <div className="flex items-center gap-1.5">
-              <div className={`h-2.5 w-2.5 rounded-full ${getPriorityColor(project.priority)}`}></div>
-              <span className="text-sm">{project.priority}</span>
+        <div className="flex flex-col gap-1">
+          <p className="text-xs font-medium text-muted-foreground">Department</p>
+          {department && (
+            <Badge 
+              variant="outline" 
+              style={{ backgroundColor: `${department.color}20`, borderColor: department.color }}
+              className="w-fit text-xs"
+            >
+              {department.name}
+            </Badge>
+          )}
+        </div>
+        
+        {project.teamMembers.length > 0 && (
+          <div className="flex flex-col gap-1">
+            <p className="text-xs font-medium text-muted-foreground">Team</p>
+            <div className="flex -space-x-2">
+              {project.teamMembers.slice(0, 3).map(memberId => {
+                const member = getTeamMemberById(memberId);
+                return member ? (
+                  <Avatar key={memberId} className="border-2 border-background h-7 w-7">
+                    <AvatarImage src={member.avatar} alt={member.name} />
+                    <AvatarFallback className="text-xs">
+                      {member.name.split(' ').map(n => n[0]).join('')}
+                    </AvatarFallback>
+                  </Avatar>
+                ) : null;
+              })}
+              {project.teamMembers.length > 3 && (
+                <div className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-background bg-muted text-xs">
+                  +{project.teamMembers.length - 3}
+                </div>
+              )}
             </div>
           </div>
-          
-          <div className="flex flex-wrap gap-2">
-            {project.teamMembers.map((memberId) => {
-              const member = getTeamMemberById(memberId);
-              if (!member) return null;
-              
-              return (
-                <div key={memberId} className="flex items-center gap-2">
-                  <img
-                    src={member.avatar}
-                    alt={member.name}
-                    className="h-6 w-6 rounded-full object-cover"
-                  />
-                  <span className="text-sm">{member.name}</span>
-                </div>
-              );
-            })}
-            
-            {project.teamMembers.length === 0 && (
-              <p className="text-sm text-muted-foreground">No team members assigned</p>
-            )}
-          </div>
-        </div>
+        )}
       </CardContent>
     </Card>
   );

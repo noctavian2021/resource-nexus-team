@@ -54,6 +54,12 @@ export const updateProject = (id: string, updates: Partial<Project>) => {
   return apiRequest<Project>(`/projects/${id}`, 'PUT', updates);
 };
 
+export const hideProject = (id: string, isHidden: boolean) => {
+  // We'll update the project with an isHidden property
+  projectsCache = null;
+  return updateProject(id, { isHidden });
+};
+
 export const deleteProject = (id: string) => {
   // Invalidate cache to ensure fresh data on next fetch
   projectsCache = null;
