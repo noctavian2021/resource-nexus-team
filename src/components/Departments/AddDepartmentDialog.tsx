@@ -184,7 +184,7 @@ export default function AddDepartmentDialog() {
                             </SelectItem>
                           ))
                         ) : (
-                          <SelectItem value="" disabled>
+                          <SelectItem value="no-members" disabled>
                             No team members available
                           </SelectItem>
                         )}
