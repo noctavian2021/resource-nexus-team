@@ -28,7 +28,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   // For role-based restrictions
   // Admin can access everything
   // Team leads can only access their department data or common pages
-  const isRestrictedAdminRoute = location.pathname.startsWith('/admin') && user.role !== 'admin';
+  const isRestrictedAdminRoute = location.pathname.includes('/admin') && user.role !== 'admin';
   
   if (isRestrictedAdminRoute) {
     return <Navigate to="/" replace />;
