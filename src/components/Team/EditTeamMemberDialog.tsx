@@ -218,7 +218,7 @@ export default function EditTeamMemberDialog({
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                <SelectItem value="">Custom Project</SelectItem>
+                                <SelectItem value="custom">Custom Project</SelectItem>
                                 {projects.map((project) => (
                                   <SelectItem key={project.id} value={project.id}>
                                     {project.name}
@@ -228,7 +228,7 @@ export default function EditTeamMemberDialog({
                             </Select>
                             
                             {/* Show custom project name input if "Custom Project" is selected */}
-                            {(!projectField.value || projectField.value === "") && (
+                            {projectField.value === "custom" && (
                               <FormField
                                 control={form.control}
                                 name={`projectInvolvements.${index}.projectName`}

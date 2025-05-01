@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -528,7 +529,7 @@ export default function AddTeamMemberDialog({
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value="">Custom Project</SelectItem>
+                              <SelectItem value="custom">Custom Project</SelectItem>
                               {projects.map((project) => (
                                 <SelectItem key={project.id} value={project.id}>
                                   {project.name}
@@ -538,7 +539,7 @@ export default function AddTeamMemberDialog({
                           </Select>
                           
                           {/* Show custom project name input if "Custom Project" is selected */}
-                          {projectField.value === "" && (
+                          {projectField.value === "custom" && (
                             <FormField
                               control={form.control}
                               name={`projectInvolvements.${index}.projectName`}
