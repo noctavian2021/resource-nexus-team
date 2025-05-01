@@ -4,15 +4,17 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/componen
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ResourceRequest, getDepartmentById } from '@/data/mockData';
-import { CalendarDays, Check, X } from 'lucide-react';
+import { CalendarDays, Check, X, ArrowRight } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 
 const getStatusBadge = (status: string) => {
   switch (status) {
     case 'Approved':
+    case 'approved':
       return <Badge className="bg-green-500">Approved</Badge>;
     case 'Declined':
+    case 'rejected':
       return <Badge className="bg-red-500">Declined</Badge>;
     case 'Pending':
     case 'pending':
@@ -31,6 +33,10 @@ export default function RequestCard({ request }: RequestCardProps) {
   const requestingDepartment = getDepartmentById(request.requestingDepartmentId);
   const targetDepartment = getDepartmentById(request.targetDepartmentId);
 
+  // In a real app, this would come from auth context
+  const currentUserDepartmentId = '1';
+  const isApprover = request.targetDepartmentId === currentUserDepartmentId;
+  
   const handleApprove = () => {
     // In a real app, this would be an API call
     console.log('Approved request:', request.id);
@@ -55,9 +61,11 @@ export default function RequestCard({ request }: RequestCardProps) {
         <div className="flex items-center justify-between">
           <div className="space-y-1">
             <CardTitle>{request.title}</CardTitle>
-            <p className="text-sm text-muted-foreground">
-              From: {requestingDepartment?.name} → To: {targetDepartment?.name}
-            </p>
+            <div className="flex items-center text-sm text-muted-foreground gap-1">
+              <span>{requestingDepartment?.name || 'Unknown'}</span>
+              <ArrowRight className="h-3 w-3" />
+              <span>{targetDepartment?.name || 'Unknown'}</span>
+            </div>
           </div>
           {getStatusBadge(request.status)}
         </div>
@@ -82,7 +90,7 @@ export default function RequestCard({ request }: RequestCardProps) {
         </div>
       </CardContent>
       
-      {request.status === "pending" && (
+      {request.status === "pending" && isApprover && (
         <CardFooter className="flex justify-end gap-2">
           <Button variant="outline" size="sm" onClick={handleDecline}>
             <X className="mr-1 h-4 w-4" />

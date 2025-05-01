@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -5,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { departments, ResourceRequest } from '@/data/mockData';
+import { ResourceRequest } from '@/data/mockData';
 import { PlusCircle, Mail } from 'lucide-react';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -13,6 +14,11 @@ import { toast } from '@/hooks/use-toast';
 import { useNotifications } from '@/hooks/useNotifications';
 import { useEmailConfig } from '@/hooks/useEmailConfig';
 import apiRequest from '@/services/api';
+import { useEffect, useState } from 'react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useQuery } from '@tanstack/react-query';
+import { getDepartments } from '@/services/departmentService';
+import { Department } from '@/data/mockData';
 
 const requestFormSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -30,6 +36,16 @@ export default function CreateRequestDialog() {
   const [sending, setSending] = React.useState(false);
   const { addNotification } = useNotifications();
   const { emailConfig } = useEmailConfig();
+  
+  // Fetch departments using React Query
+  const { data: departmentList = [], isLoading: isLoadingDepartments } = useQuery({
+    queryKey: ['departments'],
+    queryFn: getDepartments
+  });
+
+  // Get current user's department (in a real app, this would come from auth context)
+  // For now, we'll just assume department ID '1' for demo purposes
+  const currentUserDepartmentId = '1';
   
   const form = useForm<RequestFormData>({
     resolver: zodResolver(requestFormSchema),
@@ -50,16 +66,16 @@ export default function CreateRequestDialog() {
       // In a real app, this would be an API call
       console.log('New request:', data);
       
-      const targetDepartment = departments.find(dept => dept.id === data.targetDepartmentId);
-      const requestingDepartment = departments.find(d => d.id === '1'); // In a real app, this would come from the authenticated user's department
+      const targetDepartment = departmentList.find(dept => dept.id === data.targetDepartmentId);
+      const requestingDepartment = departmentList.find(d => d.id === currentUserDepartmentId);
       
       // Modified to match the ResourceRequest interface
       const newRequest: Partial<ResourceRequest> = {
         id: `request-${Date.now()}`,
-        requesterId: '1', // In a real app, this would be the authenticated user's ID
+        requesterId: currentUserDepartmentId, // In a real app, this would be the authenticated user's ID
         projectId: '', // This would be set if the request is for a specific project
-        departmentId: '1', // In a real app, this would come from the authenticated user's department
-        requestingDepartmentId: '1', // In a real app, this would come from the authenticated user's department
+        departmentId: currentUserDepartmentId, // In a real app, this would come from the authenticated user's department
+        requestingDepartmentId: currentUserDepartmentId, // In a real app, this would come from the authenticated user's department
         targetDepartmentId: data.targetDepartmentId,
         title: data.title,
         description: data.description,
@@ -81,7 +97,7 @@ export default function CreateRequestDialog() {
       );
       
       // Send email notification if email is configured
-      if (emailConfig.enabled) {
+      if (emailConfig.enabled && targetDepartment) {
         try {
           // Using the API service to send the email
           await apiRequest('/email/send-welcome', 'POST', {
@@ -174,17 +190,29 @@ export default function CreateRequestDialog() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Target Department</FormLabel>
-                  <select
-                    {...field}
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  <Select 
+                    onValueChange={field.onChange} 
+                    defaultValue={field.value}
                   >
-                    <option value="">Select department</option>
-                    {departments.map((dept) => (
-                      <option key={dept.id} value={dept.id}>
-                        {dept.name}
-                      </option>
-                    ))}
-                  </select>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select department" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {isLoadingDepartments ? (
+                        <SelectItem value="loading">Loading departments...</SelectItem>
+                      ) : (
+                        departmentList
+                          .filter(dept => dept.id !== currentUserDepartmentId) // Filter out current department
+                          .map((dept) => (
+                            <SelectItem key={dept.id} value={dept.id}>
+                              {dept.name}
+                            </SelectItem>
+                          ))
+                      )}
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
