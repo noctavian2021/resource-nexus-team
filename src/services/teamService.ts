@@ -1,6 +1,7 @@
 
 import { TeamMember } from '@/data/mockData';
 import apiRequest from './api';
+import { EmailConfig } from '@/hooks/useEmailConfig';
 
 export interface ProjectInvolvement {
   projectId: string;
@@ -95,6 +96,7 @@ export const sendWelcomePackage = (data: {
   replacingMember: string; 
   additionalNotes: string;
   requiredResources?: RequiredResource[];
+  emailConfig?: EmailConfig;
 }) => {
   return apiRequest('/email/send-welcome', 'POST', data);
 };

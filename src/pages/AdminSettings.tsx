@@ -382,7 +382,7 @@ export default function AdminSettings() {
                            
     if (validationErrors) {
       return (
-        <Alert variant="warning" className="mb-4">
+        <Alert variant="destructive" className="mb-4">
           <AlertTriangle className="h-4 w-4" />
           <AlertTitle>Incomplete email configuration</AlertTitle>
           <AlertDescription>
@@ -393,7 +393,7 @@ export default function AdminSettings() {
     }
     
     return (
-      <Alert variant="success" className="mb-4 bg-green-50 border-green-200">
+      <Alert variant="default" className="mb-4 bg-green-50 border-green-200">
         <CheckCircle className="h-4 w-4 text-green-600" />
         <AlertTitle className="text-green-800">Email configuration ready</AlertTitle>
         <AlertDescription className="text-green-700">

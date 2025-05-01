@@ -1,4 +1,3 @@
-
 import React from 'react';
 import {
   Dialog,
@@ -153,7 +152,7 @@ export default function SendWelcomeDialog() {
         </DialogHeader>
         
         {!emailConfig.enabled && (
-          <Alert variant="warning" className="mb-4">
+          <Alert variant="destructive" className="mb-4">
             <AlertTriangle className="h-4 w-4" />
             <AlertTitle>Email Notifications Disabled</AlertTitle>
             <AlertDescription>
