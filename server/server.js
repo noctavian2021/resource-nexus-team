@@ -229,7 +229,7 @@ app.post('/api/email/send-test', async (req, res) => {
 
 app.post('/api/email/send-welcome', async (req, res) => {
   try {
-    const { email, replacingMember, additionalNotes, emailConfig } = req.body;
+    const { email, replacingMember, additionalNotes, requiredResources = [], emailConfig } = req.body;
     
     // Check if we have email configuration
     if (!emailConfig || !emailConfig.enabled) {
@@ -237,6 +237,7 @@ app.post('/api/email/send-welcome', async (req, res) => {
       console.log('Sending welcome email to:', email);
       console.log('Replacing member:', replacingMember);
       console.log('Additional notes:', additionalNotes);
+      console.log('Required resources:', requiredResources);
       
       // Simulate email send
       setTimeout(() => {
@@ -257,7 +258,22 @@ app.post('/api/email/send-welcome', async (req, res) => {
         user: emailConfig.username,
         pass: emailConfig.password,
       },
+      // Add connection timeout and debug options
+      connectionTimeout: 10000,
+      greetingTimeout: 5000,
     });
+
+    // Verify connection first
+    try {
+      await transporter.verify();
+      console.log('SMTP connection verified successfully');
+    } catch (verifyError) {
+      console.error('SMTP verification failed:', verifyError);
+      return res.status(400).json({ 
+        success: false, 
+        error: `Failed to connect to SMTP server: ${verifyError.message}` 
+      });
+    }
 
     const mailOptions = {
       from: `"${emailConfig.fromName}" <${emailConfig.fromEmail}>`,

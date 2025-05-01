@@ -72,7 +72,16 @@ const apiRequest = async <T>(
       throw new Error(errorMessage);
     }
     
-    return await response.json();
+    // Handle empty responses properly
+    const contentType = response.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+      const text = await response.text();
+      // Only try to parse if there's actual content
+      return text ? JSON.parse(text) : {} as T;
+    } else {
+      // For non-JSON responses, return an empty object
+      return {} as T;
+    }
   } catch (error) {
     console.error(`API Error (${endpoint}):`, error);
     throw error;

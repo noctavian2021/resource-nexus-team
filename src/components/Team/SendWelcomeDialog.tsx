@@ -1,3 +1,4 @@
+
 import React from 'react';
 import {
   Dialog,
@@ -31,6 +32,7 @@ export default function SendWelcomeDialog() {
   const [requiredResources, setRequiredResources] = React.useState<ResourceWithSelection[]>([]);
   const [isOpen, setIsOpen] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
   const { toast } = useToast();
   const { emailConfig } = useEmailConfig();
 
@@ -55,6 +57,7 @@ export default function SendWelcomeDialog() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setError(null);
     
     try {
       if (!email) {
@@ -77,36 +80,46 @@ export default function SendWelcomeDialog() {
         return;
       }
 
-      // Send welcome package through the API
       // Only include selected resources
       const selectedResources = requiredResources
         .filter(resource => resource.selected)
         .map(({ selected, ...resource }) => resource);
 
       // Pass email config to the API to enable actual email sending
-      await sendWelcomePackage({
-        email,
-        replacingMember,
-        additionalNotes,
-        requiredResources: selectedResources,
-        emailConfig: emailConfig.enabled ? emailConfig : undefined
-      });
+      try {
+        await sendWelcomePackage({
+          email,
+          replacingMember,
+          additionalNotes,
+          requiredResources: selectedResources,
+          emailConfig: emailConfig.enabled ? emailConfig : undefined
+        });
 
-      toast({
-        title: "Welcome package sent",
-        description: emailConfig.enabled 
-          ? "The welcome package has been sent via email."
-          : "The welcome package has been processed (email notifications disabled).",
-      });
+        toast({
+          title: "Welcome package sent",
+          description: emailConfig.enabled 
+            ? "The welcome package has been sent via email."
+            : "The welcome package has been processed (email notifications disabled).",
+        });
 
-      setIsOpen(false);
-      setEmail("");
-      setReplacingMember("");
-      setAdditionalNotes("");
-      setSelectedMember(null);
-      setRequiredResources([]);
+        setIsOpen(false);
+        setEmail("");
+        setReplacingMember("");
+        setAdditionalNotes("");
+        setSelectedMember(null);
+        setRequiredResources([]);
+      } catch (apiError: any) {
+        console.error("API Error:", apiError);
+        setError(apiError.message || "Failed to send welcome package");
+        toast({
+          title: "Error",
+          description: apiError.message || "Failed to send welcome package. Please try again.",
+          variant: "destructive",
+        });
+      }
     } catch (error: any) {
       console.error("Error sending welcome package:", error);
+      setError(error.message || "An unexpected error occurred");
       toast({
         title: "Error",
         description: error.message || "Failed to send welcome package. Please try again.",
@@ -159,6 +172,14 @@ export default function SendWelcomeDialog() {
               Email notifications are currently disabled. The welcome package will be processed but no email will be sent.
               You can enable email notifications in the Admin Settings.
             </AlertDescription>
+          </Alert>
+        )}
+        
+        {error && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
           </Alert>
         )}
         

@@ -193,6 +193,21 @@ export const useEmailConfig = () => {
         }),
       });
 
+      // Add better error handling for failed responses
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Server error response:', errorText);
+        
+        // Try to parse as JSON if possible
+        try {
+          const errorJson = JSON.parse(errorText);
+          return { success: false, error: errorJson.error || `Server error: ${response.status}` };
+        } catch (e) {
+          // If we can't parse as JSON, return the raw error text
+          return { success: false, error: `Server error: ${errorText || response.statusText || response.status}` };
+        }
+      }
+
       const result = await response.json();
       
       if (result.success) {
