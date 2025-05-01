@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { toast } from '@/hooks/use-toast';
 import { useEmailConfig } from '@/hooks/useEmailConfig';
 
@@ -15,12 +15,16 @@ interface Notification {
 export const useNotifications = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const { emailConfig } = useEmailConfig();
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     const stored = localStorage.getItem('notifications');
     if (stored) {
       setNotifications(JSON.parse(stored));
     }
+    
+    // Initialize audio element
+    audioRef.current = new Audio('/notification-sound.mp3');
   }, []);
 
   const addNotification = (title: string, message: string, category: 'general' | 'report' | 'request' | 'absence' = 'general') => {
@@ -36,6 +40,14 @@ export const useNotifications = () => {
     const updatedNotifications = [newNotification, ...notifications];
     setNotifications(updatedNotifications);
     localStorage.setItem('notifications', JSON.stringify(updatedNotifications));
+
+    // Play notification sound
+    if (audioRef.current) {
+      audioRef.current.currentTime = 0; // Reset to start
+      audioRef.current.play().catch(err => {
+        console.log('Error playing notification sound:', err);
+      });
+    }
 
     // Show toast for new notification
     toast({
