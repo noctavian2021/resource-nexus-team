@@ -40,7 +40,12 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-export default function AddDepartmentDialog() {
+// Updated to accept onDepartmentAdded prop
+interface AddDepartmentDialogProps {
+  onDepartmentAdded: () => void;
+}
+
+export default function AddDepartmentDialog({ onDepartmentAdded }: AddDepartmentDialogProps) {
   const [isOpen, setIsOpen] = React.useState(false);
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState(false);
@@ -98,7 +103,8 @@ export default function AddDepartmentDialog() {
       setIsOpen(false);
       form.reset();
       
-      window.location.reload();
+      // Call the callback function to notify the parent component
+      onDepartmentAdded();
     } catch (error) {
       console.error("Error creating department:", error);
       toast({
