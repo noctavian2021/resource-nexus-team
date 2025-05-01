@@ -6,8 +6,8 @@
  */
 
 // Re-export the main API client
-import apiRequest, { API_URL, USE_MOCK } from './apiClient';
+import apiRequest, { API_URL, isMockDataEnabled, toggleMockData } from './apiClient';
 
 // Export for backward compatibility
-export { API_URL, USE_MOCK };
+export { API_URL, isMockDataEnabled, toggleMockData };
 export default apiRequest;
