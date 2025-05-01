@@ -1,7 +1,7 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { useNavigate, Navigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -18,6 +18,7 @@ interface LoginFormData {
 export default function Login() {
   const { user, login, isLoading, error } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
   
   const { register, handleSubmit, formState: { errors } } = useForm<LoginFormData>({
@@ -27,10 +28,12 @@ export default function Login() {
     }
   });
 
-  // If already logged in, redirect to home
-  if (user) {
-    return <Navigate to="/" />;
-  }
+  useEffect(() => {
+    // Only redirect if user is logged in and we're not dealing with a force reload
+    if (user && !location.search.includes('forceHideBadge')) {
+      navigate('/', { replace: true });
+    }
+  }, [user, navigate, location]);
 
   const onSubmit = async (data: LoginFormData) => {
     const success = await login(data.email, data.password);
@@ -40,7 +43,7 @@ export default function Login() {
         title: "Login successful",
         description: "Welcome back!",
       });
-      navigate('/');
+      navigate('/', { replace: true });
     } else {
       toast({
         title: "Login failed",
@@ -49,6 +52,11 @@ export default function Login() {
       });
     }
   };
+
+  // If already logged in, don't render form (handled by useEffect)
+  if (user) {
+    return null;
+  }
 
   // Demo login credentials
   const demoAccounts = [
