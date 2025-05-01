@@ -42,7 +42,9 @@ const apiRequest = async <T>(
     return handleMockRequest<T>(endpoint, method, data);
   }
   
-  const url = `${API_URL}/api${endpoint}`;
+  // Fix for endpoints: ensure they start with a slash if endpoint doesn't already
+  const formattedEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+  const url = `${API_URL}/api${formattedEndpoint}`;
   console.log(`Making API request to: ${url}`);
   
   const options: RequestInit = {

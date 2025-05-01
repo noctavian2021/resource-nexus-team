@@ -1,6 +1,6 @@
-
 import { useState, useEffect } from 'react';
 import { toast } from '@/hooks/use-toast';
+import apiRequest from '@/services/apiClient';
 
 export interface EmailConfig {
   provider: 'gmail' | 'resend' | 'yahoo' | 'outlook365' | 'custom';
@@ -161,62 +161,35 @@ export const useEmailConfig = () => {
     setError(null);
     
     try {
-      // Call the backend API to send the test email
-      const response = await fetch('/api/email/send-test', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          config: {
-            ...emailConfig,
-            // For security, we only include necessary fields
-            provider: emailConfig.provider,
-            host: emailConfig.host,
-            port: emailConfig.port,
-            secure: emailConfig.secure,
-            username: emailConfig.username,
-            password: emailConfig.password,
-            fromEmail: emailConfig.fromEmail,
-            fromName: emailConfig.fromName,
-          },
-          recipient,
-          subject: 'Test Email from Resource Management System',
-          text: 'This is a test email to verify your SMTP configuration is working correctly.',
-          html: `
-            <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
-              <h2>Test Email</h2>
-              <p>This is a test email to verify your SMTP configuration is working correctly.</p>
-              <p>If you received this email, your email system is properly configured!</p>
-              <hr>
-              <p style="color: #666; font-size: 12px;">Resource Management System</p>
-            </div>
-          `
-        }),
+      // Use our updated apiRequest function instead of direct fetch
+      const result = await apiRequest('/email/send-test', 'POST', {
+        config: {
+          ...emailConfig,
+          // For security, we only include necessary fields
+          provider: emailConfig.provider,
+          host: emailConfig.host,
+          port: emailConfig.port,
+          secure: emailConfig.secure,
+          username: emailConfig.username,
+          password: emailConfig.password,
+          fromEmail: emailConfig.fromEmail,
+          fromName: emailConfig.fromName,
+        },
+        recipient,
+        subject: 'Test Email from Resource Management System',
+        text: 'This is a test email to verify your SMTP configuration is working correctly.',
+        html: `
+          <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2>Test Email</h2>
+            <p>This is a test email to verify your SMTP configuration is working correctly.</p>
+            <p>If you received this email, your email system is properly configured!</p>
+            <hr>
+            <p style="color: #666; font-size: 12px;">Resource Management System</p>
+          </div>
+        `
       });
-
-      // Add better error handling for failed responses
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Server error response:', errorText);
-        
-        // Try to parse as JSON if possible
-        try {
-          const errorJson = JSON.parse(errorText);
-          return { success: false, error: errorJson.error || `Server error: ${response.status}` };
-        } catch (e) {
-          // If we can't parse as JSON, return the raw error text
-          return { success: false, error: `Server error: ${errorText || response.statusText || response.status}` };
-        }
-      }
-
-      const result = await response.json();
       
-      if (result.success) {
-        return { success: true };
-      } else {
-        const errorMsg = result.error || 'Failed to send email';
-        setError(errorMsg);
-        return { success: false, error: errorMsg };
-      }
+      return { success: true };
     } catch (err: any) {
       const errorMsg = `Email sending failed: ${err.message || 'Unknown error'}`;
       setError(errorMsg);
