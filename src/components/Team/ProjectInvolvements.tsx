@@ -73,13 +73,16 @@ export default function ProjectInvolvements({ member }: ProjectInvolvementsProps
             id: customId,
             name: displayName.charAt(0).toUpperCase() + displayName.slice(1), // Capitalize first letter
             description: "Custom project",
-            status: "active",
+            status: "Active", // Fix: changed "active" to "Active" to match the type
             startDate: new Date().toISOString(),
             endDate: null,
             budget: null,
             department: member.department,
-            teamMembers: [member.id]
-          };
+            teamMembers: [member.id],
+            departmentId: '', // Added to match Project interface
+            progress: 0, // Added to match Project interface
+            priority: 'Medium' // Added to match Project interface
+          } as Project; // Use type assertion for the whole object
         });
         
         const projectEntries = await Promise.all(projectPromises);
