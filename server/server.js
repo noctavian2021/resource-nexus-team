@@ -173,6 +173,19 @@ app.post('/api/email/send-test', async (req, res) => {
       });
     }
 
+    console.log('Sending test email to:', recipient);
+    console.log('Using email configuration:', JSON.stringify({
+      host: config.host,
+      port: config.port,
+      secure: config.secure,
+      auth: {
+        user: config.username,
+        // Mask password in logs
+        pass: '********'
+      },
+      from: `"${config.fromName}" <${config.fromEmail}>`,
+    }, null, 2));
+
     // Create a transporter with the provided configuration
     const transporter = nodemailer.createTransport({
       host: config.host,
@@ -182,7 +195,7 @@ app.post('/api/email/send-test', async (req, res) => {
         user: config.username,
         pass: config.password,
       },
-      // Add connection timeout and debug options
+      // Add connection timeout and debug options for better troubleshooting
       connectionTimeout: 10000,
       greetingTimeout: 5000,
       debug: true,
@@ -212,11 +225,14 @@ app.post('/api/email/send-test', async (req, res) => {
 
     const info = await transporter.sendMail(mailOptions);
     console.log('Email sent successfully:', info);
+    console.log('Message ID:', info.messageId);
+    console.log('SMTP response:', info.response);
 
     res.json({ 
       success: true, 
       message: 'Test email sent successfully',
-      messageId: info.messageId 
+      messageId: info.messageId,
+      smtpResponse: info.response
     });
   } catch (error) {
     console.error('Email sending error:', error);

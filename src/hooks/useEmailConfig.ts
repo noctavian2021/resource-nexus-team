@@ -140,7 +140,7 @@ export const useEmailConfig = () => {
     }
   };
 
-  const sendTestEmail = async (recipient: string): Promise<{success: boolean; error?: string}> => {
+  const sendTestEmail = async (recipient: string): Promise<{success: boolean; error?: string; details?: any}> => {
     if (!emailConfig.enabled) {
       return { success: false, error: 'Email notifications are disabled' };
     }
@@ -160,9 +160,26 @@ export const useEmailConfig = () => {
     setIsLoading(true);
     setError(null);
     
+    console.log('Sending test email to', recipient, 'with config:', JSON.stringify({
+      provider: emailConfig.provider,
+      host: emailConfig.host,
+      port: emailConfig.port,
+      secure: emailConfig.secure,
+      username: emailConfig.username,
+      fromEmail: emailConfig.fromEmail,
+      fromName: emailConfig.fromName,
+      enabled: emailConfig.enabled
+    }, null, 2));
+    
     try {
       // Use our updated apiRequest function instead of direct fetch
-      const result = await apiRequest('/email/send-test', 'POST', {
+      const result = await apiRequest<{
+        success: boolean;
+        message?: string;
+        error?: string;
+        messageId?: string;
+        smtpResponse?: string;
+      }>('/email/send-test', 'POST', {
         config: {
           ...emailConfig,
           // For security, we only include necessary fields
@@ -189,9 +206,23 @@ export const useEmailConfig = () => {
         `
       });
       
-      return { success: true };
+      if (result.success) {
+        console.log('Email sent successfully:', result);
+        return { 
+          success: true, 
+          details: {
+            messageId: result.messageId,
+            smtpResponse: result.smtpResponse
+          }
+        };
+      } else {
+        const errorMsg = result.error || 'Unknown error sending email';
+        setError(errorMsg);
+        return { success: false, error: errorMsg };
+      }
     } catch (err: any) {
       const errorMsg = `Email sending failed: ${err.message || 'Unknown error'}`;
+      console.error(errorMsg);
       setError(errorMsg);
       return { success: false, error: errorMsg };
     } finally {

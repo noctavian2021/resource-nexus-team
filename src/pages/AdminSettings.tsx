@@ -33,6 +33,10 @@ export default function AdminSettings() {
   const [isImporting, setIsImporting] = useState(false);
   const [backupFile, setBackupFile] = useState<File | null>(null);
   const [useMockData, setUseMockData] = useState(false);
+  const [emailTestDetails, setEmailTestDetails] = useState<{
+    messageId?: string;
+    smtpResponse?: string;
+  } | null>(null);
   const isMobile = useIsMobile();
   
   // Initialize mock data state
@@ -77,6 +81,8 @@ export default function AdminSettings() {
     }
 
     setIsSendingTest(true);
+    setEmailTestDetails(null);
+    
     try {
       const result = await sendTestEmail(testEmailRecipient);
       if (result.success) {
@@ -85,6 +91,14 @@ export default function AdminSettings() {
           description: `A test email was sent to ${testEmailRecipient}`,
           variant: "default",
         });
+        
+        // Set the details for display
+        if (result.details) {
+          setEmailTestDetails({
+            messageId: result.details.messageId,
+            smtpResponse: result.details.smtpResponse
+          });
+        }
       } else {
         toast({
           title: "Email Sending Failed",
@@ -416,6 +430,52 @@ export default function AdminSettings() {
     );
   };
 
+  const renderTestEmailSection = () => {
+    return (
+      <div className="border p-4 rounded-md bg-muted/50 space-y-4">
+        <div className="flex flex-col space-y-1.5">
+          <Label htmlFor="testEmail">Test Email</Label>
+          <div className="flex space-x-2">
+            <Input
+              id="testEmail"
+              placeholder="recipient@example.com"
+              value={testEmailRecipient}
+              onChange={(e) => setTestEmailRecipient(e.target.value)}
+            />
+            <Button 
+              onClick={handleTestEmail} 
+              disabled={isSendingTest || !emailConfig.enabled || !emailConfig.fromEmail || !emailConfig.host}
+            >
+              {isSendingTest ? "Sending..." : "Send Test"}
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground mt-1">
+            Send a test email to verify your SMTP configuration.
+          </p>
+        </div>
+        
+        {emailTestDetails && (
+          <div className="mt-4 p-3 bg-muted rounded-md text-sm">
+            <h4 className="font-medium mb-2">Email Delivery Details</h4>
+            {emailTestDetails.messageId && (
+              <div className="mb-1">
+                <span className="font-semibold">Message ID:</span> {emailTestDetails.messageId}
+              </div>
+            )}
+            {emailTestDetails.smtpResponse && (
+              <div className="mb-1">
+                <span className="font-semibold">SMTP Response:</span> {emailTestDetails.smtpResponse}
+              </div>
+            )}
+            <p className="text-xs text-muted-foreground mt-2">
+              If the SMTP response shows a success code (usually starting with 2xx), the email was successfully handed over to the mail server.
+            </p>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <>
       <Header title="Admin Settings" />
@@ -548,28 +608,7 @@ export default function AdminSettings() {
                   <Label htmlFor="enableEmails">Enable email notifications</Label>
                 </div>
 
-                <div className="border p-4 rounded-md bg-muted/50 space-y-4">
-                  <div className="flex flex-col space-y-1.5">
-                    <Label htmlFor="testEmail">Test Email</Label>
-                    <div className="flex space-x-2">
-                      <Input
-                        id="testEmail"
-                        placeholder="recipient@example.com"
-                        value={testEmailRecipient}
-                        onChange={(e) => setTestEmailRecipient(e.target.value)}
-                      />
-                      <Button 
-                        onClick={handleTestEmail} 
-                        disabled={isSendingTest || !emailConfig.enabled || !emailConfig.fromEmail || !emailConfig.host}
-                      >
-                        {isSendingTest ? "Sending..." : "Send Test"}
-                      </Button>
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Send a test email to verify your SMTP configuration.
-                    </p>
-                  </div>
-                </div>
+                {renderTestEmailSection()}
               </CardContent>
               <CardFooter className="flex justify-end">
                 <Button onClick={handleSaveConfig}>Save Configuration</Button>
