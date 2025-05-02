@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { toast } from '@/hooks/use-toast';
 import apiRequest from '@/services/apiClient';
@@ -67,6 +68,14 @@ const validateEmailConfig = (config: EmailConfig): string[] => {
       errors.push('From email is required');
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(config.fromEmail)) {
       errors.push('Valid from email is required');
+    }
+
+    // Special validation for Resend
+    if (config.provider === 'resend') {
+      // Check if fromEmail is using resend.dev domain and not verified
+      if (config.fromEmail.endsWith('resend.dev') && config.fromEmail !== 'onboarding@resend.dev') {
+        errors.push('For Resend: Only onboarding@resend.dev can be used as a from email unless you have verified your domain');
+      }
     }
   }
   
@@ -240,7 +249,7 @@ export const useEmailConfig = () => {
       case 'yahoo':
         return 'For Yahoo, you need to generate an app password in your account security settings.';
       case 'resend':
-        return 'For Resend, use your API key as the password.';
+        return 'For Resend, use your API key as both the username and password. You must use onboarding@resend.dev as the from email unless you have verified your domain in Resend.';
       default:
         return '';
     }
