@@ -96,34 +96,17 @@ export default function SendWelcomeDialog({ teamMembers, onRefreshList }: SendWe
         emailConfigEnabled: emailConfig.enabled
       });
       
-      // Ensure we're sending the correct configuration to the API
-      // Create a normalized copy of the email config to ensure all SSL settings are properly applied
-      const normalizedEmailConfig = emailConfig.enabled ? {
-        ...emailConfig,
-        // Ensure secure is boolean and matches the expected port configuration
-        port: emailConfig.port,
-        secure: emailConfig.port === '465' ? true : false,
-        // Ensure provider-specific settings are applied
-        ...(emailConfig.provider === 'gmail' ? {
-          host: 'smtp.gmail.com',
-          port: '587',
-          secure: false
-        } : {}),
-        ...(emailConfig.provider === 'yahoo' ? {
-          host: 'smtp.mail.yahoo.com',
-          port: '465',
-          secure: true
-        } : {})
-      } : undefined;
-
-      // Pass email config to the API to enable actual email sending
+      // Remove custom normalization code from here since we moved it to the service
+      // This prevents double-normalization and ensures consistent approach with emailTestService
+      
+      // Pass email config directly to the API - normalization now happens in the service
       try {
         await sendWelcomePackage({
           email,
           replacingMember,
           additionalNotes,
           requiredResources: selectedResources,
-          emailConfig: normalizedEmailConfig
+          emailConfig: emailConfig.enabled ? emailConfig : undefined
         });
 
         toast({
@@ -161,8 +144,8 @@ export default function SendWelcomeDialog({ teamMembers, onRefreshList }: SendWe
         }
         
         // Connection timeout issues
-        if (errorMessage.includes('ETIMEDOUT') || errorMessage.includes('Connection timed out')) {
-          errorMessage = "Connection to email server timed out. This could be due to network issues or incorrect server settings. Please verify your host and port settings.";
+        if (errorMessage.includes('ETIMEDOUT') || errorMessage.includes('Connection timed out') || errorMessage.includes('Greeting never received')) {
+          errorMessage = "Connection to email server timed out. This could be due to network issues or incorrect server settings. Please check for security alerts in your email account and verify your provider settings.";
         }
         
         setError(errorMessage);

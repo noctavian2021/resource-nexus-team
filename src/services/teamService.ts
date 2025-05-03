@@ -107,31 +107,36 @@ export const sendWelcomePackage = (data: {
     provider: data.emailConfig?.provider
   });
   
-  // Normalize emailConfig to ensure proper SSL settings for the welcome package email
-  const normalizedData = {
-    ...data,
-    emailConfig: data.emailConfig ? {
-      ...data.emailConfig,
-      // Force correct secure settings based on port
-      secure: data.emailConfig.port === '465' ? true : false,
-      // Apply provider-specific overrides
-      ...(data.emailConfig.provider === 'gmail' ? {
-        host: 'smtp.gmail.com',
-        port: '587',
-        secure: false
-      } : {}),
-      ...(data.emailConfig.provider === 'yahoo' ? {
-        host: 'smtp.mail.yahoo.com',
-        port: '465',
-        secure: true
-      } : {}),
-      // Add connection timeout settings
-      connectionTimeout: 30000, // 30 seconds
-      greetingTimeout: 30000    // 30 seconds
-    } : undefined
-  };
+  // Apply the same approach as in emailTestService.ts
+  // Normalize and ensure consistent configuration
+  const normalizedConfig = data.emailConfig ? {
+    ...data.emailConfig,
+    // Ensure port is string and secured is properly set based on port
+    port: String(data.emailConfig.port),
+    secure: data.emailConfig.port === '465' ? true : (data.emailConfig.port === '587' ? false : data.emailConfig.secure),
+    
+    // Apply provider-specific overrides - same as in emailTestService.ts
+    ...(data.emailConfig.provider === 'gmail' ? {
+      host: 'smtp.gmail.com',
+      port: '587',
+      secure: false
+    } : {}),
+    ...(data.emailConfig.provider === 'yahoo' ? {
+      host: 'smtp.mail.yahoo.com',
+      port: '465',
+      secure: true
+    } : {}),
+    
+    // Add connection timeout settings - same as in emailTestService.ts
+    connectionTimeout: 30000, // 30 seconds
+    greetingTimeout: 30000    // 30 seconds
+  } : undefined;
   
-  return apiRequest('/email/send-welcome', 'POST', normalizedData);
+  // Send the normalized data to the API
+  return apiRequest('/email/send-welcome', 'POST', {
+    ...data,
+    emailConfig: normalizedConfig
+  });
 };
 
 // New function to get organizational structure
