@@ -4,7 +4,7 @@ import { toast } from '@/hooks/use-toast';
 import { EmailConfig } from './types';
 import { defaultEmailConfig, defaultConfigs } from './emailDefaults';
 import { validateEmailConfig } from './validation';
-import { getProviderHelp, normalizeProviderConfig } from './providerUtils';
+import { getProviderHelp, normalizeProviderConfig, getConnectionErrorHelp } from './providerUtils';
 import { sendTestEmail } from './emailTestService';
 
 export const useEmailConfig = () => {
@@ -56,7 +56,7 @@ export const useEmailConfig = () => {
           }
         }
         
-        // For Gmail, provide safe defaults
+        // For Gmail, provide safe defaults - always use 587 with STARTTLS
         if (config.provider === 'gmail') {
           updatedConfig.port = '587'; // Standard port for Gmail
           updatedConfig.secure = false; // Uses STARTTLS
@@ -121,9 +121,51 @@ export const useEmailConfig = () => {
       
       if (!result.success && result.error) {
         setError(result.error);
+        
+        if (result.error.includes('Greeting never received')) {
+          // Provide specific guidance for connection issues
+          const helpMessage = getConnectionErrorHelp(result.error, emailConfig.provider);
+          toast({
+            title: "Connection Error",
+            description: helpMessage,
+            variant: "destructive"
+          });
+        } else {
+          toast({
+            title: "Email Test Failed",
+            description: result.error,
+            variant: "destructive"
+          });
+        }
+      } else if (result.success) {
+        toast({
+          title: "Email Test Successful",
+          description: "The test email was sent successfully!",
+        });
       }
       
       return result;
+    } catch (err: any) {
+      const errorMsg = err.message || 'Unknown error sending test email';
+      setError(errorMsg);
+      
+      // Provide helpful guidance for common errors
+      if (errorMsg.includes('Greeting never received')) {
+        const helpMessage = getConnectionErrorHelp(errorMsg, emailConfig.provider);
+        toast({
+          title: "Connection Error",
+          description: helpMessage,
+          variant: "destructive"
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: errorMsg,
+          variant: "destructive"
+        });
+      }
+      
+      return { success: false, error: errorMsg };
     } finally {
       setIsLoading(false);
     }

@@ -4,7 +4,7 @@ import { EmailConfig, EmailProviderType } from './types';
 export const getProviderHelp = (provider: EmailProviderType): string => {
   switch(provider) {
     case 'gmail':
-      return 'For Gmail, you need to: 1) Use your full Gmail address as username 2) Use an App Password if you have 2FA enabled (go to your Google Account > Security > App passwords) 3) Make sure "Less secure app access" is enabled if you don\'t use 2FA.';
+      return 'For Gmail, you need to: 1) Use your full Gmail address as username 2) Use an App Password if you have 2FA enabled (go to your Google Account > Security > App passwords) 3) Make sure "Less secure app access" is enabled if you don\'t use 2FA. 4) Check your Gmail account for security alerts that may be blocking connection attempts.';
     case 'outlook365':
       return 'For Outlook 365, make sure to use your full email as username and enable "Allow less secure apps" in your Microsoft account settings.';
     case 'yahoo':
@@ -27,13 +27,17 @@ export const normalizeProviderConfig = (config: EmailConfig): EmailConfig => {
   } else if (config.provider === 'gmail') {
     normalizedConfig.host = 'smtp.gmail.com';
     
-    // Gmail can use either 465 (SSL) or 587 (STARTTLS)
-    if (config.port === '465') {
-      normalizedConfig.secure = true; // Direct SSL
-    } else {
-      normalizedConfig.port = '587'; // Default to 587 if not 465
-      normalizedConfig.secure = false; // STARTTLS
-    }
+    // Gmail should use 587 with STARTTLS (secure=false) for better reliability
+    normalizedConfig.port = '587';
+    normalizedConfig.secure = false;
+  } else if (config.provider === 'outlook365') {
+    normalizedConfig.host = 'smtp.office365.com';
+    normalizedConfig.port = '587';
+    normalizedConfig.secure = false;
+  } else if (config.provider === 'resend') {
+    normalizedConfig.host = 'smtp.resend.com';
+    normalizedConfig.port = '465';
+    normalizedConfig.secure = true;
   } else {
     // For other providers, set secure based on port number
     if (config.port === '465') {
@@ -44,4 +48,21 @@ export const normalizeProviderConfig = (config: EmailConfig): EmailConfig => {
   }
   
   return normalizedConfig;
+};
+
+// New helper function to handle common email connection errors
+export const getConnectionErrorHelp = (errorMessage: string, provider: EmailProviderType): string => {
+  if (errorMessage.includes('Greeting never received')) {
+    if (provider === 'gmail') {
+      return 'Gmail connection timed out. This often happens due to security restrictions. Try: 1) Using an App Password if you have 2FA enabled 2) Check your Gmail inbox for security alerts 3) Try again in a few minutes';
+    }
+    
+    return 'Connection timed out. This could be due to network issues, incorrect server settings, or the email provider blocking your connection. Verify your settings and try again later.';
+  }
+  
+  if (errorMessage.includes('SSL routines') || errorMessage.includes('wrong version number')) {
+    return 'SSL/TLS connection failed. Your secure setting may not match what the server expects. If your port is 587, try setting secure=false. If your port is 465, try setting secure=true.';
+  }
+  
+  return `Email error: ${errorMessage}`;
 };

@@ -34,6 +34,7 @@ export const sendTestEmail = async (
   
   if (config.provider === 'gmail') {
     console.log('Using Gmail provider - note that Gmail requires an App Password if 2FA is enabled');
+    console.log('Gmail connection may fail if the account has security restrictions. Check for emails about security alerts.');
   }
   
   try {
@@ -44,7 +45,15 @@ export const sendTestEmail = async (
       messageId?: string;
       smtpResponse?: string;
     }>('/email/send-test', 'POST', {
-      config,
+      config: {
+        ...config,
+        // Ensure port is string and secured is properly set based on port
+        port: String(config.port),
+        secure: config.port === '465' ? true : (config.port === '587' ? false : config.secure),
+        // Add connection timeout settings
+        connectionTimeout: 30000, // 30 seconds
+        greetingTimeout: 30000    // 30 seconds
+      },
       recipient,
       subject: 'Test Email from Resource Management System',
       text: 'This is a test email to verify your SMTP configuration is working correctly.',
@@ -70,6 +79,7 @@ export const sendTestEmail = async (
       };
     } else {
       const errorMsg = result.error || 'Unknown error sending email';
+      console.error('Email error:', errorMsg);
       
       // Enhanced error handling for specific providers
       if (config.provider === 'yahoo' && 
@@ -85,7 +95,7 @@ export const sendTestEmail = async (
         if (errorMsg.includes('Greeting never received')) {
           return {
             success: false,
-            error: `Gmail connection timed out. Please try: 1) Using an App Password if you have 2FA enabled 2) Verifying your username is a Gmail address 3) Waiting a few minutes before trying again. Error: ${errorMsg}`
+            error: `Gmail connection timed out. Please try: 1) Using an App Password if you have 2FA enabled 2) Verifying your username is a Gmail address 3) Checking for security alerts in your Gmail 4) Waiting a few minutes before trying again. Error: ${errorMsg}`
           };
         }
         
@@ -103,6 +113,15 @@ export const sendTestEmail = async (
   } catch (err: any) {
     const errorMsg = `Email sending failed: ${err.message || 'Unknown error'}`;
     console.error(errorMsg);
+    
+    // Provide more specific guidance for common errors
+    if (err.message && err.message.includes('Greeting never received')) {
+      return { 
+        success: false, 
+        error: "SMTP connection timeout - server didn't respond. This could be due to: 1) Network connectivity issues 2) Email provider blocking access 3) Incorrect port or security settings. For Gmail, try using port 587 with secure=false. If using a corporate email, check with your IT department about firewall restrictions."
+      };
+    }
+    
     return { success: false, error: errorMsg };
   }
 };

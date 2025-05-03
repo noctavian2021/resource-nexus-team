@@ -116,13 +116,18 @@ export const sendWelcomePackage = (data: {
       secure: data.emailConfig.port === '465' ? true : false,
       // Apply provider-specific overrides
       ...(data.emailConfig.provider === 'gmail' ? {
+        host: 'smtp.gmail.com',
         port: '587',
         secure: false
       } : {}),
       ...(data.emailConfig.provider === 'yahoo' ? {
+        host: 'smtp.mail.yahoo.com',
         port: '465',
         secure: true
-      } : {})
+      } : {}),
+      // Add connection timeout settings
+      connectionTimeout: 30000, // 30 seconds
+      greetingTimeout: 30000    // 30 seconds
     } : undefined
   };
   
