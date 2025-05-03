@@ -65,7 +65,7 @@ const apiRequest = async <T>(
       try {
         // Try to parse as JSON
         const errorData = JSON.parse(errorText);
-        errorMessage = errorData.error || 'An error occurred';
+        errorMessage = errorData.error || errorData.message || 'An error occurred';
       } catch (e) {
         // If not JSON, use the text directly
         errorMessage = errorText || `HTTP error ${response.status}`;

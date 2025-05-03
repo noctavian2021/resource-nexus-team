@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { toast } from '@/hooks/use-toast';
 import apiRequest from '@/services/apiClient';
@@ -35,7 +34,7 @@ const defaultConfigs: Record<string, Partial<EmailConfig>> = {
   resend: {
     host: 'smtp.resend.com',
     port: '465',
-    secure: true,
+    secure: true, // Resend requires SSL/TLS for port 465
   },
   custom: {
     host: '',
@@ -75,6 +74,11 @@ const validateEmailConfig = (config: EmailConfig): string[] => {
       // Check if fromEmail is using resend.dev domain and not verified
       if (config.fromEmail.endsWith('resend.dev') && config.fromEmail !== 'onboarding@resend.dev') {
         errors.push('For Resend: Only onboarding@resend.dev can be used as a from email unless you have verified your domain');
+      }
+      
+      // Make sure username and password are the same for Resend (both should be the API key)
+      if (config.username !== config.password) {
+        errors.push('For Resend: API key must be used as both username and password');
       }
     }
   }
