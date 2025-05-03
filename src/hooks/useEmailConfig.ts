@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { toast } from '@/hooks/use-toast';
 import apiRequest from '@/services/apiClient';
@@ -80,6 +79,14 @@ const validateEmailConfig = (config: EmailConfig): string[] => {
         errors.push('For Resend: API key must be used as both username and password');
       }
     }
+    
+    // Gmail-specific validation
+    if (config.provider === 'gmail') {
+      // Gmail requires a valid gmail address as username
+      if (!config.username.includes('@gmail.com')) {
+        errors.push('For Gmail: Username must be a valid Gmail address (@gmail.com)');
+      }
+    }
   }
   
   return errors;
@@ -132,6 +139,12 @@ export const useEmailConfig = () => {
           if (updatedConfig.username && !updatedConfig.fromEmail) {
             updatedConfig.fromEmail = updatedConfig.username;
           }
+        }
+        
+        // For Gmail, provide safe defaults
+        if (config.provider === 'gmail') {
+          updatedConfig.port = '587'; // Standard port for Gmail
+          updatedConfig.secure = false; // Uses STARTTLS
         }
       } else {
         updatedConfig = { ...emailConfig, ...config };
@@ -224,6 +237,11 @@ export const useEmailConfig = () => {
         console.log('Note: Yahoo requires an app password, not regular account password');
       }
       
+      // Special handling for Gmail - add extra logging
+      if (emailConfig.provider === 'gmail') {
+        console.log('Using Gmail provider - note that Gmail requires an App Password if 2FA is enabled');
+      }
+      
       const configToSend = {
         ...emailConfig,
         // Ensure correct settings for yahoo
@@ -231,6 +249,12 @@ export const useEmailConfig = () => {
           host: 'smtp.mail.yahoo.com',
           port: '465',
           secure: true
+        } : {}),
+        // Ensure correct settings for gmail
+        ...(emailConfig.provider === 'gmail' ? {
+          host: 'smtp.gmail.com',
+          port: '587',
+          secure: false
         } : {})
       };
       
@@ -282,6 +306,26 @@ export const useEmailConfig = () => {
           };
         }
         
+        // Special error handling for Gmail
+        if (emailConfig.provider === 'gmail') {
+          if (errorMsg.includes('Greeting never received')) {
+            setError(`Gmail SMTP greeting timeout. This might be due to network issues or Gmail security measures. Try using an App Password if you have 2FA enabled.`);
+            return {
+              success: false,
+              error: `Gmail connection timed out. Please try: 1) Using an App Password if you have 2FA enabled 2) Verifying your username is a Gmail address 3) Waiting a few minutes before trying again. Error: ${errorMsg}`
+            };
+          }
+          
+          if (errorMsg.includes('535') || errorMsg.includes('authentication') || 
+             errorMsg.includes('auth') || errorMsg.includes('login')) {
+            setError(`Gmail authentication failed. If you have 2FA enabled, you need to use an App Password. ${errorMsg}`);
+            return {
+              success: false,
+              error: `Gmail authentication failed. If you have 2FA enabled on your Google account, you must generate and use an App Password instead of your regular password. Error: ${errorMsg}`
+            };
+          }
+        }
+        
         setError(errorMsg);
         return { success: false, error: errorMsg };
       }
@@ -299,7 +343,7 @@ export const useEmailConfig = () => {
   const getProviderHelp = (provider: EmailConfig['provider']): string => {
     switch(provider) {
       case 'gmail':
-        return 'For Gmail, you need to use an App Password if 2FA is enabled. Go to your Google Account > Security > App passwords.';
+        return 'For Gmail, you need to: 1) Use your full Gmail address as username 2) Use an App Password if you have 2FA enabled (go to your Google Account > Security > App passwords) 3) Make sure "Less secure app access" is enabled if you don\'t use 2FA.';
       case 'outlook365':
         return 'For Outlook 365, make sure to use your full email as username and enable "Allow less secure apps" in your Microsoft account settings.';
       case 'yahoo':

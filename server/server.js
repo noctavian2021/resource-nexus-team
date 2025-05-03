@@ -185,8 +185,8 @@ app.post('/api/email/send-test', async (req, res) => {
       from: `"${config.fromName}" <${config.fromEmail}>`,
     }, null, 2));
 
-    // Create a transporter with the provided configuration
-    const transporter = nodemailer.createTransport({
+    // Configure longer timeouts, especially for Gmail
+    const transportOptions = {
       host: config.host,
       port: parseInt(config.port),
       secure: config.secure,
@@ -194,22 +194,44 @@ app.post('/api/email/send-test', async (req, res) => {
         user: config.username,
         pass: config.password,
       },
-      // Add connection timeout and debug options for better troubleshooting
-      connectionTimeout: 10000,
-      greetingTimeout: 5000,
+      // Extended timeout settings
+      connectionTimeout: 30000,  // 30 seconds
+      greetingTimeout: 30000,    // 30 seconds
+      socketTimeout: 30000,      // 30 seconds
       debug: true,
       logger: true,
-    });
+    };
+    
+    // Add TLS options for Gmail to improve connection reliability
+    if (config.provider === 'gmail') {
+      console.log('Adding special TLS options for Gmail');
+      transportOptions.tls = {
+        rejectUnauthorized: false, // Allow self-signed certificates
+        minVersion: 'TLSv1.2',     // Ensure modern TLS
+        ciphers: 'HIGH:!aNULL:!MD5', // Use secure ciphers
+      };
+    }
+
+    // Create a transporter with the provided configuration
+    const transporter = nodemailer.createTransport(transportOptions);
 
     // Verify connection configuration
     try {
+      console.log('Verifying SMTP connection...');
       await transporter.verify();
       console.log('SMTP connection verified successfully');
     } catch (verifyError) {
       console.error('SMTP verification failed:', verifyError);
+      let errorMessage = `Failed to connect to SMTP server: ${verifyError.message}`;
+      
+      // Enhanced error messages for common Gmail issues
+      if (config.provider === 'gmail' && verifyError.message.includes('Greeting never received')) {
+        errorMessage = 'Gmail SMTP greeting timeout. This might be due to network issues, Gmail temporarily blocking your IP, or incorrect credentials. Try using an App Password if you have 2FA enabled.';
+      }
+      
       return res.status(400).json({ 
         success: false, 
-        error: `Failed to connect to SMTP server: ${verifyError.message}` 
+        error: errorMessage
       });
     }
 
@@ -222,6 +244,7 @@ app.post('/api/email/send-test', async (req, res) => {
       html,
     };
 
+    console.log('Sending email with these options:', JSON.stringify(mailOptions, null, 2));
     const info = await transporter.sendMail(mailOptions);
     console.log('Email sent successfully:', info);
     console.log('Message ID:', info.messageId);
@@ -235,9 +258,16 @@ app.post('/api/email/send-test', async (req, res) => {
     });
   } catch (error) {
     console.error('Email sending error:', error);
+    
+    // Enhanced error handling with specific Gmail guidance
+    let errorMessage = `Failed to send email: ${error.message}`;
+    if (error.message.includes('Greeting never received') && req.body.config?.provider === 'gmail') {
+      errorMessage = 'Gmail SMTP connection timed out waiting for greeting. This could be due to network issues or Gmail security measures. Try the following: 1) Check your credentials 2) Use an App Password if you have 2FA enabled 3) Wait a few minutes before trying again.';
+    }
+    
     res.status(500).json({ 
       success: false, 
-      error: `Failed to send email: ${error.message}` 
+      error: errorMessage
     });
   }
 });
