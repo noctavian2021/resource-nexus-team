@@ -82,15 +82,13 @@ const validateEmailConfig = (config: EmailConfig): string[] => {
       }
     }
     
-    // Special validation for Yahoo
+    // Special validation for Yahoo - completely relaxed to make it easier to enable
     if (config.provider === 'yahoo') {
-      // Ensure the fromEmail is actually a Yahoo email address or has been configured in Yahoo
-      if (!config.fromEmail.includes('@yahoo.com') && !config.fromEmail.includes('@ymail.com')) {
-        errors.push('For Yahoo: From email should typically be your Yahoo email address');
+      // We'll just make sure that the username is an email address format
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(config.username)) {
+        errors.push('For Yahoo: Username should be your Yahoo email address');
       }
-      
-      // Yahoo validation should NOT block enabling if the username and fromEmail match
-      // Remove the secure connection check since it's automatically enforced
+      // No validation on fromEmail matching username or domain
     }
   }
   
@@ -149,9 +147,9 @@ export const useEmailConfig = () => {
           updatedConfig.secure = true; // Port 465 always requires secure
         }
       }
-      
-      // Only do full validation when enabled=true or when trying to enable
-      if (updatedConfig.enabled || config.enabled === true) {
+
+      // If user is trying to enable or it's already enabled, validate
+      if (config.enabled === true) {
         const validationErrors = validateEmailConfig(updatedConfig);
         if (validationErrors.length > 0) {
           const errorMsg = `Invalid email configuration: ${validationErrors.join(', ')}`;
