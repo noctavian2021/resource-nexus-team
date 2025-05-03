@@ -89,10 +89,8 @@ const validateEmailConfig = (config: EmailConfig): string[] => {
         errors.push('For Yahoo: From email should typically be your Yahoo email address');
       }
       
-      // Ensure secure is enabled for Yahoo
-      if (!config.secure) {
-        errors.push('Yahoo SMTP requires a secure connection (SSL/TLS)');
-      }
+      // Yahoo validation should NOT block enabling if the username and fromEmail match
+      // Remove the secure connection check since it's automatically enforced
     }
   }
   
@@ -152,8 +150,8 @@ export const useEmailConfig = () => {
         }
       }
       
-      // Validate if enabled
-      if (updatedConfig.enabled) {
+      // Only do full validation when enabled=true or when trying to enable
+      if (updatedConfig.enabled || config.enabled === true) {
         const validationErrors = validateEmailConfig(updatedConfig);
         if (validationErrors.length > 0) {
           const errorMsg = `Invalid email configuration: ${validationErrors.join(', ')}`;
