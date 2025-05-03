@@ -1,4 +1,3 @@
-
 import React from 'react';
 import {
   Dialog,
@@ -246,7 +245,7 @@ export default function SendWelcomeDialog({ teamMembers, onRefreshList }: SendWe
         )}
         
         {sslHelpText && (
-          <Alert variant="warning" className="mb-4">
+          <Alert className="mb-4">
             <AlertTriangle className="h-4 w-4" />
             <AlertTitle>SSL/TLS Configuration Warning</AlertTitle>
             <AlertDescription>{sslHelpText}</AlertDescription>
