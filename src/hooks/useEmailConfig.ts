@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { toast } from '@/hooks/use-toast';
 import apiRequest from '@/services/apiClient';
@@ -24,8 +23,8 @@ const defaultConfigs: Record<string, Partial<EmailConfig>> = {
   },
   yahoo: {
     host: 'smtp.mail.yahoo.com',
-    port: '587',
-    secure: false,
+    port: '465', // Updated to 465 which is recommended for Yahoo
+    secure: true, // Yahoo requires SSL/TLS
   },
   outlook365: {
     host: 'smtp.office365.com',
@@ -82,6 +81,19 @@ const validateEmailConfig = (config: EmailConfig): string[] => {
         errors.push('For Resend: API key must be used as both username and password');
       }
     }
+    
+    // Special validation for Yahoo
+    if (config.provider === 'yahoo') {
+      // Ensure the fromEmail is actually a Yahoo email address or has been configured in Yahoo
+      if (!config.fromEmail.includes('@yahoo.com') && !config.fromEmail.includes('@ymail.com')) {
+        errors.push('For Yahoo: From email should typically be your Yahoo email address');
+      }
+      
+      // Ensure secure is enabled for Yahoo
+      if (!config.secure) {
+        errors.push('Yahoo SMTP requires a secure connection (SSL/TLS)');
+      }
+    }
   }
   
   return errors;
@@ -125,8 +137,19 @@ export const useEmailConfig = () => {
           updatedConfig.secure = true; // Always enable secure for Resend
           updatedConfig.fromEmail = 'onboarding@resend.dev'; // Default to the safe onboarding email
         }
+        
+        // For Yahoo, enforce secure connection
+        if (config.provider === 'yahoo') {
+          updatedConfig.secure = true; // Always enable secure for Yahoo
+          updatedConfig.port = '465'; // Always use 465 for Yahoo
+        }
       } else {
         updatedConfig = { ...emailConfig, ...config };
+        
+        // Special handling for port changes that might require secure connection updates
+        if (config.port === '465' && updatedConfig.secure === false) {
+          updatedConfig.secure = true; // Port 465 always requires secure
+        }
       }
       
       // Validate if enabled
@@ -193,11 +216,17 @@ export const useEmailConfig = () => {
     }, null, 2));
     
     try {
-      // Special handling for Resend provider
+      // Special handling for provider specific requirements
       let configToSend = {...emailConfig};
       
       // For Resend, ensure secure is true and using port 465
       if (configToSend.provider === 'resend') {
+        configToSend.secure = true;
+        configToSend.port = '465';
+      }
+      
+      // For Yahoo, ensure secure is true and using port 465
+      if (configToSend.provider === 'yahoo') {
         configToSend.secure = true;
         configToSend.port = '465';
       }
@@ -256,7 +285,7 @@ export const useEmailConfig = () => {
       case 'outlook365':
         return 'For Outlook 365, make sure to use your full email as username and enable "Allow less secure apps" in your Microsoft account settings.';
       case 'yahoo':
-        return 'For Yahoo, you need to generate an app password in your account security settings.';
+        return 'For Yahoo, you need to generate an app password in your Yahoo account security settings. Visit Account Info > Account Security > Generate app password.';
       case 'resend':
         return 'For Resend, use your API key as both the username and password. You must use onboarding@resend.dev as the from email unless you have verified your domain in Resend.';
       default:
