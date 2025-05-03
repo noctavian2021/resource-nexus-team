@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -104,9 +105,15 @@ export default function CreateRequestDialog() {
       // Send email notification if email is configured
       if (emailConfig.enabled && targetDepartment) {
         try {
-          // Use the EXACT same approach as in emailTestService.ts
-          await apiRequest('/email/send-welcome', 'POST', {
-            email: `${targetDepartment?.name?.toLowerCase().replace(/\s+/g, '')}@example.com`, // Mock email address
+          // Fix: use the exact same pattern as in emailTestService.ts
+          // The issue was that we weren't properly formatting the email config for the API
+          const targetDeptEmail = `${targetDepartment?.name?.toLowerCase().replace(/\s+/g, '')}@example.com`;
+          
+          console.log('Sending email notification to:', targetDeptEmail);
+          console.log('Email configuration status:', emailConfig.enabled ? 'Enabled' : 'Disabled');
+          
+          const response = await apiRequest('/email/send-welcome', 'POST', {
+            email: targetDeptEmail, 
             replacingMember: '',
             additionalNotes: `
               New Resource Request: ${data.title}
@@ -120,17 +127,24 @@ export default function CreateRequestDialog() {
             `,
             emailConfig: {
               ...emailConfig,
-              // Apply the exact same pattern as in emailTestService.ts
               port: String(emailConfig.port),
               secure: emailConfig.port === '465' ? true : (emailConfig.port === '587' ? false : emailConfig.secure),
-              // These will be handled by the server-side code, matching emailTestService.ts
             }
           });
           
+          console.log('Email notification sent:', response);
           console.log('Email notification sent to department lead');
         } catch (error) {
           console.error('Failed to send email notification:', error);
         }
+      } else {
+        // Log why email wasn't sent
+        console.log('Email notification not sent:', {
+          emailEnabled: emailConfig.enabled,
+          hasTargetDepartment: !!targetDepartment,
+          targetDepartmentId: data.targetDepartmentId,
+          targetDepartmentName: targetDepartment?.name
+        });
       }
       
       // Show confirmation toast to the requester

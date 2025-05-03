@@ -1,3 +1,4 @@
+
 import { TeamMember } from '@/data/mockData';
 import apiRequest from './api';
 import { EmailConfig } from '@/hooks/useEmailConfig';
@@ -115,7 +116,7 @@ export const sendWelcomePackage = (data: {
     });
   }
   
-  // Use the EXACT same approach as in emailTestService.ts
+  // Fix: Match the exact format used in emailTestService.ts
   return apiRequest('/email/send-welcome', 'POST', {
     ...data,
     emailConfig: {
