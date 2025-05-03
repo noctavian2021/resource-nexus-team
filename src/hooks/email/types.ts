@@ -9,6 +9,8 @@ export interface EmailConfig {
   fromName: string;
   secure: boolean;
   enabled: boolean;
+  connectionTimeout?: number; // Added optional connectionTimeout property
+  greetingTimeout?: number;   // Added optional greetingTimeout property
 }
 
 export interface EmailProviderConfig extends Partial<EmailConfig> {}
