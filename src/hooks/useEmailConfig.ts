@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { toast } from '@/hooks/use-toast';
 import apiRequest from '@/services/apiClient';
@@ -63,12 +64,7 @@ const validateEmailConfig = (config: EmailConfig): string[] => {
     if (!config.port) errors.push('Port is required');
     if (!config.username) errors.push('Username is required');
     if (!config.password) errors.push('Password is required');
-    if (!config.fromEmail) {
-      errors.push('From email is required');
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(config.fromEmail)) {
-      errors.push('Valid from email is required');
-    }
-
+    
     // Special validation for Resend
     if (config.provider === 'resend') {
       // Check if fromEmail is using resend.dev domain and not verified
@@ -82,13 +78,11 @@ const validateEmailConfig = (config: EmailConfig): string[] => {
       }
     }
     
-    // Special validation for Yahoo - completely relaxed to make it easier to enable
+    // Very minimal Yahoo validation - just make sure we have something for critical fields
     if (config.provider === 'yahoo') {
-      // We'll just make sure that the username is an email address format
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(config.username)) {
-        errors.push('For Yahoo: Username should be your Yahoo email address');
+      if (!config.fromEmail) {
+        errors.push('From email is required');
       }
-      // No validation on fromEmail matching username or domain
     }
   }
   
@@ -138,6 +132,10 @@ export const useEmailConfig = () => {
         if (config.provider === 'yahoo') {
           updatedConfig.secure = true; // Always enable secure for Yahoo
           updatedConfig.port = '465'; // Always use 465 for Yahoo
+          // If username is set but fromEmail is not, use username as fromEmail
+          if (updatedConfig.username && !updatedConfig.fromEmail) {
+            updatedConfig.fromEmail = updatedConfig.username;
+          }
         }
       } else {
         updatedConfig = { ...emailConfig, ...config };
@@ -146,9 +144,20 @@ export const useEmailConfig = () => {
         if (config.port === '465' && updatedConfig.secure === false) {
           updatedConfig.secure = true; // Port 465 always requires secure
         }
+        
+        // For Yahoo, always sync fromEmail with username if username changes
+        if (config.username && updatedConfig.provider === 'yahoo') {
+          updatedConfig.fromEmail = config.username;
+        }
       }
 
-      // If user is trying to enable or it's already enabled, validate
+      // Ensure Yahoo always uses the correct settings
+      if (updatedConfig.provider === 'yahoo') {
+        updatedConfig.port = '465';
+        updatedConfig.secure = true;
+      }
+
+      // If user is trying to enable, validate
       if (config.enabled === true) {
         const validationErrors = validateEmailConfig(updatedConfig);
         if (validationErrors.length > 0) {
@@ -281,7 +290,7 @@ export const useEmailConfig = () => {
       case 'outlook365':
         return 'For Outlook 365, make sure to use your full email as username and enable "Allow less secure apps" in your Microsoft account settings.';
       case 'yahoo':
-        return 'For Yahoo, you need to generate an app password in your Yahoo account security settings. Visit Account Info > Account Security > Generate app password.';
+        return 'For Yahoo, you need to generate an app password in your Yahoo account security settings. Visit Account Info > Account Security > Generate app password. Yahoo has blocked your login attempts temporarily, please wait a few minutes before trying again.';
       case 'resend':
         return 'For Resend, use your API key as both the username and password. You must use onboarding@resend.dev as the from email unless you have verified your domain in Resend.';
       default:
