@@ -24,6 +24,61 @@ interface EditTeamMemberDialogProps {
   onOpenChange?: (open: boolean) => void;
 }
 
+// Helper function to compress image data
+const compressImageData = (base64Data: string, maxSizeKB: number = 100): Promise<string> => {
+  return new Promise((resolve) => {
+    // Skip non-base64 or already small images
+    if (!base64Data || !base64Data.startsWith('data:image') || base64Data.length < maxSizeKB * 1024) {
+      resolve(base64Data);
+      return;
+    }
+
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      
+      // Calculate new dimensions while maintaining aspect ratio
+      let { width, height } = img;
+      const maxDimension = 300; // Maximum width or height
+
+      if (width > height && width > maxDimension) {
+        height = Math.floor(height * (maxDimension / width));
+        width = maxDimension;
+      } else if (height > maxDimension) {
+        width = Math.floor(width * (maxDimension / height));
+        height = maxDimension;
+      }
+
+      canvas.width = width;
+      canvas.height = height;
+
+      // Draw and compress
+      const ctx = canvas.getContext('2d');
+      ctx?.drawImage(img, 0, 0, width, height);
+      
+      // Start with 0.8 quality
+      let quality = 0.8;
+      let compressed = canvas.toDataURL('image/jpeg', quality);
+      
+      // If still too large, try with lower quality
+      if (compressed.length > maxSizeKB * 1024) {
+        quality = 0.6;
+        compressed = canvas.toDataURL('image/jpeg', quality);
+      }
+      
+      // If still too large, use even lower quality
+      if (compressed.length > maxSizeKB * 1024) {
+        quality = 0.4;
+        compressed = canvas.toDataURL('image/jpeg', quality);
+      }
+
+      resolve(compressed);
+    };
+    img.onerror = () => resolve(''); // Return empty string on error
+    img.src = base64Data;
+  });
+};
+
 export default function EditTeamMemberDialog({ 
   member, 
   onMemberUpdated, 
@@ -33,6 +88,7 @@ export default function EditTeamMemberDialog({
   const [internalOpen, setInternalOpen] = React.useState(false);
   const [projects, setProjects] = useState<any[]>([]);
   const [isLoadingProjects, setIsLoadingProjects] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
   
   // Determine which open state to use (controlled or uncontrolled)
@@ -115,6 +171,8 @@ export default function EditTeamMemberDialog({
   
   async function onSubmit(values: TeamMemberFormValues) {
     try {
+      setIsSubmitting(true);
+      
       // Process project involvements - handle both projectId and projectName
       const processedProjectInvolvements = values.projectInvolvements?.filter(p => p.projectId || p.projectName).map(p => ({
         projectId: p.projectId || `custom-${p.projectName?.replace(/\s+/g, '-').toLowerCase()}`,
@@ -126,10 +184,10 @@ export default function EditTeamMemberDialog({
       
       // Optimize the avatar data if it's a large base64 string
       let optimizedAvatar = values.avatar;
-      if (optimizedAvatar && optimizedAvatar.length > 1000000) {
-        console.log('Avatar size is large, consider optimizing it');
-        // For now we'll keep using the original avatar
-        // In a production app, you might want to resize/compress it
+      if (optimizedAvatar && optimizedAvatar.startsWith('data:image')) {
+        console.log('Compressing avatar image...');
+        optimizedAvatar = await compressImageData(optimizedAvatar, 80); // Compress to ~80KB max
+        console.log(`Avatar size: ${Math.round(optimizedAvatar.length / 1024)}KB`);
       }
       
       const updatedMember = await updateTeamMember(member.id, {
@@ -162,6 +220,8 @@ export default function EditTeamMemberDialog({
         description: "Failed to update team member profile.",
         variant: "destructive",
       });
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
@@ -298,8 +358,8 @@ export default function EditTeamMemberDialog({
                 <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>
                   Cancel
                 </Button>
-                <Button type="submit">
-                  Update Profile
+                <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? "Updating..." : "Update Profile"}
                 </Button>
               </div>
             </form>
