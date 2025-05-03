@@ -14,7 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from "@/hooks/use-toast";
 import { useEmailConfig } from "@/hooks/useEmailConfig";
-import { teamMembers } from '@/data/mockData';
+import { TeamMember } from '@/data/mockData';
 import { Mail, AlertTriangle } from 'lucide-react';
 import { sendWelcomePackage, RequiredResource } from '@/services/teamService';
 import { Checkbox } from "@/components/ui/checkbox";
@@ -24,7 +24,12 @@ interface ResourceWithSelection extends RequiredResource {
   selected: boolean;
 }
 
-export default function SendWelcomeDialog() {
+interface SendWelcomeDialogProps {
+  teamMembers: TeamMember[];
+  onRefreshList?: () => Promise<void>;
+}
+
+export default function SendWelcomeDialog({ teamMembers, onRefreshList }: SendWelcomeDialogProps) {
   const [email, setEmail] = React.useState("");
   const [replacingMember, setReplacingMember] = React.useState("");
   const [additionalNotes, setAdditionalNotes] = React.useState("");
@@ -52,7 +57,7 @@ export default function SendWelcomeDialog() {
         setRequiredResources([]);
       }
     }
-  }, [selectedMember]);
+  }, [selectedMember, teamMembers]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -102,6 +107,11 @@ export default function SendWelcomeDialog() {
             : "The welcome package has been processed (email notifications disabled).",
         });
 
+        // Refresh the team members list if a callback is provided
+        if (onRefreshList) {
+          await onRefreshList();
+        }
+
         setIsOpen(false);
         setEmail("");
         setReplacingMember("");
@@ -130,6 +140,16 @@ export default function SendWelcomeDialog() {
     }
   };
 
+  const handleDialogOpenChange = (open: boolean) => {
+    // If the dialog is opening, refresh the team list first to ensure we have the latest data
+    if (open && onRefreshList) {
+      onRefreshList().catch(error => {
+        console.error("Error refreshing team members:", error);
+      });
+    }
+    setIsOpen(open);
+  };
+
   const handleMemberSelect = (memberId: string) => {
     setSelectedMember(memberId);
     if (memberId !== 'none') {
@@ -152,7 +172,7 @@ export default function SendWelcomeDialog() {
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+    <Dialog open={isOpen} onOpenChange={handleDialogOpenChange}>
       <DialogTrigger asChild>
         <Button variant="outline">
           <Mail className="mr-2 h-4 w-4" />

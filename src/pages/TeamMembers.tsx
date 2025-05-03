@@ -14,26 +14,27 @@ export default function TeamMembers() {
   const { toast } = useToast();
 
   // Fetch team members whenever the component mounts
-  useEffect(() => {
-    const fetchTeamMembers = async () => {
-      try {
-        const data = await getTeamMembers();
-        setTeamMembers(data);
-      } catch (error) {
-        console.error('Error fetching team members:', error);
-        toast({
-          title: "Error",
-          description: "Failed to fetch team members. Using mock data instead.",
-          variant: "destructive"
-        });
-        
-        // Initialize with empty array if fetch fails
-        setTeamMembers([]);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchTeamMembers = async () => {
+    try {
+      setLoading(true);
+      const data = await getTeamMembers();
+      setTeamMembers(data);
+    } catch (error) {
+      console.error('Error fetching team members:', error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch team members. Using mock data instead.",
+        variant: "destructive"
+      });
+      
+      // Initialize with empty array if fetch fails
+      setTeamMembers([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchTeamMembers();
   }, [toast]);
 
@@ -69,7 +70,10 @@ export default function TeamMembers() {
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <h1 className="text-2xl font-semibold tracking-tight">Team Members</h1>
           <div className="flex gap-2">
-            <SendWelcomeDialog />
+            <SendWelcomeDialog 
+              teamMembers={teamMembers} 
+              onRefreshList={fetchTeamMembers}
+            />
             <AddTeamMemberDialog onMemberAdded={handleMemberAdded} />
           </div>
         </div>
