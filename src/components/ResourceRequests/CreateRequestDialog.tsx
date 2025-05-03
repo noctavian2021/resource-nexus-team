@@ -73,7 +73,7 @@ export default function CreateRequestDialog() {
       const newRequest: Partial<ResourceRequest> = {
         id: `request-${Date.now()}`,
         requesterId: user?.id || '',
-        projectId: '', // This would be set if the request is for a specific project
+        projectId: '',
         departmentId: currentUserDepartmentId, 
         requestingDepartmentId: currentUserDepartmentId,
         targetDepartmentId: data.targetDepartmentId,
@@ -81,11 +81,11 @@ export default function CreateRequestDialog() {
         description: data.description,
         requiredSkills: data.requiredSkills.split(',').map(skill => skill.trim()),
         skillsRequired: data.requiredSkills.split(',').map(skill => skill.trim()),
-        roleNeeded: '', // This would be set if the request is for a specific role
+        roleNeeded: '',
         startDate: data.startDate,
         endDate: data.endDate,
         status: "pending", 
-        priority: 'Medium', // Default priority
+        priority: 'Medium',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       };
@@ -102,41 +102,9 @@ export default function CreateRequestDialog() {
       });
       
       // Send email notification if email is configured
-      // Use the same approach as the successful test email
       if (emailConfig.enabled && targetDepartment) {
         try {
-          // Apply the same normalization pattern as in emailTestService
-          const normalizedConfig = {
-            ...emailConfig,
-            // Ensure port is string and secure is properly set based on port
-            port: String(emailConfig.port),
-            secure: emailConfig.port === '465' ? true : (emailConfig.port === '587' ? false : emailConfig.secure),
-          };
-          
-          // Apply provider-specific configurations
-          if (emailConfig.provider === 'gmail') {
-            normalizedConfig.host = 'smtp.gmail.com';
-            normalizedConfig.port = '587';
-            normalizedConfig.secure = false;
-          } else if (emailConfig.provider === 'yahoo') {
-            normalizedConfig.host = 'smtp.mail.yahoo.com';
-            normalizedConfig.port = '465';
-            normalizedConfig.secure = true;
-          } else if (emailConfig.provider === 'outlook365') {
-            normalizedConfig.host = 'smtp.office365.com';
-            normalizedConfig.port = '587';
-            normalizedConfig.secure = false;
-          } else if (emailConfig.provider === 'resend') {
-            normalizedConfig.host = 'smtp.resend.com';
-            normalizedConfig.port = '465';
-            normalizedConfig.secure = true;
-          }
-          
-          // Add timeout settings
-          normalizedConfig.connectionTimeout = 30000; // 30 seconds
-          normalizedConfig.greetingTimeout = 30000;   // 30 seconds
-          
-          // Using the API service to send the email with the normalized config
+          // Use the EXACT same approach as in emailTestService.ts
           await apiRequest('/email/send-welcome', 'POST', {
             email: `${targetDepartment?.name?.toLowerCase().replace(/\s+/g, '')}@example.com`, // Mock email address
             replacingMember: '',
@@ -150,7 +118,13 @@ export default function CreateRequestDialog() {
               Description:
               ${data.description}
             `,
-            emailConfig: normalizedConfig
+            emailConfig: {
+              ...emailConfig,
+              // Apply the exact same pattern as in emailTestService.ts
+              port: String(emailConfig.port),
+              secure: emailConfig.port === '465' ? true : (emailConfig.port === '587' ? false : emailConfig.secure),
+              // These will be handled by the server-side code, matching emailTestService.ts
+            }
           });
           
           console.log('Email notification sent to department lead');

@@ -107,8 +107,6 @@ export const sendWelcomePackage = (data: {
     provider: data.emailConfig?.provider
   });
   
-  // Apply the exact same approach as in emailTestService.ts
-  // This is the successful strategy that works with test emails
   if (!data.emailConfig || !data.emailConfig.enabled) {
     console.log('Email notifications disabled or missing config');
     return apiRequest('/email/send-welcome', 'POST', {
@@ -117,47 +115,17 @@ export const sendWelcomePackage = (data: {
     });
   }
   
-  try {
-    // Use the exact same normalization pattern as emailTestService.ts
-    const normalizedConfig = {
+  // Use the EXACT same approach as in emailTestService.ts
+  return apiRequest('/email/send-welcome', 'POST', {
+    ...data,
+    emailConfig: {
       ...data.emailConfig,
       // Ensure port is string and secure is properly set based on port
       port: String(data.emailConfig.port),
       secure: data.emailConfig.port === '465' ? true : (data.emailConfig.port === '587' ? false : data.emailConfig.secure),
-    };
-    
-    // Apply provider-specific configurations - exactly like in emailTestService
-    if (data.emailConfig.provider === 'gmail') {
-      normalizedConfig.host = 'smtp.gmail.com';
-      normalizedConfig.port = '587';
-      normalizedConfig.secure = false;
-    } else if (data.emailConfig.provider === 'yahoo') {
-      normalizedConfig.host = 'smtp.mail.yahoo.com';
-      normalizedConfig.port = '465';
-      normalizedConfig.secure = true;
-    } else if (data.emailConfig.provider === 'outlook365') {
-      normalizedConfig.host = 'smtp.office365.com';
-      normalizedConfig.port = '587';
-      normalizedConfig.secure = false;
-    } else if (data.emailConfig.provider === 'resend') {
-      normalizedConfig.host = 'smtp.resend.com';
-      normalizedConfig.port = '465';
-      normalizedConfig.secure = true;
+      // Server-side will handle provider-specific configurations
     }
-    
-    // Add connection timeout settings - same as in emailTestService
-    normalizedConfig.connectionTimeout = 30000; // 30 seconds
-    normalizedConfig.greetingTimeout = 30000;   // 30 seconds
-    
-    // Send normalized configuration to the API
-    return apiRequest('/email/send-welcome', 'POST', {
-      ...data,
-      emailConfig: normalizedConfig
-    });
-  } catch (error) {
-    console.error('Error preparing email configuration:', error);
-    throw error;
-  }
+  });
 };
 
 // New function to get organizational structure
