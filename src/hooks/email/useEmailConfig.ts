@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { toast } from '@/hooks/use-toast';
-import { EmailConfig } from './types';
+import { EmailConfig, TestEmailResponse } from './types';
 import { defaultEmailConfig, defaultConfigs } from './emailDefaults';
 import { validateEmailConfig } from './validation';
 import { getProviderHelp, normalizeProviderConfig, getConnectionErrorHelp } from './providerUtils';
@@ -112,7 +112,7 @@ export const useEmailConfig = () => {
     }
   };
 
-  const handleTestEmail = async (recipient: string) => {
+  const handleTestEmail = async (recipient: string): Promise<TestEmailResponse> => {
     setIsLoading(true);
     setError(null);
     
@@ -165,7 +165,12 @@ export const useEmailConfig = () => {
         });
       }
       
-      return { success: false, error: errorMsg };
+      // Return a properly formatted TestEmailResponse
+      return { 
+        success: false, 
+        error: errorMsg,
+        details: undefined
+      };
     } finally {
       setIsLoading(false);
     }
