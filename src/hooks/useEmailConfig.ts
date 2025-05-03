@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { toast } from '@/hooks/use-toast';
 import apiRequest from '@/services/apiClient';
@@ -118,6 +119,12 @@ export const useEmailConfig = () => {
           port: providerDefaults.port || '',
           secure: providerDefaults.secure || false,
         };
+        
+        // For Resend, enforce specific settings
+        if (config.provider === 'resend') {
+          updatedConfig.secure = true; // Always enable secure for Resend
+          updatedConfig.fromEmail = 'onboarding@resend.dev'; // Default to the safe onboarding email
+        }
       } else {
         updatedConfig = { ...emailConfig, ...config };
       }
@@ -173,6 +180,7 @@ export const useEmailConfig = () => {
     setIsLoading(true);
     setError(null);
     
+    // Enhanced logging for better debugging
     console.log('Sending test email to', recipient, 'with config:', JSON.stringify({
       provider: emailConfig.provider,
       host: emailConfig.host,
@@ -185,7 +193,15 @@ export const useEmailConfig = () => {
     }, null, 2));
     
     try {
-      // Use our updated apiRequest function instead of direct fetch
+      // Special handling for Resend provider
+      let configToSend = {...emailConfig};
+      
+      // For Resend, ensure secure is true and using port 465
+      if (configToSend.provider === 'resend') {
+        configToSend.secure = true;
+        configToSend.port = '465';
+      }
+      
       const result = await apiRequest<{
         success: boolean;
         message?: string;
@@ -193,18 +209,7 @@ export const useEmailConfig = () => {
         messageId?: string;
         smtpResponse?: string;
       }>('/email/send-test', 'POST', {
-        config: {
-          ...emailConfig,
-          // For security, we only include necessary fields
-          provider: emailConfig.provider,
-          host: emailConfig.host,
-          port: emailConfig.port,
-          secure: emailConfig.secure,
-          username: emailConfig.username,
-          password: emailConfig.password,
-          fromEmail: emailConfig.fromEmail,
-          fromName: emailConfig.fromName,
-        },
+        config: configToSend,
         recipient,
         subject: 'Test Email from Resource Management System',
         text: 'This is a test email to verify your SMTP configuration is working correctly.',
