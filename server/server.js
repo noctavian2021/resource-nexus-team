@@ -21,6 +21,11 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // Root API route for testing connection
+app.use('/api', (req, res, next) => {
+  console.log(`API Request: ${req.method} ${req.path}`);
+  next();
+});
+
 app.get('/api', (req, res) => {
   res.json({ message: 'Resource Nexus API is running' });
 });
@@ -297,7 +302,15 @@ app.post('/api/email/send-welcome', async (req, res) => {
     }
     
     // If we have email config, try to send a real email
-    const transporter = nodemailer.createTransport({
+    console.log('Attempting to send real email with config:', {
+      host: emailConfig.host,
+      port: emailConfig.port,
+      secure: emailConfig.secure,
+      provider: emailConfig.provider
+    });
+    
+    // Configure longer timeouts and add TLS options to improve connection reliability
+    const transportOptions = {
       host: emailConfig.host,
       port: parseInt(emailConfig.port),
       secure: emailConfig.secure,
@@ -305,10 +318,19 @@ app.post('/api/email/send-welcome', async (req, res) => {
         user: emailConfig.username,
         pass: emailConfig.password,
       },
-      // Add connection timeout and debug options
-      connectionTimeout: 10000,
-      greetingTimeout: 5000,
-    });
+      // Extended timeout settings
+      connectionTimeout: 30000,
+      greetingTimeout: 30000,
+      socketTimeout: 30000,
+      // Add TLS options to improve connection reliability
+      tls: {
+        rejectUnauthorized: false, // Allow self-signed certificates
+        minVersion: 'TLSv1.2'      // Ensure modern TLS
+      }
+    };
+
+    // Create transporter with the options
+    const transporter = nodemailer.createTransport(transportOptions);
 
     // Verify connection first
     try {

@@ -90,6 +90,13 @@ export default function SendWelcomeDialog({ teamMembers, onRefreshList }: SendWe
         .filter(resource => resource.selected)
         .map(({ selected, ...resource }) => resource);
 
+      console.log("Sending welcome package with:", {
+        email,
+        replacingMember,
+        resources: selectedResources.length,
+        emailConfigEnabled: emailConfig.enabled
+      });
+
       // Pass email config to the API to enable actual email sending
       try {
         await sendWelcomePackage({
@@ -120,10 +127,17 @@ export default function SendWelcomeDialog({ teamMembers, onRefreshList }: SendWe
         setRequiredResources([]);
       } catch (apiError: any) {
         console.error("API Error:", apiError);
-        setError(apiError.message || "Failed to send welcome package");
+        
+        // Enhance error message for SSL/TLS issues
+        let errorMessage = apiError.message || "Failed to send welcome package";
+        if (errorMessage.includes('SSL routines') || errorMessage.includes('wrong version number')) {
+          errorMessage = "SSL/TLS connection failed. Please check that your email provider's secure settings match your configuration.";
+        }
+        
+        setError(errorMessage);
         toast({
           title: "Error",
-          description: apiError.message || "Failed to send welcome package. Please try again.",
+          description: errorMessage,
           variant: "destructive",
         });
       }

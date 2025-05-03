@@ -98,6 +98,12 @@ export const sendWelcomePackage = (data: {
   requiredResources?: RequiredResource[];
   emailConfig?: EmailConfig;
 }) => {
+  console.log('Sending welcome package with config:', {
+    email: data.email,
+    hasEmailConfig: !!data.emailConfig,
+    emailEnabled: data.emailConfig?.enabled
+  });
+  
   return apiRequest('/email/send-welcome', 'POST', data);
 };
 
