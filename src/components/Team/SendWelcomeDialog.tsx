@@ -96,17 +96,15 @@ export default function SendWelcomeDialog({ teamMembers, onRefreshList }: SendWe
         emailConfigEnabled: emailConfig.enabled
       });
       
-      // Remove custom normalization code from here since we moved it to the service
-      // This prevents double-normalization and ensures consistent approach with emailTestService
-      
-      // Pass email config directly to the API - normalization now happens in the service
+      // Pass email config directly to the service which will handle normalization
+      // Using the same approach as the successful email test service
       try {
         await sendWelcomePackage({
           email,
           replacingMember,
           additionalNotes,
           requiredResources: selectedResources,
-          emailConfig: emailConfig.enabled ? emailConfig : undefined
+          emailConfig: emailConfig // Service will normalize this exactly like test email
         });
 
         toast({
@@ -130,21 +128,21 @@ export default function SendWelcomeDialog({ teamMembers, onRefreshList }: SendWe
       } catch (apiError: any) {
         console.error("API Error:", apiError);
         
-        // Enhanced error messages for common email issues
+        // Enhanced error messages using the same patterns as email test service
         let errorMessage = apiError.message || "Failed to send welcome package";
         
-        // SSL/TLS connection issues
+        // Use the same error handling as the successful email test service
         if (errorMessage.includes('SSL routines') || errorMessage.includes('wrong version number')) {
           errorMessage = `SSL/TLS connection failed. Your email port ${emailConfig.port} with secure=${emailConfig.secure} settings don't match. For port 587, secure should be false. For port 465, secure should be true.`;
         }
         
-        // Authentication errors
-        if (errorMessage.includes('Invalid login') || errorMessage.includes('authentication failed') || errorMessage.includes('Username and Password not accepted')) {
+        if (errorMessage.includes('Invalid login') || errorMessage.includes('authentication failed') || 
+            errorMessage.includes('Username and Password not accepted')) {
           errorMessage = "Email authentication failed. Please verify your username and password. If you're using Gmail or Yahoo with 2FA, make sure you're using an App Password.";
         }
         
-        // Connection timeout issues
-        if (errorMessage.includes('ETIMEDOUT') || errorMessage.includes('Connection timed out') || errorMessage.includes('Greeting never received')) {
+        if (errorMessage.includes('ETIMEDOUT') || errorMessage.includes('Connection timed out') || 
+            errorMessage.includes('Greeting never received')) {
           errorMessage = "Connection to email server timed out. This could be due to network issues or incorrect server settings. Please check for security alerts in your email account and verify your provider settings.";
         }
         

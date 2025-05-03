@@ -102,9 +102,41 @@ export default function CreateRequestDialog() {
       });
       
       // Send email notification if email is configured
+      // Use the same approach as the successful test email
       if (emailConfig.enabled && targetDepartment) {
         try {
-          // Using the API service to send the email
+          // Apply the same normalization pattern as in emailTestService
+          const normalizedConfig = {
+            ...emailConfig,
+            // Ensure port is string and secure is properly set based on port
+            port: String(emailConfig.port),
+            secure: emailConfig.port === '465' ? true : (emailConfig.port === '587' ? false : emailConfig.secure),
+          };
+          
+          // Apply provider-specific configurations
+          if (emailConfig.provider === 'gmail') {
+            normalizedConfig.host = 'smtp.gmail.com';
+            normalizedConfig.port = '587';
+            normalizedConfig.secure = false;
+          } else if (emailConfig.provider === 'yahoo') {
+            normalizedConfig.host = 'smtp.mail.yahoo.com';
+            normalizedConfig.port = '465';
+            normalizedConfig.secure = true;
+          } else if (emailConfig.provider === 'outlook365') {
+            normalizedConfig.host = 'smtp.office365.com';
+            normalizedConfig.port = '587';
+            normalizedConfig.secure = false;
+          } else if (emailConfig.provider === 'resend') {
+            normalizedConfig.host = 'smtp.resend.com';
+            normalizedConfig.port = '465';
+            normalizedConfig.secure = true;
+          }
+          
+          // Add timeout settings
+          normalizedConfig.connectionTimeout = 30000; // 30 seconds
+          normalizedConfig.greetingTimeout = 30000;   // 30 seconds
+          
+          // Using the API service to send the email with the normalized config
           await apiRequest('/email/send-welcome', 'POST', {
             email: `${targetDepartment?.name?.toLowerCase().replace(/\s+/g, '')}@example.com`, // Mock email address
             replacingMember: '',
@@ -117,7 +149,8 @@ export default function CreateRequestDialog() {
               
               Description:
               ${data.description}
-            `
+            `,
+            emailConfig: normalizedConfig
           });
           
           console.log('Email notification sent to department lead');
