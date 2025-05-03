@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useFieldArray } from "react-hook-form";
@@ -125,6 +124,14 @@ export default function EditTeamMemberDialog({
       // Get project IDs for the projects array
       const projectIds = processedProjectInvolvements?.map(p => p.projectId) || [];
       
+      // Optimize the avatar data if it's a large base64 string
+      let optimizedAvatar = values.avatar;
+      if (optimizedAvatar && optimizedAvatar.length > 1000000) {
+        console.log('Avatar size is large, consider optimizing it');
+        // For now we'll keep using the original avatar
+        // In a production app, you might want to resize/compress it
+      }
+      
       const updatedMember = await updateTeamMember(member.id, {
         name: values.name,
         role: values.role,
@@ -137,7 +144,7 @@ export default function EditTeamMemberDialog({
           startDate: values.vacationStartDate || undefined,
           endDate: values.vacationEndDate || undefined,
         },
-        avatar: values.avatar || member.avatar,
+        avatar: optimizedAvatar || member.avatar,
         projectInvolvements: processedProjectInvolvements,
         projects: projectIds
       });
