@@ -103,37 +103,63 @@ export default function CreateRequestDialog() {
       });
       
       // Send email notification if email is configured
-      if (emailConfig.enabled && targetDepartment) {
+      if (emailConfig.enabled) {
         try {
-          // Fix: use the exact same pattern as in emailTestService.ts
-          // The issue was that we weren't properly formatting the email config for the API
-          const targetDeptEmail = `${targetDepartment?.name?.toLowerCase().replace(/\s+/g, '')}@example.com`;
+          // First, send to target department
+          if (targetDepartment) {
+            const targetDeptEmail = `${targetDepartment?.name?.toLowerCase().replace(/\s+/g, '')}@example.com`;
+            
+            console.log('Sending email notification to target department:', targetDeptEmail);
+            
+            const targetResponse = await apiRequest('/email/send-welcome', 'POST', {
+              email: targetDeptEmail, 
+              replacingMember: '',
+              additionalNotes: `
+                New Resource Request: ${data.title}
+                From: ${requestingDepartment?.name || user?.name}
+                Required Skills: ${data.requiredSkills}
+                Start Date: ${data.startDate}
+                End Date: ${data.endDate}
+                
+                Description:
+                ${data.description}
+              `,
+              emailConfig: {
+                ...emailConfig,
+                port: String(emailConfig.port),
+                secure: emailConfig.port === '465' ? true : (emailConfig.port === '587' ? false : emailConfig.secure),
+              }
+            });
+            
+            console.log('Email notification sent to target department lead:', targetResponse);
+          }
           
-          console.log('Sending email notification to:', targetDeptEmail);
-          console.log('Email configuration status:', emailConfig.enabled ? 'Enabled' : 'Disabled');
-          
-          const response = await apiRequest('/email/send-welcome', 'POST', {
-            email: targetDeptEmail, 
-            replacingMember: '',
-            additionalNotes: `
-              New Resource Request: ${data.title}
-              From: ${requestingDepartment?.name}
-              Required Skills: ${data.requiredSkills}
-              Start Date: ${data.startDate}
-              End Date: ${data.endDate}
-              
-              Description:
-              ${data.description}
-            `,
-            emailConfig: {
-              ...emailConfig,
-              port: String(emailConfig.port),
-              secure: emailConfig.port === '465' ? true : (emailConfig.port === '587' ? false : emailConfig.secure),
-            }
-          });
-          
-          console.log('Email notification sent:', response);
-          console.log('Email notification sent to department lead');
+          // Now send a copy to the requester (admin/current user)
+          if (user?.email) {
+            console.log('Sending email notification to requester:', user.email);
+            
+            const requesterResponse = await apiRequest('/email/send-welcome', 'POST', {
+              email: user.email,
+              replacingMember: '',
+              additionalNotes: `
+                Your Resource Request: ${data.title}
+                To: ${targetDepartment?.name || 'Target Department'}
+                Required Skills: ${data.requiredSkills}
+                Start Date: ${data.startDate}
+                End Date: ${data.endDate}
+                
+                Description:
+                ${data.description}
+              `,
+              emailConfig: {
+                ...emailConfig,
+                port: String(emailConfig.port),
+                secure: emailConfig.port === '465' ? true : (emailConfig.port === '587' ? false : emailConfig.secure),
+              }
+            });
+            
+            console.log('Email notification sent to requester:', requesterResponse);
+          }
         } catch (error) {
           console.error('Failed to send email notification:', error);
         }

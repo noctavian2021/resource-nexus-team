@@ -116,7 +116,7 @@ export const sendWelcomePackage = (data: {
     });
   }
   
-  // Fix: Match the exact format used in emailTestService.ts
+  // Ensure we're using the exact same format as in emailTestService.ts
   return apiRequest('/email/send-welcome', 'POST', {
     ...data,
     emailConfig: {
@@ -124,7 +124,9 @@ export const sendWelcomePackage = (data: {
       // Ensure port is string and secure is properly set based on port
       port: String(data.emailConfig.port),
       secure: data.emailConfig.port === '465' ? true : (data.emailConfig.port === '587' ? false : data.emailConfig.secure),
-      // Server-side will handle provider-specific configurations
+      // Add connection timeouts to match emailTestService
+      connectionTimeout: 30000,
+      greetingTimeout: 30000
     }
   });
 };

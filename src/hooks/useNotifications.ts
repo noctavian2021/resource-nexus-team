@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { toast } from '@/hooks/use-toast';
 import { useEmailConfig } from '@/hooks/useEmailConfig';
 import { playNotificationSound } from '@/utils/sound';
+import apiRequest from '@/services/api';
 
 interface Notification {
   id: string;
@@ -74,11 +75,32 @@ export const useNotifications = () => {
       // If email is configured, send an email notification for specific categories
       if (emailConfig.enabled && (category === 'report' || category === 'request')) {
         try {
-          // Only send emails for reports and requests if configured
-          console.log('Would send email notification using:', emailConfig);
+          // Send email notification for specific notification types
+          const recipientEmail = localStorage.getItem('userEmail') || 'admin@example.com'; // Get user email or fallback
           
-          // In a real app, we could make an API call to send the email here
-          // For now, we'll log that we would send it
+          console.log(`Sending ${category} notification email to:`, recipientEmail);
+          
+          await apiRequest('/email/send-welcome', 'POST', {
+            email: recipientEmail,
+            replacingMember: '',
+            additionalNotes: `
+              Notification: ${title}
+              
+              ${message}
+              
+              Category: ${category}
+              Time: ${new Date().toLocaleString()}
+            `,
+            emailConfig: {
+              ...emailConfig,
+              port: String(emailConfig.port),
+              secure: emailConfig.port === '465' ? true : (emailConfig.port === '587' ? false : emailConfig.secure),
+              connectionTimeout: 30000,
+              greetingTimeout: 30000
+            }
+          });
+          
+          console.log(`Email notification for ${category} sent successfully`);
         } catch (emailErr) {
           console.error('Error sending email notification:', emailErr);
         }
