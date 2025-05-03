@@ -24,7 +24,7 @@ const defaultConfigs: Record<string, Partial<EmailConfig>> = {
   },
   yahoo: {
     host: 'smtp.mail.yahoo.com',
-    port: '465', // Updated to 465 which is recommended for Yahoo
+    port: '465', // Yahoo requires 465 port
     secure: true, // Yahoo requires SSL/TLS
   },
   outlook365: {
@@ -65,6 +65,9 @@ const validateEmailConfig = (config: EmailConfig): string[] => {
     if (!config.username) errors.push('Username is required');
     if (!config.password) errors.push('Password is required');
     
+    // Basic validation for all providers - from email should exist
+    if (!config.fromEmail) errors.push('From email is required');
+    
     // Special validation for Resend
     if (config.provider === 'resend') {
       // Check if fromEmail is using resend.dev domain and not verified
@@ -75,13 +78,6 @@ const validateEmailConfig = (config: EmailConfig): string[] => {
       // Make sure username and password are the same for Resend (both should be the API key)
       if (config.username !== config.password) {
         errors.push('For Resend: API key must be used as both username and password');
-      }
-    }
-    
-    // Very minimal Yahoo validation - just make sure we have something for critical fields
-    if (config.provider === 'yahoo') {
-      if (!config.fromEmail) {
-        errors.push('From email is required');
       }
     }
   }
@@ -128,11 +124,11 @@ export const useEmailConfig = () => {
           updatedConfig.fromEmail = 'onboarding@resend.dev'; // Default to the safe onboarding email
         }
         
-        // For Yahoo, enforce secure connection
+        // For Yahoo, enforce specific settings
         if (config.provider === 'yahoo') {
           updatedConfig.secure = true; // Always enable secure for Yahoo
           updatedConfig.port = '465'; // Always use 465 for Yahoo
-          // If username is set but fromEmail is not, use username as fromEmail
+          // For Yahoo, use username as fromEmail by default
           if (updatedConfig.username && !updatedConfig.fromEmail) {
             updatedConfig.fromEmail = updatedConfig.username;
           }
@@ -141,7 +137,7 @@ export const useEmailConfig = () => {
         updatedConfig = { ...emailConfig, ...config };
         
         // Special handling for port changes that might require secure connection updates
-        if (config.port === '465' && updatedConfig.secure === false) {
+        if (config.port === '465') {
           updatedConfig.secure = true; // Port 465 always requires secure
         }
         
@@ -151,10 +147,11 @@ export const useEmailConfig = () => {
         }
       }
 
-      // Ensure Yahoo always uses the correct settings
+      // Ensure Yahoo always uses the correct settings regardless of user changes
       if (updatedConfig.provider === 'yahoo') {
         updatedConfig.port = '465';
         updatedConfig.secure = true;
+        updatedConfig.host = 'smtp.mail.yahoo.com';
       }
 
       // If user is trying to enable, validate
@@ -221,20 +218,21 @@ export const useEmailConfig = () => {
     }, null, 2));
     
     try {
-      // Special handling for provider specific requirements
-      let configToSend = {...emailConfig};
-      
-      // For Resend, ensure secure is true and using port 465
-      if (configToSend.provider === 'resend') {
-        configToSend.secure = true;
-        configToSend.port = '465';
+      // Special handling for Yahoo - add extra logging
+      if (emailConfig.provider === 'yahoo') {
+        console.log('Using Yahoo provider with special configuration');
+        console.log('Note: Yahoo requires an app password, not regular account password');
       }
       
-      // For Yahoo, ensure secure is true and using port 465
-      if (configToSend.provider === 'yahoo') {
-        configToSend.secure = true;
-        configToSend.port = '465';
-      }
+      const configToSend = {
+        ...emailConfig,
+        // Ensure correct settings for yahoo
+        ...(emailConfig.provider === 'yahoo' ? {
+          host: 'smtp.mail.yahoo.com',
+          port: '465',
+          secure: true
+        } : {})
+      };
       
       const result = await apiRequest<{
         success: boolean;
@@ -269,6 +267,21 @@ export const useEmailConfig = () => {
         };
       } else {
         const errorMsg = result.error || 'Unknown error sending email';
+        
+        // Special error handling for Yahoo
+        if (emailConfig.provider === 'yahoo' && 
+            (errorMsg.includes('535') || errorMsg.includes('authentication') || 
+             errorMsg.includes('auth') || errorMsg.includes('login'))) {
+          
+          // Add more specific guidance for Yahoo auth issues
+          setError(`Yahoo SMTP authentication failed. Please ensure you're using an App Password, not your regular Yahoo password. ${errorMsg}`);
+          
+          return { 
+            success: false, 
+            error: `Yahoo authentication failed. Make sure you've generated an App Password specifically for this app and you're not using your regular Yahoo account password. Error: ${errorMsg}`
+          };
+        }
+        
         setError(errorMsg);
         return { success: false, error: errorMsg };
       }
@@ -290,7 +303,7 @@ export const useEmailConfig = () => {
       case 'outlook365':
         return 'For Outlook 365, make sure to use your full email as username and enable "Allow less secure apps" in your Microsoft account settings.';
       case 'yahoo':
-        return 'For Yahoo, you need to generate an app password in your Yahoo account security settings. Visit Account Info > Account Security > Generate app password. Yahoo has blocked your login attempts temporarily, please wait a few minutes before trying again.';
+        return 'For Yahoo Mail, you MUST use an App Password and not your regular Yahoo password. To generate an App Password: 1) Go to Yahoo Account Info > Account Security > Generate app password 2) Select "Other app" and name it 3) Copy the generated password and use it here. Also ensure you use your full Yahoo email as the username.';
       case 'resend':
         return 'For Resend, use your API key as both the username and password. You must use onboarding@resend.dev as the from email unless you have verified your domain in Resend.';
       default:
