@@ -92,7 +92,7 @@ export default function AdminSettings() {
           variant: "default",
         });
         
-        // Set the details for display
+        // Set the details for display - adding null check for details property
         if (result.details) {
           setEmailTestDetails({
             messageId: result.details.messageId,
