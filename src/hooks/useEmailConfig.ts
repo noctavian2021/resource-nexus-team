@@ -1,5 +1,6 @@
 
 import { useEmailConfig } from './email/useEmailConfig';
-export { EmailConfig } from './email/types';
+// Change from "export { EmailConfig }" to "export type { EmailConfig }"
+export type { EmailConfig } from './email/types';
 
 export { useEmailConfig };
