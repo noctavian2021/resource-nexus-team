@@ -94,7 +94,8 @@ export default function CreateRequestDialog() {
       // Add notification for the department lead
       addNotification(
         "New Resource Request",
-        `${data.title} - Resource request from ${requestingDepartment?.name}`
+        `${data.title} - Resource request from ${requestingDepartment?.name || 'Admin'}`,
+        'request'
       );
       
       // Play notification sound for both sender and receiver
@@ -107,7 +108,16 @@ export default function CreateRequestDialog() {
         try {
           // First, send to target department
           if (targetDepartment) {
-            const targetDeptEmail = `${targetDepartment?.name?.toLowerCase().replace(/\s+/g, '')}@example.com`;
+            // Get target department lead email (or construct default if not available)
+            let targetDeptEmail = '';
+            
+            if (targetDepartment.leadId) {
+              // If there's a lead ID, we could fetch their email (simplified in this implementation)
+              targetDeptEmail = `${targetDepartment.name?.toLowerCase().replace(/\s+/g, '')}@example.com`;
+            } else {
+              // Default fallback email for department
+              targetDeptEmail = `${targetDepartment.name?.toLowerCase().replace(/\s+/g, '')}@example.com`;
+            }
             
             console.log('Sending email notification to target department:', targetDeptEmail);
             
@@ -116,7 +126,7 @@ export default function CreateRequestDialog() {
               replacingMember: '',
               additionalNotes: `
                 New Resource Request: ${data.title}
-                From: ${requestingDepartment?.name || user?.name}
+                From: ${requestingDepartment?.name || user?.name || 'Admin'}
                 Required Skills: ${data.requiredSkills}
                 Start Date: ${data.startDate}
                 End Date: ${data.endDate}
@@ -128,14 +138,46 @@ export default function CreateRequestDialog() {
                 ...emailConfig,
                 port: String(emailConfig.port),
                 secure: emailConfig.port === '465' ? true : (emailConfig.port === '587' ? false : emailConfig.secure),
+                connectionTimeout: 30000,
+                greetingTimeout: 30000
               }
             });
             
             console.log('Email notification sent to target department lead:', targetResponse);
           }
           
-          // Now send a copy to the requester (admin/current user)
-          if (user?.email) {
+          // Always send a copy to the admin email (regardless of who is creating the request)
+          const adminEmail = 'admin@example.com';
+          
+          console.log('Sending email notification to admin:', adminEmail);
+          
+          const adminResponse = await apiRequest('/email/send-welcome', 'POST', {
+            email: adminEmail,
+            replacingMember: '',
+            additionalNotes: `
+              Resource Request Details: ${data.title}
+              To: ${targetDepartment?.name || 'Target Department'}
+              From: ${user?.name || 'Admin'}
+              Required Skills: ${data.requiredSkills}
+              Start Date: ${data.startDate}
+              End Date: ${data.endDate}
+              
+              Description:
+              ${data.description}
+            `,
+            emailConfig: {
+              ...emailConfig,
+              port: String(emailConfig.port),
+              secure: emailConfig.port === '465' ? true : (emailConfig.port === '587' ? false : emailConfig.secure),
+              connectionTimeout: 30000,
+              greetingTimeout: 30000
+            }
+          });
+          
+          console.log('Email notification sent to admin:', adminResponse);
+          
+          // Now send a copy to the requester (if they're not the admin)
+          if (user?.email && user.email !== adminEmail) {
             console.log('Sending email notification to requester:', user.email);
             
             const requesterResponse = await apiRequest('/email/send-welcome', 'POST', {
@@ -155,6 +197,8 @@ export default function CreateRequestDialog() {
                 ...emailConfig,
                 port: String(emailConfig.port),
                 secure: emailConfig.port === '465' ? true : (emailConfig.port === '587' ? false : emailConfig.secure),
+                connectionTimeout: 30000,
+                greetingTimeout: 30000
               }
             });
             

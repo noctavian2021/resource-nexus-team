@@ -8,6 +8,8 @@ export interface User {
   email: string;
   departmentId: string;
   role: 'team_lead' | 'admin' | 'member';
+  // Flag to indicate if user is considered a lead (admins are always leads)
+  isLead?: boolean;
 }
 
 // Define context type
@@ -31,7 +33,8 @@ const MOCK_USERS = [
     email: 'john@example.com',
     password: 'password123', // In a real app, this would be hashed
     departmentId: '1',
-    role: 'team_lead' as const
+    role: 'team_lead' as const,
+    isLead: true
   },
   {
     id: 'user2',
@@ -39,7 +42,8 @@ const MOCK_USERS = [
     email: 'jane@example.com',
     password: 'password123',
     departmentId: '2',
-    role: 'team_lead' as const
+    role: 'team_lead' as const,
+    isLead: true
   },
   {
     id: 'user3',
@@ -47,7 +51,8 @@ const MOCK_USERS = [
     email: 'admin@example.com',
     password: 'admin123',
     departmentId: '0',
-    role: 'admin' as const
+    role: 'admin' as const,
+    isLead: true  // Mark admin as a lead by default
   },
 ];
 
@@ -64,7 +69,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     if (storedUser) {
       try {
         const parsedUser = JSON.parse(storedUser);
+        
+        // Ensure admin users always have isLead set to true
+        if (parsedUser.role === 'admin') {
+          parsedUser.isLead = true;
+        }
+        
         setUser(parsedUser);
+        
+        // Store user email in localStorage for notification purposes
+        localStorage.setItem('userEmail', parsedUser.email);
       } catch (err) {
         console.error('Error parsing stored user data', err);
         localStorage.removeItem('authUser');
@@ -90,10 +104,20 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (foundUser) {
         // Remove password before storing
         const { password: _, ...userWithoutPassword } = foundUser;
+        
+        // Ensure admin users always have isLead set to true
+        if (userWithoutPassword.role === 'admin') {
+          userWithoutPassword.isLead = true;
+        }
+        
         setUser(userWithoutPassword);
         
         // Store in localStorage for persistence
         localStorage.setItem('authUser', JSON.stringify(userWithoutPassword));
+        
+        // Store user email in localStorage for notification purposes
+        localStorage.setItem('userEmail', userWithoutPassword.email);
+        
         setIsLoading(false);
         return true;
       } else {
