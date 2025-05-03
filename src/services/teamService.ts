@@ -1,4 +1,3 @@
-
 import { TeamMember } from '@/data/mockData';
 import apiRequest from './api';
 import { EmailConfig } from '@/hooks/useEmailConfig';
@@ -101,10 +100,33 @@ export const sendWelcomePackage = (data: {
   console.log('Sending welcome package with config:', {
     email: data.email,
     hasEmailConfig: !!data.emailConfig,
-    emailEnabled: data.emailConfig?.enabled
+    emailEnabled: data.emailConfig?.enabled,
+    // Add detailed info for debugging
+    port: data.emailConfig?.port,
+    secure: data.emailConfig?.secure,
+    provider: data.emailConfig?.provider
   });
   
-  return apiRequest('/email/send-welcome', 'POST', data);
+  // Normalize emailConfig to ensure proper SSL settings for the welcome package email
+  const normalizedData = {
+    ...data,
+    emailConfig: data.emailConfig ? {
+      ...data.emailConfig,
+      // Force correct secure settings based on port
+      secure: data.emailConfig.port === '465' ? true : false,
+      // Apply provider-specific overrides
+      ...(data.emailConfig.provider === 'gmail' ? {
+        port: '587',
+        secure: false
+      } : {}),
+      ...(data.emailConfig.provider === 'yahoo' ? {
+        port: '465',
+        secure: true
+      } : {})
+    } : undefined
+  };
+  
+  return apiRequest('/email/send-welcome', 'POST', normalizedData);
 };
 
 // New function to get organizational structure
