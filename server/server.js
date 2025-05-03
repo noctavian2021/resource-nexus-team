@@ -192,11 +192,11 @@ app.post('/api/email/send-test', async (req, res) => {
       from: `"${config.fromName}" <${config.fromEmail}>`,
     }, null, 2));
 
-    // Configure longer timeouts, especially for Gmail
+    // Configure appropriate options based on port and provider
     const transportOptions = {
       host: config.host,
       port: parseInt(config.port),
-      secure: config.secure,
+      secure: config.secure, // Use config.secure value
       auth: {
         user: config.username,
         pass: config.password,
@@ -209,14 +209,20 @@ app.post('/api/email/send-test', async (req, res) => {
       logger: true,
     };
     
-    // Add TLS options for Gmail to improve connection reliability
+    // Add TLS options for all email providers to improve connection reliability
+    transportOptions.tls = {
+      // Don't reject connections with self-signed certificates
+      rejectUnauthorized: false,
+      // Ensure we use modern TLS versions
+      minVersion: 'TLSv1.2',
+      // Use secure ciphers
+      ciphers: 'HIGH:!aNULL:!MD5',
+    };
+    
+    // Special Gmail settings
     if (config.provider === 'gmail') {
       console.log('Adding special TLS options for Gmail');
-      transportOptions.tls = {
-        rejectUnauthorized: false, // Allow self-signed certificates
-        minVersion: 'TLSv1.2',     // Ensure modern TLS
-        ciphers: 'HIGH:!aNULL:!MD5', // Use secure ciphers
-      };
+      // Gmail specific settings already added in common TLS block above
     }
 
     // Create a transporter with the provided configuration
@@ -231,9 +237,13 @@ app.post('/api/email/send-test', async (req, res) => {
       console.error('SMTP verification failed:', verifyError);
       let errorMessage = `Failed to connect to SMTP server: ${verifyError.message}`;
       
-      // Enhanced error messages for common Gmail issues
-      if (config.provider === 'gmail' && verifyError.message.includes('Greeting never received')) {
-        errorMessage = 'Gmail SMTP greeting timeout. This might be due to network issues, Gmail temporarily blocking your IP, or incorrect credentials. Try using an App Password if you have 2FA enabled.';
+      // Enhanced error messages for common issues
+      if (verifyError.message.includes('Greeting never received')) {
+        errorMessage = 'SMTP greeting timeout. This might be due to network issues, temporarily blocked IP, or incorrect credentials. Try again in a few minutes.';
+      }
+      
+      if (verifyError.message.includes('SSL routines') || verifyError.message.includes('wrong version number')) {
+        errorMessage = 'SSL/TLS connection failed. Your secure setting may not match what the server expects. If your port is 587, try setting secure=false. If your port is 465, try setting secure=true.';
       }
       
       return res.status(400).json({ 
@@ -266,10 +276,16 @@ app.post('/api/email/send-test', async (req, res) => {
   } catch (error) {
     console.error('Email sending error:', error);
     
-    // Enhanced error handling with specific Gmail guidance
+    // Enhanced error handling with specific guidance
     let errorMessage = `Failed to send email: ${error.message}`;
-    if (error.message.includes('Greeting never received') && req.body.config?.provider === 'gmail') {
-      errorMessage = 'Gmail SMTP connection timed out waiting for greeting. This could be due to network issues or Gmail security measures. Try the following: 1) Check your credentials 2) Use an App Password if you have 2FA enabled 3) Wait a few minutes before trying again.';
+    
+    // SSL/TLS specific error messages
+    if (error.message.includes('SSL routines') || error.message.includes('wrong version number')) {
+      errorMessage = 'SSL/TLS connection failed. Your secure setting may not match what the server expects. If your port is 587, try setting secure=false. If your port is 465, try setting secure=true.';
+    }
+    
+    if (error.message.includes('Greeting never received')) {
+      errorMessage = 'SMTP connection timed out waiting for greeting. This could be due to network issues or security measures. Try again in a few minutes or check your credentials.';
     }
     
     res.status(500).json({ 
@@ -309,7 +325,7 @@ app.post('/api/email/send-welcome', async (req, res) => {
       provider: emailConfig.provider
     });
     
-    // Configure longer timeouts and add TLS options to improve connection reliability
+    // Configure appropriate options based on port and provider
     const transportOptions = {
       host: emailConfig.host,
       port: parseInt(emailConfig.port),
@@ -318,18 +334,23 @@ app.post('/api/email/send-welcome', async (req, res) => {
         user: emailConfig.username,
         pass: emailConfig.password,
       },
-      // Extended timeout settings
-      connectionTimeout: 30000,
-      greetingTimeout: 30000,
-      socketTimeout: 30000,
-      // Add TLS options to improve connection reliability
-      tls: {
-        rejectUnauthorized: false, // Allow self-signed certificates
-        minVersion: 'TLSv1.2'      // Ensure modern TLS
-      }
+      // Extended timeout settings for slower connections
+      connectionTimeout: 30000, // 30 seconds
+      greetingTimeout: 30000,   // 30 seconds
+      socketTimeout: 30000,     // 30 seconds
     };
-
-    // Create transporter with the options
+    
+    // Add TLS options to improve connection reliability for ALL email providers
+    transportOptions.tls = {
+      // Don't fail on invalid certificates - many email providers use self-signed certs
+      rejectUnauthorized: false,
+      // Use modern TLS versions only
+      minVersion: 'TLSv1.2',
+      // Use secure ciphers
+      ciphers: 'HIGH:!aNULL:!MD5'
+    };
+    
+    // Create transporter with the enhanced options
     const transporter = nodemailer.createTransport(transportOptions);
 
     // Verify connection first
@@ -338,9 +359,17 @@ app.post('/api/email/send-welcome', async (req, res) => {
       console.log('SMTP connection verified successfully');
     } catch (verifyError) {
       console.error('SMTP verification failed:', verifyError);
+      
+      // Provide detailed error message based on the specific error
+      let errorMessage = `Failed to connect to SMTP server: ${verifyError.message}`;
+      
+      if (verifyError.message.includes('SSL routines') || verifyError.message.includes('wrong version number')) {
+        errorMessage = 'SSL/TLS connection failed. Your secure setting may not match what the server expects. If your port is 587, try setting secure=false. If your port is 465, try setting secure=true.';
+      }
+      
       return res.status(400).json({ 
         success: false, 
-        error: `Failed to connect to SMTP server: ${verifyError.message}` 
+        error: errorMessage 
       });
     }
 
@@ -372,9 +401,18 @@ app.post('/api/email/send-welcome', async (req, res) => {
     });
   } catch (error) {
     console.error('Welcome email sending error:', error);
+    
+    // Provide more specific error message based on the error type
+    let errorMessage = `Failed to send welcome email: ${error.message}`;
+    
+    // Handle SSL/TLS specific errors with clear guidance
+    if (error.message.includes('SSL routines') || error.message.includes('wrong version number')) {
+      errorMessage = 'SSL/TLS connection failed. Your secure setting may not match what the server expects. If your port is 587, try setting secure=false. If your port is 465, try setting secure=true.';
+    }
+    
     res.status(500).json({ 
       success: false, 
-      error: `Failed to send welcome email: ${error.message}` 
+      error: errorMessage 
     });
   }
 });

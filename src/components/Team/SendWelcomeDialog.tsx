@@ -128,15 +128,27 @@ export default function SendWelcomeDialog({ teamMembers, onRefreshList }: SendWe
       } catch (apiError: any) {
         console.error("API Error:", apiError);
         
-        // Enhance error message for SSL/TLS issues
+        // Enhanced error messages for common email issues
         let errorMessage = apiError.message || "Failed to send welcome package";
+        
+        // SSL/TLS connection issues
         if (errorMessage.includes('SSL routines') || errorMessage.includes('wrong version number')) {
-          errorMessage = "SSL/TLS connection failed. Please check that your email provider's secure settings match your configuration.";
+          errorMessage = "SSL/TLS connection failed. Please check that your email provider's secure settings match your configuration. If using port 587, try setting 'secure' to false. If using port 465, set 'secure' to true.";
+        }
+        
+        // Authentication errors
+        if (errorMessage.includes('Invalid login') || errorMessage.includes('authentication failed') || errorMessage.includes('Username and Password not accepted')) {
+          errorMessage = "Email authentication failed. Please verify your username and password. If you're using Gmail or Yahoo with 2FA, make sure you're using an App Password.";
+        }
+        
+        // Connection timeout issues
+        if (errorMessage.includes('ETIMEDOUT') || errorMessage.includes('Connection timed out')) {
+          errorMessage = "Connection to email server timed out. This could be due to network issues or incorrect server settings. Please verify your host and port settings.";
         }
         
         setError(errorMessage);
         toast({
-          title: "Error",
+          title: "Email Error",
           description: errorMessage,
           variant: "destructive",
         });
@@ -162,6 +174,11 @@ export default function SendWelcomeDialog({ teamMembers, onRefreshList }: SendWe
       });
     }
     setIsOpen(open);
+    
+    // Clear errors when dialog is closed
+    if (!open) {
+      setError(null);
+    }
   };
 
   const handleMemberSelect = (memberId: string) => {
@@ -185,6 +202,25 @@ export default function SendWelcomeDialog({ teamMembers, onRefreshList }: SendWe
     });
   };
 
+  // Get SSL configuration help text based on current settings
+  const getSslHelpText = () => {
+    if (!emailConfig.enabled) return null;
+    
+    const { port, secure } = emailConfig;
+    
+    if (port === '587' && secure) {
+      return "You're using port 587 with secure=true. This port typically uses STARTTLS (secure=false).";
+    }
+    
+    if (port === '465' && !secure) {
+      return "You're using port 465 with secure=false. This port requires SSL/TLS (secure=true).";
+    }
+    
+    return null;
+  };
+  
+  const sslHelpText = getSslHelpText();
+
   return (
     <Dialog open={isOpen} onOpenChange={handleDialogOpenChange}>
       <DialogTrigger asChild>
@@ -206,6 +242,14 @@ export default function SendWelcomeDialog({ teamMembers, onRefreshList }: SendWe
               Email notifications are currently disabled. The welcome package will be processed but no email will be sent.
               You can enable email notifications in the Admin Settings.
             </AlertDescription>
+          </Alert>
+        )}
+        
+        {sslHelpText && (
+          <Alert variant="warning" className="mb-4">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle>SSL/TLS Configuration Warning</AlertTitle>
+            <AlertDescription>{sslHelpText}</AlertDescription>
           </Alert>
         )}
         

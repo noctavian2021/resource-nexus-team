@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { toast } from '@/hooks/use-toast';
 import apiRequest from '@/services/apiClient';
@@ -152,6 +153,9 @@ export const useEmailConfig = () => {
         // Special handling for port changes that might require secure connection updates
         if (config.port === '465') {
           updatedConfig.secure = true; // Port 465 always requires secure
+        } else if (config.port === '587' && config.provider !== 'yahoo') {
+          // Port 587 typically uses STARTTLS (not immediate TLS) except for Yahoo
+          updatedConfig.secure = false;
         }
         
         // For Yahoo, always sync fromEmail with username if username changes
@@ -165,6 +169,18 @@ export const useEmailConfig = () => {
         updatedConfig.port = '465';
         updatedConfig.secure = true;
         updatedConfig.host = 'smtp.mail.yahoo.com';
+      }
+      
+      // Ensure Gmail always uses the correct settings
+      if (updatedConfig.provider === 'gmail') {
+        updatedConfig.host = 'smtp.gmail.com';
+        // Gmail can use either 465 (SSL) or 587 (STARTTLS)
+        if (updatedConfig.port === '465') {
+          updatedConfig.secure = true; // Direct SSL
+        } else {
+          updatedConfig.port = '587'; // Default to 587 if not 465
+          updatedConfig.secure = false; // STARTTLS
+        }
       }
 
       // If user is trying to enable, validate
