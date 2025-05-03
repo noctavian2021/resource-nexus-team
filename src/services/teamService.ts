@@ -123,7 +123,7 @@ export const sendWelcomePackage = (data: {
     } : {}),
     ...(data.emailConfig.provider === 'yahoo' ? {
       host: 'smtp.mail.yahoo.com',
-      port: '465',
+      port: '465', 
       secure: true
     } : {}),
     
