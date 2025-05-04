@@ -30,7 +30,7 @@ export const useEmailConfig = () => {
       let updatedConfig: EmailConfig;
       
       if (config.provider && config.provider !== emailConfig.provider) {
-        // Safely cast provider to EmailProviderType
+        // Safely cast provider to EmailProviderType with type checking
         const providerType = config.provider as EmailProviderType;
         
         // If provider changed, update with default settings for that provider
@@ -44,13 +44,13 @@ export const useEmailConfig = () => {
         };
         
         // For Resend, enforce specific settings
-        if (config.provider === 'resend') {
+        if (providerType === 'resend') {
           updatedConfig.secure = true; // Always enable secure for Resend
           updatedConfig.fromEmail = 'onboarding@resend.dev'; // Default to the safe onboarding email
         }
         
         // For Yahoo, enforce specific settings
-        if (config.provider === 'yahoo') {
+        if (providerType === 'yahoo') {
           updatedConfig.secure = true; // Always enable secure for Yahoo
           updatedConfig.port = '465'; // Always use 465 for Yahoo
           // For Yahoo, use username as fromEmail by default
@@ -60,7 +60,7 @@ export const useEmailConfig = () => {
         }
         
         // For Gmail, provide safe defaults - always use 587 with STARTTLS
-        if (config.provider === 'gmail') {
+        if (providerType === 'gmail') {
           updatedConfig.port = '587'; // Standard port for Gmail
           updatedConfig.secure = false; // Uses STARTTLS
         }

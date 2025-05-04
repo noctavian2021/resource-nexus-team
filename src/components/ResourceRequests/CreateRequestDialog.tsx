@@ -10,15 +10,13 @@ import { PlusCircle, Mail } from 'lucide-react';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from '@/hooks/use-toast';
-import { useNotifications } from '@/hooks/useNotifications';
-import { useEmailConfig, EmailConfig } from '@/hooks/useEmailConfig';
-import apiRequest from '@/services/api';
-import { useEffect, useState } from 'react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useNotifications, NotificationOptions } from '@/hooks/useNotifications';
+import { useEmailConfig } from '@/hooks/useEmailConfig';
 import { useQuery } from '@tanstack/react-query';
 import { getDepartments } from '@/services/departmentService';
 import { useAuth } from '@/context/AuthContext';
 import { playNotificationSound } from '@/utils/sound';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const requestFormSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -40,6 +38,7 @@ export default function CreateRequestDialog() {
   
   // Get all users for mapping department leads
   const allUsers = getAllUsers();
+  console.log('Available users for email lookup:', allUsers);
   
   // Fetch departments using React Query
   const { data: departmentList = [], isLoading: isLoadingDepartments } = useQuery({
@@ -72,25 +71,45 @@ export default function CreateRequestDialog() {
       const targetDepartment = departmentList.find(dept => dept.id === data.targetDepartmentId);
       const requestingDepartment = departmentList.find(d => d.id === currentUserDepartmentId);
       
-      // Find the actual department lead's email - improved lookup
-      let targetDepartmentLeadEmail = '';
-      let targetDepartmentLeadName = '';
+      // Find the department lead's information
+      let targetLeadEmail = '';
+      let targetLeadName = '';
       
-      if (targetDepartment && targetDepartment.leadId) {
-        // Find the lead user by ID - improved debug logging
+      // Improve debugging for the lookup process
+      console.log('Looking up department lead for department:', targetDepartment);
+      console.log('Department lead ID to find:', targetDepartment?.leadId);
+      console.log('Current users available:', allUsers);
+      
+      // Get directly from API if allUsers is empty
+      if (targetDepartment?.leadId && (!allUsers || allUsers.length === 0)) {
+        try {
+          // In a real app, you would fetch the user directly
+          console.log(`Attempting direct fetch for lead with ID: ${targetDepartment.leadId}`);
+          
+          // Mock getting the user email from departmentId - in real app would be API call
+          targetLeadEmail = `${targetDepartment.name?.toLowerCase().replace(/\s+/g, '')}lead@example.com`;
+          targetLeadName = `${targetDepartment.name} Lead`;
+          console.log(`Using mock email for department lead: ${targetLeadEmail}`);
+        } catch (error) {
+          console.error('Error fetching department lead:', error);
+        }
+      } else if (targetDepartment?.leadId) {
+        // Find lead in allUsers array
         const departmentLead = allUsers.find(u => u.id === targetDepartment.leadId);
         console.log('Department lead found:', departmentLead);
-        console.log('All available users:', allUsers.map(u => ({ id: u.id, name: u.name, email: u.email })));
         
         if (departmentLead && departmentLead.email) {
-          targetDepartmentLeadEmail = departmentLead.email;
-          targetDepartmentLeadName = departmentLead.name || '';
-          console.log(`Found target department lead email: ${targetDepartmentLeadEmail} (${targetDepartmentLeadName})`);
-        } else {
-          console.warn(`Department lead found (ID: ${targetDepartment.leadId}), but email is missing or undefined`);
+          targetLeadEmail = departmentLead.email;
+          targetLeadName = departmentLead.name || 'Department Lead';
+          console.log(`Found target department lead email: ${targetLeadEmail} (${targetLeadName})`);
         }
-      } else {
-        console.warn(`No department lead ID found for department ${targetDepartment?.name || data.targetDepartmentId}`);
+      }
+      
+      // If still no email, create a fallback
+      if (!targetLeadEmail && targetDepartment) {
+        targetLeadEmail = `${targetDepartment.name?.toLowerCase().replace(/\s+/g, '')}@example.com`;
+        targetLeadName = targetDepartment.name || 'Department';
+        console.log(`Using fallback email: ${targetLeadEmail}`);
       }
       
       // Modified to match the ResourceRequest interface
@@ -114,11 +133,28 @@ export default function CreateRequestDialog() {
         updatedAt: new Date().toISOString()
       };
 
-      // Add notification for the department lead
-      addNotification(
+      // Enhanced email content for better readability
+      const additionalEmailContent = `
+        Required Skills: ${data.requiredSkills}
+        Duration: ${data.startDate} to ${data.endDate}
+        From Department: ${requestingDepartment?.name || user?.name || 'Admin'}
+        
+        Please review this request in the Resource Management System.
+      `;
+
+      // Add notification for the department lead with specific email targeting
+      const notificationOptions: NotificationOptions = {
+        emailRecipient: targetLeadEmail,
+        recipientName: targetLeadName,
+        additionalEmailContent: additionalEmailContent
+      };
+      
+      // Add system notification with email
+      await addNotification(
         "New Resource Request",
         `${data.title} - Resource request from ${requestingDepartment?.name || 'Admin'}`,
-        'request'
+        'request',
+        notificationOptions
       );
       
       // Play notification sound for both sender and receiver
@@ -126,127 +162,25 @@ export default function CreateRequestDialog() {
         console.log('Error playing notification sound in CreateRequestDialog:', err);
       });
       
-      // Send email notification if email is configured - IMPROVED VERSION
-      if (emailConfig.enabled) {
-        try {
-          // Ensure email config is correctly normalized - fixed format to match backend
-          const normalizedEmailConfig = {
-            ...emailConfig,
-            port: String(emailConfig.port),
-            secure: emailConfig.port === '465' ? true : (emailConfig.port === '587' ? false : emailConfig.secure),
-            connectionTimeout: 30000,
-            greetingTimeout: 30000
-          };
-          
-          console.log('Sending email notification for resource request with config:', {
-            enabled: normalizedEmailConfig.enabled,
-            provider: normalizedEmailConfig.provider,
-            host: normalizedEmailConfig.host,
-            port: normalizedEmailConfig.port,
-            secure: normalizedEmailConfig.secure,
-            fromEmail: normalizedEmailConfig.fromEmail
-          });
-          
-          // Prepare better email content with HTML formatting
-          const emailSubject = `New Resource Request: ${data.title}`;
-          const emailHtml = `
-            <div style="font-family: Arial, sans-serif; max-width: 600px;">
-              <h2>New Resource Request: ${data.title}</h2>
-              
-              <p><strong>From:</strong> ${requestingDepartment?.name || user?.name || 'Admin'}</p>
-              <p><strong>Required Skills:</strong> ${data.requiredSkills}</p>
-              <p><strong>Duration:</strong> ${data.startDate} to ${data.endDate}</p>
-              
-              <h3>Description:</h3>
-              <p style="padding: 10px; background-color: #f5f5f5; border-radius: 4px;">${data.description}</p>
-              
-              <p style="margin-top: 20px;">Please review this request in the Resource Management System.</p>
-              
-              <div style="margin-top: 30px; padding-top: 10px; border-top: 1px solid #eee; color: #666; font-size: 12px;">
-                This is an automated notification from the Resource Management System.
-              </div>
-            </div>
-          `;
-          
-          const emailText = `
-            New Resource Request: ${data.title}
-            
-            From: ${requestingDepartment?.name || user?.name || 'Admin'}
-            Required Skills: ${data.requiredSkills}
-            Duration: ${data.startDate} to ${data.endDate}
-            
-            Description:
-            ${data.description}
-            
-            Please review this request in the Resource Management System.
-          `;
-          
-          // First, send to target department lead if we have a valid email - use send-welcome endpoint which works
-          if (targetDepartmentLeadEmail) {
-            console.log(`Sending email notification to ${targetDepartmentLeadName} (${targetDepartmentLeadEmail})`);
-            
-            // Using send-welcome endpoint which is known to work
-            const targetResponse = await apiRequest('/email/send-welcome', 'POST', {
-              email: targetDepartmentLeadEmail,
-              subject: emailSubject,
-              name: targetDepartmentLeadName || 'Department Lead',
-              startDate: new Date().toISOString().split('T')[0],
-              replacingMember: '', 
-              additionalNotes: `**Resource Request Details**\n\n${data.description}\n\nRequired Skills: ${data.requiredSkills}\nDuration: ${data.startDate} to ${data.endDate}`,
-              emailConfig: normalizedEmailConfig
-            });
-            
-            console.log(`Email notification sent to department lead (${targetDepartmentLeadEmail}):`, targetResponse);
-          } else {
-            console.warn('Could not find target department lead email. Using fallback address.');
-            // Fallback to a generic department email if we can't find the lead's email
-            const fallbackEmail = targetDepartment ? 
-              `${targetDepartment.name?.toLowerCase().replace(/\s+/g, '')}@example.com` : 
-              'no-reply@example.com';
-              
-            // Using send-welcome endpoint which is known to work  
-            const targetResponse = await apiRequest('/email/send-welcome', 'POST', {
-              email: fallbackEmail,
-              subject: emailSubject,
-              name: targetDepartment?.name || 'Department',
-              startDate: new Date().toISOString().split('T')[0],
-              replacingMember: '',
-              additionalNotes: `**Resource Request Details**\n\n${data.description}\n\nRequired Skills: ${data.requiredSkills}\nDuration: ${data.startDate} to ${data.endDate}`,
-              emailConfig: normalizedEmailConfig
-            });
-            
-            console.log('Email notification sent to fallback address:', targetResponse);
-          }
-          
-          // Send a copy to the requester if they're not the admin
-          if (user?.email) {
-            console.log('Sending email notification to requester:', user.email);
-            
-            const requesterResponse = await apiRequest('/email/send-welcome', 'POST', {
-              email: user.email,
-              subject: `Your Resource Request: ${data.title}`,
-              name: user.name || 'User',
-              startDate: new Date().toISOString().split('T')[0],
-              replacingMember: '',
-              additionalNotes: `**Your Request Details**\n\n${data.description}\n\nRequired Skills: ${data.requiredSkills}\nDuration: ${data.startDate} to ${data.endDate}\n\nYour request has been submitted to ${targetDepartment?.name || 'the department'}.`,
-              emailConfig: normalizedEmailConfig
-            });
-            
-            console.log('Email notification sent to requester:', requesterResponse);
-          }
-          
-          console.log('All email notifications for resource request processed');
-        } catch (error) {
-          console.error('Failed to send email notification:', error);
-        }
-      } else {
-        // Log why email wasn't sent
-        console.log('Email notification not sent - email is not enabled in config:', {
-          emailEnabled: emailConfig.enabled,
-          hasTargetDepartment: !!targetDepartment,
-          targetDepartmentId: data.targetDepartmentId,
-          targetDepartmentName: targetDepartment?.name
-        });
+      // Send confirmation email to requester if different from target
+      if (user?.email && user.email !== targetLeadEmail) {
+        // Send copy to requester with different message
+        const requesterOptions: NotificationOptions = {
+          emailRecipient: user.email,
+          recipientName: user.name || 'User',
+          skipEmail: !emailConfig.enabled,
+          additionalEmailContent: `
+            Your request has been submitted to ${targetDepartment?.name || 'the department'}.
+            You will be notified when there is an update.
+          `
+        };
+        
+        await addNotification(
+          `Your Resource Request: ${data.title}`,
+          `Your request has been submitted to ${targetDepartment?.name}`,
+          'general',
+          requesterOptions
+        );
       }
       
       // Show confirmation toast to the requester

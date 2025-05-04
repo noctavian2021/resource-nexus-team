@@ -14,6 +14,13 @@ interface Notification {
   category?: 'general' | 'report' | 'request' | 'absence';
 }
 
+export interface NotificationOptions {
+  emailRecipient?: string;
+  recipientName?: string;
+  skipEmail?: boolean;
+  additionalEmailContent?: string;
+}
+
 export const useNotifications = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const { emailConfig } = useEmailConfig();
@@ -44,7 +51,12 @@ export const useNotifications = () => {
   }, []);
 
   // Add a new notification
-  const addNotification = async (title: string, message: string, category: 'general' | 'report' | 'request' | 'absence' = 'general') => {
+  const addNotification = async (
+    title: string, 
+    message: string, 
+    category: 'general' | 'report' | 'request' | 'absence' = 'general',
+    options: NotificationOptions = {}
+  ) => {
     try {
       const newNotification: Notification = {
         id: Date.now().toString(),
@@ -72,18 +84,24 @@ export const useNotifications = () => {
         duration: 5000,
       });
 
-      // If email is configured, send an email notification for specific categories
-      if (emailConfig.enabled && (category === 'report' || category === 'request')) {
+      // If email is configured and we have a recipient, send an email notification
+      if (emailConfig.enabled && !options.skipEmail && 
+         (category === 'report' || category === 'request' || options.emailRecipient)) {
+        
         try {
-          // Send email notification for specific notification types
-          const recipientEmail = localStorage.getItem('userEmail') || 'admin@example.com'; // Get user email or fallback
+          // Get recipient email - either from options or fallback
+          const recipientEmail = options.emailRecipient || localStorage.getItem('userEmail') || 'admin@example.com';
+          const recipientName = options.recipientName || localStorage.getItem('userName') || 'User';
           
           console.log(`Sending ${category} notification email to:`, recipientEmail);
+          
+          // Add additional content if provided
+          const additionalContent = options.additionalEmailContent || '';
           
           // Use the send-welcome endpoint which is known to work
           await apiRequest('/email/send-welcome', 'POST', {
             email: recipientEmail,
-            name: localStorage.getItem('userName') || 'User',
+            name: recipientName,
             subject: `${title} - Notification`,
             startDate: new Date().toISOString().split('T')[0],
             replacingMember: '',
@@ -94,6 +112,7 @@ export const useNotifications = () => {
               
               Category: ${category}
               Time: ${new Date().toLocaleString()}
+              ${additionalContent}
             `,
             emailConfig: {
               ...emailConfig,
@@ -104,7 +123,7 @@ export const useNotifications = () => {
             }
           });
           
-          console.log(`Email notification for ${category} sent successfully`);
+          console.log(`Email notification for ${category} sent successfully to ${recipientEmail}`);
         } catch (emailErr) {
           console.error('Error sending email notification:', emailErr);
         }
