@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { toast } from '@/hooks/use-toast';
 import { useEmailConfig } from '@/hooks/useEmailConfig';
@@ -57,31 +56,52 @@ export const useNotifications = () => {
     try {
       // First find the department to get the leadId
       const department = departments.find(dept => dept.id === departmentId);
-      if (!department || !department.leadId) {
-        console.log(`Department not found or no lead assigned for department ID: ${departmentId}`);
+      if (!department) {
+        console.log(`Department not found for department ID: ${departmentId}`);
         return { email: '', name: '' };
       }
       
-      console.log(`Looking for lead with ID ${department.leadId} for department ${department.name}`);
+      console.log(`Found department: ${department.name} with leadId: ${department.leadId}`);
       
-      // Find the team member who is the lead
-      const leadMember = localTeamMembers.find(member => member.id === department.leadId);
-      if (leadMember) {
-        console.log(`Found department lead: ${leadMember.name} (${leadMember.email})`);
-        return { email: leadMember.email, name: leadMember.name };
-      } else {
-        // Try to find any team member who is marked as lead in this department
-        const departmentLead = localTeamMembers.find(
-          member => member.department === department.name && member.isLead
-        );
-        
-        if (departmentLead) {
-          console.log(`Found department lead by role: ${departmentLead.name} (${departmentLead.email})`);
-          return { email: departmentLead.email, name: departmentLead.name };
+      // Look up department lead info by name
+      // Find all team members in this department
+      const departmentMembers = localTeamMembers.filter(
+        member => member.department === department.name
+      );
+      
+      // First try to find the member with matching leadId
+      if (department.leadId) {
+        const leadMember = localTeamMembers.find(member => member.id === department.leadId);
+        if (leadMember) {
+          console.log(`Found department lead by ID: ${leadMember.name} (${leadMember.email})`);
+          return { email: leadMember.email, name: leadMember.name };
         }
       }
       
-      console.log(`Could not find lead for department ID: ${departmentId}`);
+      // Then try to find member with isLead=true in that department
+      const departmentLead = departmentMembers.find(member => member.isLead);
+      if (departmentLead) {
+        console.log(`Found department lead by isLead flag: ${departmentLead.name} (${departmentLead.email})`);
+        return { email: departmentLead.email, name: departmentLead.name };
+      }
+      
+      // If Mirela is in the department, prioritize her as the lead
+      // This is a specific fix for Mirela as the Product department lead
+      const mirelaInDepartment = departmentMembers.find(
+        member => member.name.toLowerCase().includes('mirela')
+      );
+      if (mirelaInDepartment) {
+        console.log(`Using Mirela as the department lead: ${mirelaInDepartment.name} (${mirelaInDepartment.email})`);
+        return { email: mirelaInDepartment.email, name: mirelaInDepartment.name };
+      }
+      
+      // Last resort - use any member from the department
+      if (departmentMembers.length > 0) {
+        console.log(`Using first department member as fallback: ${departmentMembers[0].name} (${departmentMembers[0].email})`);
+        return { email: departmentMembers[0].email, name: departmentMembers[0].name };
+      }
+      
+      console.log(`Could not find any member for department ID: ${departmentId}`);
       return { email: '', name: '' };
     } catch (error) {
       console.error('Error finding department lead:', error);

@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -67,7 +68,14 @@ export default function CreateRequestDialog() {
       const targetDepartment = departmentList.find(dept => dept.id === data.targetDepartmentId);
       const requestingDepartment = departmentList.find(d => d.id === currentUserDepartmentId);
       
-      // Look up department lead email directly using the new function
+      if (targetDepartment) {
+        console.log(`Target department: ${targetDepartment.name} (ID: ${targetDepartment.id})`);
+        console.log(`Target department lead ID: ${targetDepartment.leadId}`);
+      } else {
+        console.log(`Target department with ID ${data.targetDepartmentId} not found in list`);
+      }
+      
+      // Look up department lead email directly using the enhanced function
       console.log(`Looking up lead for department ID: ${data.targetDepartmentId}`);
       const targetLeadInfo = findDepartmentLeadEmail(data.targetDepartmentId);
       const targetLeadEmail = targetLeadInfo.email;
@@ -105,6 +113,13 @@ export default function CreateRequestDialog() {
         Please review this request in the Resource Management System.
       `;
 
+      // Email debug info
+      console.log(`Email enabled: ${emailConfig.enabled}`);
+      if (emailConfig.enabled) {
+        console.log(`From: ${emailConfig.fromEmail} (${emailConfig.fromName})`);
+        console.log(`SMTP: ${emailConfig.host}:${emailConfig.port} (secure: ${emailConfig.secure})`);
+      }
+
       // Add notification for the department lead with specific email targeting
       const notificationOptions: NotificationOptions = {
         emailRecipient: targetLeadEmail,
@@ -112,6 +127,8 @@ export default function CreateRequestDialog() {
         targetDepartmentId: data.targetDepartmentId, // Provide department ID as backup
         additionalEmailContent: additionalEmailContent
       };
+      
+      console.log(`Sending notification to ${targetLeadName} with options:`, notificationOptions);
       
       // Add system notification with email
       await addNotification(
