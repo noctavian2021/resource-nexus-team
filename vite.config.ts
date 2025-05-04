@@ -1,10 +1,10 @@
-import { defineConfig } from "vite";
+import { defineConfig, ConfigEnv, Plugin } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
 
 // https://vitejs.dev/config/
-export default defineConfig(({ mode }) => ({
+export default defineConfig(({ mode }: ConfigEnv) => ({
   server: {
     host: "::",
     port: 8080,
@@ -16,8 +16,8 @@ export default defineConfig(({ mode }) => ({
     // Add plugin to intercept problematic imports
     {
       name: 'module-shim',
-      enforce: 'pre',
-      resolveId(id) {
+      enforce: 'pre' as const, // Explicitly type as 'pre'
+      resolveId(id: string) {
         // Return the id unchanged to let Vite handle it
         // but mark brotli modules for special handling
         if (id.includes('brotli/decompress')) {
@@ -28,7 +28,7 @@ export default defineConfig(({ mode }) => ({
         }
         return null;
       },
-      transform(code, id) {
+      transform(code: string, id: string) {
         // Handle specific problematic modules
         if (id.includes('brotli/decompress')) {
           // Export a shimmed version that won't break the build
@@ -49,7 +49,7 @@ export default defineConfig(({ mode }) => ({
         return null;
       }
     }
-  ].filter(Boolean),
+  ].filter(Boolean) as Plugin[],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),

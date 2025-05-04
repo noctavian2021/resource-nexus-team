@@ -2,6 +2,21 @@
 // Add necessary polyfills for browser environment
 import { Buffer as BufferPolyfill } from 'buffer';
 
+// Declare custom window properties to avoid TypeScript errors
+declare global {
+  interface Window {
+    Buffer: typeof BufferPolyfill;
+    process: {
+      env: { NODE_ENV: string };
+      // Use any to allow browser property that doesn't exist in Node's Process interface
+      browser?: boolean;
+      version: string;
+      versions: Record<string, string>;
+    };
+    __customModuleShims?: Record<string, any>;
+  }
+}
+
 // Polyfill Buffer for browser environment
 if (typeof window !== 'undefined') {
   window.Buffer = window.Buffer || BufferPolyfill;
@@ -9,7 +24,6 @@ if (typeof window !== 'undefined') {
 
 // Create shims for Node.js modules used by PDF libraries
 if (typeof window !== 'undefined') {
-  // @ts-ignore - Add missing global modules needed by PDF libraries
   window.process = window.process || {
     env: { NODE_ENV: 'production' },
     browser: true,
@@ -28,6 +42,8 @@ const customBrotliShim = {
 };
 
 // This will be used by our import interception logic in vite.config.ts
-window.__customModuleShims = {
-  '/node_modules/brotli/decompress.js': customBrotliShim,
-};
+if (typeof window !== 'undefined') {
+  window.__customModuleShims = {
+    '/node_modules/brotli/decompress.js': customBrotliShim,
+  };
+}
