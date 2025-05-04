@@ -1,3 +1,4 @@
+
 import { TeamMember, Project } from '@/data/mockData';
 
 export interface AllocationData {
@@ -26,6 +27,8 @@ declare module '@/data/mockData' {
     availability?: number;
     projects?: string[];
     status?: 'active' | 'disabled';
+    isLead?: boolean; // Added this property
+    isDirector?: boolean; // Added this property
     officeDays?: {
       monday: boolean;
       tuesday: boolean;

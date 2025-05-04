@@ -12,6 +12,8 @@ export interface TeamMember {
   availability: number; // percentage available
   projects: string[];
   status?: 'active' | 'disabled'; // Add status
+  isLead?: boolean; // Added this property
+  isDirector?: boolean; // Added this property
   vacation?: {
     isOnVacation: boolean;
     startDate: string;
