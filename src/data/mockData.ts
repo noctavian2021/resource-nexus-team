@@ -1,3 +1,4 @@
+
 import { useNotifications } from "@/hooks/useNotifications";
 
 // Team Member
@@ -124,6 +125,19 @@ export const teamMembers: TeamMember[] = [
     availability: 50,
     projects: ['2']
   },
+  // Adding Mirela as the Product department lead
+  {
+    id: '3m',
+    name: 'Mirela Wang',
+    role: 'Product Manager',
+    department: 'Product',
+    email: 'mirela@example.com',
+    avatar: 'https://i.pravatar.cc/150?img=4',
+    skills: ['Product Strategy', 'User Research', 'Roadmapping'],
+    availability: 65,
+    projects: ['2', '5'],
+    isLead: true // Explicitly marking her as lead
+  },
   {
     id: '3',
     name: 'Michael Chen',
@@ -134,6 +148,7 @@ export const teamMembers: TeamMember[] = [
     skills: ['Agile', 'Roadmapping', 'Stakeholder Management'],
     availability: 15,
     projects: ['1', '2', '4'],
+    isLead: false, // No longer the lead
     vacation: {
       isOnVacation: false,
       startDate: '2025-06-10',
@@ -187,7 +202,7 @@ export const departments: Department[] = [
     id: '3',
     name: 'Product',
     description: 'Product management and strategy',
-    leadId: '3',
+    leadId: '3m', // Updated to Mirela's ID
     memberCount: 6,
     color: '#10b981', // emerald-500
     isHidden: false

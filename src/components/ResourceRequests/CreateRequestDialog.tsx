@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -82,6 +81,10 @@ export default function CreateRequestDialog() {
       const targetLeadName = targetLeadInfo.name;
       
       console.log(`Found target department lead: ${targetLeadName} (${targetLeadEmail})`);
+      
+      if (targetDepartment?.name === 'Product') {
+        console.log(`⚠️ ATTENTION: Sending to Product department, lead should be Mirela. Actual recipient: ${targetLeadName} (${targetLeadEmail})`);
+      }
       
       // Modified to match the ResourceRequest interface
       const newRequest: Partial<ResourceRequest> = {

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { toast } from '@/hooks/use-toast';
 import { useEmailConfig } from '@/hooks/useEmailConfig';
@@ -51,7 +52,7 @@ export const useNotifications = () => {
     };
   }, []);
 
-  // Find department lead's email directly from team members data
+  // Enhanced department lead email finder with special case for Mirela
   const findDepartmentLeadEmail = (departmentId: string): { email: string, name: string } => {
     try {
       // First find the department to get the leadId
@@ -63,18 +64,37 @@ export const useNotifications = () => {
       
       console.log(`Found department: ${department.name} with leadId: ${department.leadId}`);
       
-      // Look up department lead info by name
+      // Special case for Product department - Always prioritize Mirela if she exists
+      if (department.name === 'Product') {
+        // Look for Mirela in the Product department first
+        const mirelaInProduct = localTeamMembers.find(
+          member => member.department === 'Product' && 
+                   member.name.toLowerCase().includes('mirela')
+        );
+        
+        if (mirelaInProduct) {
+          console.log(`Using Mirela as the Product department lead: ${mirelaInProduct.name} (${mirelaInProduct.email})`);
+          // Set her as lead if found
+          return { email: mirelaInProduct.email, name: mirelaInProduct.name };
+        }
+      }
+      
       // Find all team members in this department
       const departmentMembers = localTeamMembers.filter(
         member => member.department === department.name
       );
       
-      // First try to find the member with matching leadId
+      // If there's a leadId in the department data, try to find that person
       if (department.leadId) {
         const leadMember = localTeamMembers.find(member => member.id === department.leadId);
         if (leadMember) {
-          console.log(`Found department lead by ID: ${leadMember.name} (${leadMember.email})`);
-          return { email: leadMember.email, name: leadMember.name };
+          // Skip Michael Chen for Product department
+          if (department.name === 'Product' && leadMember.name === 'Michael Chen') {
+            console.log(`Skipping Michael Chen as Product lead - no longer the lead`);
+          } else {
+            console.log(`Found department lead by ID: ${leadMember.name} (${leadMember.email})`);
+            return { email: leadMember.email, name: leadMember.name };
+          }
         }
       }
       
@@ -85,13 +105,13 @@ export const useNotifications = () => {
         return { email: departmentLead.email, name: departmentLead.name };
       }
       
-      // If Mirela is in the department, prioritize her as the lead
-      // This is a specific fix for Mirela as the Product department lead
+      // If Mirela is in any department, prioritize her as a lead
+      // This is a general fallback for Mirela in any department
       const mirelaInDepartment = departmentMembers.find(
         member => member.name.toLowerCase().includes('mirela')
       );
       if (mirelaInDepartment) {
-        console.log(`Using Mirela as the department lead: ${mirelaInDepartment.name} (${mirelaInDepartment.email})`);
+        console.log(`Using Mirela as the department lead (general fallback): ${mirelaInDepartment.name} (${mirelaInDepartment.email})`);
         return { email: mirelaInDepartment.email, name: mirelaInDepartment.name };
       }
       
