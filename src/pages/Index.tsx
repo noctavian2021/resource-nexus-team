@@ -143,6 +143,7 @@ export default function Index() {
                   <TeamMemberCard 
                     key={member.id} 
                     member={member}
+                    onEdit={() => handleMemberUpdated(member)}
                     onMemberUpdated={handleMemberUpdated}
                   />
                 ))}

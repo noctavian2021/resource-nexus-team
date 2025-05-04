@@ -4,7 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal } from 'lucide-react';
+import { MoreHorizontal, Edit } from 'lucide-react';
 import { 
   DropdownMenu,
   DropdownMenuContent,
@@ -18,9 +18,16 @@ import TeamMemberPasswordActions from '@/components/Admin/TeamMemberPasswordActi
 interface TeamMemberCardProps {
   member: TeamMember;
   onEdit: (member: TeamMember) => void;
+  onMemberUpdated?: (member: TeamMember) => void;
+  onRemove?: () => void;
 }
 
-const TeamMemberCard: React.FC<TeamMemberCardProps> = ({ member, onEdit }) => {
+const TeamMemberCard: React.FC<TeamMemberCardProps> = ({ 
+  member, 
+  onEdit, 
+  onMemberUpdated,
+  onRemove 
+}) => {
   // Extract initials from name for avatar fallback
   const getInitials = (name: string) => {
     return name
@@ -35,14 +42,22 @@ const TeamMemberCard: React.FC<TeamMemberCardProps> = ({ member, onEdit }) => {
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin';
 
+  // Handler for edit action that calls both edit and update if provided
+  const handleEdit = () => {
+    onEdit(member);
+    if (onMemberUpdated) {
+      onMemberUpdated(member);
+    }
+  };
+
   return (
     <Card className="shadow-sm hover:shadow transition-shadow duration-200">
       <CardContent className="p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <Avatar>
-              {member.profileImage ? (
-                <AvatarImage src={member.profileImage} alt={member.name} />
+              {member.avatar ? (
+                <AvatarImage src={member.avatar} alt={member.name} />
               ) : null}
               <AvatarFallback>{getInitials(member.name)}</AvatarFallback>
             </Avatar>
@@ -65,9 +80,15 @@ const TeamMemberCard: React.FC<TeamMemberCardProps> = ({ member, onEdit }) => {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => onEdit(member)}>
+                <DropdownMenuItem onClick={handleEdit}>
+                  <Edit className="h-4 w-4 mr-2" />
                   Edit
                 </DropdownMenuItem>
+                {onRemove && (
+                  <DropdownMenuItem onClick={onRemove} className="text-destructive">
+                    Remove
+                  </DropdownMenuItem>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>

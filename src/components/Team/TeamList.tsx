@@ -72,6 +72,7 @@ export default function TeamList({
             <TeamMemberCard 
               key={member.id} 
               member={member} 
+              onEdit={() => onMemberUpdated(member)} 
               onMemberUpdated={onMemberUpdated}
               onRemove={allowRemove && onRemoveMember ? () => onRemoveMember(member) : undefined}
             />
