@@ -1,91 +1,72 @@
+import { handleMockRequest } from './mockApiHandler';
+
+export const API_URL = 'https://api.example.com';
+
+// Flag to control mock data usage
+let useMockData = true;
+
+// Toggle mock data usage
+export const toggleMockData = (enabled: boolean) => {
+  useMockData = enabled;
+  console.log(`Mock data is now ${useMockData ? 'enabled' : 'disabled'}`);
+};
+
+// Check if mock data is enabled
+export const isMockDataEnabled = () => useMockData;
 
 /**
- * Core API client for the Resource Nexus app
+ * Generic API request function
+ * Will use mock data if enabled, otherwise will make real API requests
  */
-
-// Configuration
-export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000'; 
-let USE_MOCK = import.meta.env.MODE === 'development' ? false : true;
-
-// Function to toggle mock data
-export const toggleMockData = (showMock: boolean) => {
-  USE_MOCK = showMock;
-  // Save preference to localStorage for persistence
-  localStorage.setItem('useMockData', showMock.toString());
-  return USE_MOCK;
-};
-
-// Initialize from localStorage if available
-const initializeMockSetting = () => {
-  const savedSetting = localStorage.getItem('useMockData');
-  if (savedSetting !== null) {
-    USE_MOCK = savedSetting === 'true';
-  }
-};
-
-// Initialize on load
-initializeMockSetting();
-
-// Get current mock data setting
-export const isMockDataEnabled = () => USE_MOCK;
-
-// Generic API request function
 const apiRequest = async <T>(
-  endpoint: string, 
-  method: string = 'GET', 
-  data: any = null
+  endpoint: string,
+  method: string = 'GET',
+  data: any = null,
+  options: RequestInit = {}
 ): Promise<T> => {
-  // If mock mode is enabled, use mock data
-  if (USE_MOCK) {
-    // Import the mock handler on demand to avoid circular dependencies
-    const { handleMockRequest } = await import('./mockApiHandler');
-    return handleMockRequest<T>(endpoint, method, data);
-  }
-  
-  // Fix for endpoints: ensure they start with a slash if endpoint doesn't already
-  const formattedEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
-  const url = `${API_URL}/api${formattedEndpoint}`;
-  console.log(`Making API request to: ${url}`);
-  
-  const options: RequestInit = {
-    method,
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: data ? JSON.stringify(data) : null
-  };
+  // Log the request
+  console.log(`API Request: ${method} ${endpoint}`);
 
-  try {
-    const response = await fetch(url, options);
-    
-    if (!response.ok) {
-      const errorText = await response.text();
-      let errorMessage;
-      
-      try {
-        // Try to parse as JSON
-        const errorData = JSON.parse(errorText);
-        errorMessage = errorData.error || errorData.message || 'An error occurred';
-      } catch (e) {
-        // If not JSON, use the text directly
-        errorMessage = errorText || `HTTP error ${response.status}`;
-      }
-      
-      throw new Error(errorMessage);
+  // Use mock data if enabled
+  if (useMockData) {
+    try {
+      console.log(`Using mock data for ${method} ${endpoint}`);
+      return await handleMockRequest<T>(endpoint, method, data);
+    } catch (error) {
+      console.error('Mock API error:', error);
+      throw error;
     }
-    
-    // Handle empty responses properly
-    const contentType = response.headers.get('content-type');
-    if (contentType && contentType.includes('application/json')) {
-      const text = await response.text();
-      // Only try to parse if there's actual content
-      return text ? JSON.parse(text) : {} as T;
-    } else {
-      // For non-JSON responses, return an empty object
+  }
+
+  // Otherwise make a real API request
+  try {
+    const fetchOptions: RequestInit = {
+      method,
+      headers: {
+        'Content-Type': 'application/json',
+        ...options.headers,
+      },
+      ...options,
+    };
+
+    if (data && (method === 'POST' || method === 'PUT' || method === 'PATCH')) {
+      fetchOptions.body = JSON.stringify(data);
+    }
+
+    const response = await fetch(`${API_URL}${endpoint}`, fetchOptions);
+
+    if (!response.ok) {
+      throw new Error(`API error: ${response.status} ${response.statusText}`);
+    }
+
+    // For DELETE requests with no content
+    if (response.status === 204) {
       return {} as T;
     }
+
+    return await response.json();
   } catch (error) {
-    console.error(`API Error (${endpoint}):`, error);
+    console.error('API request error:', error);
     throw error;
   }
 };

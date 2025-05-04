@@ -1,10 +1,12 @@
 
 import { Project, departments, teamMembers } from '@/data/mockData';
+import { TeamMember } from '@/data/mockData';
 
-// Mock data access functions
-export const getMockProjects = async (): Promise<Project[]> => {
-  // Return a copy of the mock projects to avoid mutation
-  return [
+// In-memory storage for mock data
+const mockData = {
+  teamMembers: [...teamMembers],
+  departments: [...departments],
+  projects: [
     {
       id: '1',
       name: 'Website Redesign',
@@ -61,7 +63,36 @@ export const getMockProjects = async (): Promise<Project[]> => {
       teamMembers: ['8', '9'],
       isHidden: false
     }
-  ];
+  ]
+};
+
+// Mock data access functions
+export const getMockProjects = async (): Promise<Project[]> => {
+  // Return a copy of the mock projects to avoid mutation
+  return [...mockData.projects];
+};
+
+// Get mock team members
+export const getMockTeamMembers = async (): Promise<TeamMember[]> => {
+  return [...mockData.teamMembers];
+};
+
+// Add a new team member to mock data
+export const addMockTeamMember = async (member: TeamMember): Promise<TeamMember> => {
+  const newMember = { ...member };
+  mockData.teamMembers.push(newMember);
+  console.log("Team member added to mock data:", newMember);
+  console.log("Current team members:", mockData.teamMembers.length);
+  return newMember;
+};
+
+// Update a team member in mock data
+export const updateMockTeamMember = async (id: string, updates: Partial<TeamMember>): Promise<TeamMember> => {
+  const index = mockData.teamMembers.findIndex(m => m.id === id);
+  if (index === -1) throw new Error('Team member not found');
+  
+  mockData.teamMembers[index] = { ...mockData.teamMembers[index], ...updates };
+  return mockData.teamMembers[index];
 };
 
 // Handle mock requests
@@ -103,6 +134,43 @@ export const handleMockRequest = async <T>(
     if (endpoint === '/projects' && method === 'POST') {
       const newId = Date.now().toString();
       return { ...data, id: newId } as unknown as T;
+    }
+  }
+  
+  // Handle team member requests
+  if (endpoint.startsWith('/team-members')) {
+    if (endpoint === '/team-members' && method === 'GET') {
+      return getMockTeamMembers() as unknown as T;
+    }
+    
+    // Handle team member creation
+    if (endpoint === '/team-members' && method === 'POST') {
+      const newId = Date.now().toString();
+      const newMember = { ...data, id: newId };
+      await addMockTeamMember(newMember);
+      return newMember as unknown as T;
+    }
+    
+    // Handle specific team member endpoints
+    const match = endpoint.match(/\/team-members\/(.+)/);
+    if (match) {
+      const memberId = match[1];
+      if (method === 'GET') {
+        const members = await getMockTeamMembers();
+        const member = members.find(m => m.id === memberId);
+        if (!member) throw new Error('Team member not found');
+        return member as unknown as T;
+      } else if (method === 'PUT') {
+        const updatedMember = await updateMockTeamMember(memberId, data);
+        return updatedMember as unknown as T;
+      } else if (method === 'DELETE') {
+        // Simulate deleting a team member
+        const index = mockData.teamMembers.findIndex(m => m.id === memberId);
+        if (index !== -1) {
+          mockData.teamMembers.splice(index, 1);
+        }
+        return { success: true, message: 'Team member deleted' } as unknown as T;
+      }
     }
   }
   

@@ -18,6 +18,7 @@ export default function TeamMembers() {
     try {
       setLoading(true);
       const data = await getTeamMembers();
+      console.log('Fetched team members:', data);
       setTeamMembers(data);
     } catch (error) {
       console.error('Error fetching team members:', error);
@@ -36,7 +37,7 @@ export default function TeamMembers() {
 
   useEffect(() => {
     fetchTeamMembers();
-  }, [toast]);
+  }, []);
 
   const handleMemberAdded = (newMember: TeamMember) => {
     // Show appropriate toast based on role
@@ -52,7 +53,11 @@ export default function TeamMembers() {
       });
     }
     
+    // Add the new member to the state and fetch fresh data to ensure sync
     setTeamMembers(prev => [...prev, newMember]);
+    
+    // Re-fetch all team members to ensure we have the latest data
+    fetchTeamMembers();
   };
 
   const handleMemberUpdated = (updatedMember: TeamMember) => {
@@ -61,6 +66,9 @@ export default function TeamMembers() {
         member.id === updatedMember.id ? updatedMember : member
       )
     );
+    
+    // Re-fetch all team members to ensure we have the latest data
+    fetchTeamMembers();
   };
 
   return (
