@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
 // Define user type
@@ -197,12 +198,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     
     if (!user) {
       setError('Not logged in');
+      console.error('Cannot reset password: User not logged in');
       return false;
     }
     
     // Check if the current user is an admin
     if (user.role !== 'admin') {
       setError('Unauthorized: Only admins can reset passwords');
+      console.error('Password reset attempt by non-admin user');
       return false;
     }
     
@@ -210,11 +213,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       // Simulate API call delay
       await new Promise(resolve => setTimeout(resolve, 800));
       
+      console.log(`Attempting to reset password for userId: ${userId}`);
+      
       // Find user in our "database"
       const userIndex = users.findIndex(u => u.id === userId);
       
       if (userIndex === -1) {
         setError('User not found');
+        console.error(`User with ID ${userId} not found for password reset`);
         return false;
       }
       
@@ -226,6 +232,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       };
       
       setUsers(updatedUsers);
+      console.log(`Password successfully reset for user: ${updatedUsers[userIndex].name}`);
       return true;
     } catch (err) {
       setError('An error occurred while resetting password');

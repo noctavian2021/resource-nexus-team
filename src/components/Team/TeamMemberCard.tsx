@@ -4,7 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal, Edit, Lock, UserCog } from 'lucide-react';
+import { MoreHorizontal, Edit, UserCog } from 'lucide-react';
 import { 
   DropdownMenu,
   DropdownMenuContent,
