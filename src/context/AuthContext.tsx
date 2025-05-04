@@ -30,25 +30,61 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 // Sample user data (in a real app, this would come from an API/database)
 const MOCK_USERS = [
   {
-    id: 'user1',
-    name: 'John Smith',
-    email: 'john@example.com',
+    id: '1',  // Updated to match team member ID
+    name: 'Alex Johnson',
+    email: 'alex@example.com',
     password: 'password123', // In a real app, this would be hashed
     departmentId: '1',
     role: 'team_lead' as const,
     isLead: true
   },
   {
-    id: 'user2',
-    name: 'Jane Doe',
-    email: 'jane@example.com',
+    id: '2',  // Updated to match team member ID
+    name: 'Sarah Miller',
+    email: 'sarah@example.com',
     password: 'password123',
     departmentId: '2',
     role: 'team_lead' as const,
     isLead: true
   },
   {
-    id: 'user3',
+    id: '3m',  // Updated to match Mirela's ID
+    name: 'Mirela Wang',
+    email: 'mirela@example.com',
+    password: 'password123',
+    departmentId: '3',
+    role: 'team_lead' as const,
+    isLead: true
+  },
+  {
+    id: '3',  // Kept Michael's ID
+    name: 'Michael Chen',
+    email: 'michael@example.com',
+    password: 'password123',
+    departmentId: '3',
+    role: 'member' as const,
+    isLead: false
+  },
+  {
+    id: '4',  // Updated to match team member ID
+    name: 'Emily Davis',
+    email: 'emily@example.com',
+    password: 'password123',
+    departmentId: '4',
+    role: 'team_lead' as const,
+    isLead: true
+  },
+  {
+    id: '5',  // Updated to match team member ID
+    name: 'James Wilson',
+    email: 'james@example.com',
+    password: 'password123',
+    departmentId: '1',
+    role: 'member' as const,
+    isLead: false
+  },
+  {
+    id: 'user3',  // Kept admin user ID
     name: 'Admin User',
     email: 'admin@example.com',
     password: 'admin123',
