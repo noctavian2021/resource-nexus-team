@@ -1,4 +1,3 @@
-
 import { useNotifications } from "@/hooks/useNotifications";
 
 // Team Member
@@ -131,7 +130,7 @@ export const teamMembers: TeamMember[] = [
     name: 'Mirela Wang',
     role: 'Product Manager',
     department: 'Product',
-    email: 'mirela@example.com',
+    email: 'octavian.negrea2@ontario.ca', // Updated to match the changed email
     avatar: 'https://i.pravatar.cc/150?img=4',
     skills: ['Product Strategy', 'User Research', 'Roadmapping'],
     availability: 65,
