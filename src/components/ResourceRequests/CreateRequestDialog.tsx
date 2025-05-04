@@ -1,7 +1,7 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
@@ -19,11 +19,14 @@ import { useAuth } from '@/context/AuthContext';
 import { playNotificationSound } from '@/utils/sound';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { teamMembers } from '@/data/mockData';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { AlertTriangle } from 'lucide-react';
 
 const requestFormSchema = z.object({
   title: z.string().min(1, "Title is required"),
   description: z.string().min(1, "Description is required"),
   targetDepartmentId: z.string().min(1, "Target department is required"),
+  targetLeadEmail: z.string().email("Valid email address is required").min(1, "Lead email is required"),
   requiredSkills: z.string().min(1, "Required skills are required"),
   startDate: z.string().min(1, "Start date is required"),
   endDate: z.string().min(1, "End date is required"),
@@ -34,6 +37,7 @@ type RequestFormData = z.infer<typeof requestFormSchema>;
 export default function CreateRequestDialog() {
   const [open, setOpen] = React.useState(false);
   const [sending, setSending] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
   const { addNotification, findDepartmentLeadEmail } = useNotifications();
   const { emailConfig } = useEmailConfig();
   const { user } = useAuth();
@@ -53,52 +57,27 @@ export default function CreateRequestDialog() {
       title: '',
       description: '',
       targetDepartmentId: '',
+      targetLeadEmail: '',
       requiredSkills: '',
       startDate: '',
       endDate: '',
     }
   });
 
-  // Function to send a test email to verify configuration
-  const sendTestEmailToMirela = async () => {
-    try {
-      console.log('🚨 SENDING TEST EMAIL TO MIRELA');
-      const mirelaMember = teamMembers.find(m => m.name.toLowerCase().includes('mirela'));
-      
-      if (mirelaMember && emailConfig.enabled) {
-        console.log(`Found Mirela: ${mirelaMember.name} with email ${mirelaMember.email}`);
-        
-        const testEmailResult = await fetch('http://localhost:5000/api/email/send-test', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            config: {
-              ...emailConfig,
-              port: String(emailConfig.port),
-              secure: emailConfig.port === '465' ? true : (emailConfig.port === '587' ? false : emailConfig.secure),
-            },
-            recipient: mirelaMember.email,
-            subject: 'URGENT TEST: Product Department Request',
-            text: 'This is a DIRECT test email to verify you are receiving Product department notifications.',
-            html: '<h1>Product Department Test Notification</h1><p>This is a DIRECT test email to verify you are receiving Product department notifications.</p>'
-          })
-        }).then(res => res.json());
-        
-        console.log('Test email response:', testEmailResult);
-        return testEmailResult;
+  // Auto-populate lead email when department is selected
+  useEffect(() => {
+    const departmentId = form.watch('targetDepartmentId');
+    if (departmentId) {
+      const targetLeadInfo = findDepartmentLeadEmail(departmentId);
+      if (targetLeadInfo.email) {
+        form.setValue('targetLeadEmail', targetLeadInfo.email);
       }
-      
-      return { success: false, error: 'Email not enabled or Mirela not found' };
-    } catch (error) {
-      console.error('Error sending test email to Mirela:', error);
-      return { success: false, error: String(error) };
     }
-  };
+  }, [form.watch('targetDepartmentId'), findDepartmentLeadEmail, form]);
   
   const onSubmit = async (data: RequestFormData) => {
     setSending(true);
+    setError(null);
     
     try {
       // In a real app, this would be an API call
@@ -106,72 +85,6 @@ export default function CreateRequestDialog() {
       
       const targetDepartment = departmentList.find(dept => dept.id === data.targetDepartmentId);
       const requestingDepartment = departmentList.find(d => d.id === currentUserDepartmentId);
-      
-      if (targetDepartment) {
-        console.log(`Target department: ${targetDepartment.name} (ID: ${targetDepartment.id})`);
-        console.log(`Target department lead ID: ${targetDepartment.leadId}`);
-      } else {
-        console.log(`Target department with ID ${data.targetDepartmentId} not found in list`);
-      }
-      
-      // Check if this is for Product department
-      const isProductDepartment = targetDepartment?.name === 'Product';
-      
-      // Find Mirela directly if sending to Product department
-      let targetLeadEmail = '';
-      let targetLeadName = '';
-      
-      // Always use Mirela for Product department (revised logic)
-      const mirela = teamMembers.find(member => 
-        member.name.toLowerCase().includes('mirela')
-      );
-      
-      if (mirela) {
-        // If this is for Product department, directly use Mirela
-        if (isProductDepartment) {
-          targetLeadEmail = mirela.email;
-          targetLeadName = mirela.name;
-          console.log(`🔔 DIRECTLY USING MIRELA: ${targetLeadName} (${targetLeadEmail})`);
-          
-          // Send a test message to verify
-          sendTestEmailToMirela().then(result => {
-            if (!result.success) {
-              console.error('Test email to Mirela failed:', result.error);
-            } else {
-              console.log('Test email to Mirela succeeded!');
-            }
-          });
-        } 
-        // For other departments, use standard lookup but with a backup option
-        else {
-          const targetLeadInfo = findDepartmentLeadEmail(data.targetDepartmentId);
-          targetLeadEmail = targetLeadInfo.email;
-          targetLeadName = targetLeadInfo.name;
-          
-          // If we couldn't find a lead, CC Mirela anyway
-          if (!targetLeadEmail) {
-            targetLeadEmail = mirela.email;
-            targetLeadName = mirela.name;
-            console.log(`⚠️ Using Mirela as fallback for department ${targetDepartment?.name}: ${targetLeadName} (${targetLeadEmail})`);
-          } else {
-            console.log(`Using department lead: ${targetLeadName} (${targetLeadEmail})`);
-          }
-        }
-      } else {
-        console.log('⚠️ WARNING: Mirela not found in team members list! Using standard lookup.');
-        
-        // Fall back to standard department lead lookup
-        const targetLeadInfo = findDepartmentLeadEmail(data.targetDepartmentId);
-        targetLeadEmail = targetLeadInfo.email;
-        targetLeadName = targetLeadInfo.name;
-      }
-      
-      // Debug logging
-      console.log(`Final recipient: ${targetLeadName} (${targetLeadEmail})`);
-      
-      if (isProductDepartment) {
-        console.log(`⚠️ ATTENTION: Sending to Product department, recipient: ${targetLeadName} (${targetLeadEmail})`);
-      }
       
       // Modified to match the ResourceRequest interface
       const newRequest: Partial<ResourceRequest> = {
@@ -205,79 +118,103 @@ export default function CreateRequestDialog() {
         *** THIS IS A HIGH PRIORITY REQUEST ***
       `;
 
-      // Email debug info
-      console.log(`Email enabled: ${emailConfig.enabled}`);
-      if (emailConfig.enabled) {
-        console.log(`From: ${emailConfig.fromEmail} (${emailConfig.fromName})`);
-        console.log(`SMTP: ${emailConfig.host}:${emailConfig.port} (secure: ${emailConfig.secure})`);
+      // Use the same approach as SendWelcomeDialog - direct API call
+      try {
+        // First, make a direct API call to send the email
+        const response = await fetch('http://localhost:5000/api/email/send-welcome', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            email: data.targetLeadEmail,
+            name: targetDepartment?.name || 'Department Lead',
+            subject: `New Resource Request: ${data.title}`,
+            startDate: data.startDate,
+            replacingMember: '',
+            additionalNotes: `
+              New Resource Request: ${data.title}
+              
+              ${data.description}
+              
+              ${additionalEmailContent}
+            `,
+            emailConfig: {
+              ...emailConfig,
+              port: String(emailConfig.port),
+              secure: emailConfig.port === '465' ? true : (emailConfig.port === '587' ? false : emailConfig.secure),
+              connectionTimeout: 30000,
+              greetingTimeout: 30000
+            }
+          })
+        });
+        
+        const result = await response.json();
+        
+        if (!result.success) {
+          throw new Error(result.error || 'Failed to send email');
+        }
+        
+        console.log('Email sent successfully:', result);
+        
+      } catch (emailError) {
+        console.error('Error sending email via API:', emailError);
+        setError(`Failed to send email: ${emailError}`);
       }
 
-      // Add notification for the department lead with specific email targeting
-      const notificationOptions: NotificationOptions = {
-        emailRecipient: targetLeadEmail,
-        recipientName: targetLeadName,
-        targetDepartmentId: data.targetDepartmentId, 
-        additionalEmailContent: additionalEmailContent,
-        // Force Mirela as recipient if this is for Product department
-        forceMirelaAsRecipient: isProductDepartment
-      };
-      
-      console.log(`Sending notification with options:`, JSON.stringify(notificationOptions, null, 2));
-      
-      // Add system notification with email
+      // Also add notification for the system
       await addNotification(
         "New Resource Request",
         `${data.title} - Resource request from ${requestingDepartment?.name || 'Admin'}`,
         'request',
-        notificationOptions
+        {
+          emailRecipient: data.targetLeadEmail,
+          targetDepartmentId: data.targetDepartmentId, 
+          additionalEmailContent: additionalEmailContent
+        }
       );
       
-      // Play notification sound for both sender and receiver
+      // Play notification sound
       playNotificationSound().catch(err => {
         console.log('Error playing notification sound in CreateRequestDialog:', err);
       });
       
       // Send confirmation email to requester if different from target
-      if (user?.email && user.email !== targetLeadEmail) {
+      if (user?.email && user.email !== data.targetLeadEmail) {
         // Send copy to requester with different message
-        const requesterOptions: NotificationOptions = {
-          emailRecipient: user.email,
-          recipientName: user.name || 'User',
-          skipEmail: !emailConfig.enabled,
-          additionalEmailContent: `
-            Your request has been submitted to ${targetDepartment?.name || 'the department'}.
-            You will be notified when there is an update.
-          `
-        };
-        
-        await addNotification(
-          `Your Resource Request: ${data.title}`,
-          `Your request has been submitted to ${targetDepartment?.name}`,
-          'general',
-          requesterOptions
-        );
-      }
-      
-      // Also CC Mirela on all department communications if not already the target
-      if (mirela && !isProductDepartment && targetLeadEmail !== mirela.email && emailConfig.enabled) {
-        const mirelaOptions: NotificationOptions = {
-          emailRecipient: mirela.email,
-          recipientName: mirela.name,
-          skipEmail: !emailConfig.enabled,
-          additionalEmailContent: `
-            This is a CC of a request sent to ${targetDepartment?.name || 'another department'}.
-            Original recipient: ${targetLeadName} (${targetLeadEmail})
-            
-            ${additionalEmailContent}
-          `
-        };
-        
-        await addNotification(
-          `CC: Resource Request for ${targetDepartment?.name}`,
-          `${data.title} - Resource request from ${requestingDepartment?.name || 'Admin'}`,
-          'request',
-          mirelaOptions
-        );
+        try {
+          await fetch('http://localhost:5000/api/email/send-welcome', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              email: user.email,
+              name: user.name || 'User',
+              subject: `Your Resource Request: ${data.title}`,
+              startDate: new Date().toISOString().split('T')[0],
+              replacingMember: '',
+              additionalNotes: `
+                Your request "${data.title}" has been submitted to ${targetDepartment?.name || 'the department'}.
+                You will be notified when there is an update.
+                
+                Request Details:
+                ${data.description}
+                Required Skills: ${data.requiredSkills}
+                From ${data.startDate} to ${data.endDate}
+              `,
+              emailConfig: {
+                ...emailConfig,
+                port: String(emailConfig.port),
+                secure: emailConfig.port === '465' ? true : (emailConfig.port === '587' ? false : emailConfig.secure),
+                connectionTimeout: 30000,
+                greetingTimeout: 30000
+              }
+            })
+          });
+        } catch (confirmError) {
+          console.error('Error sending confirmation email:', confirmError);
+        }
       }
       
       // Show confirmation toast to the requester
@@ -312,7 +249,29 @@ export default function CreateRequestDialog() {
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Create Resource Request</DialogTitle>
+          <DialogDescription>
+            Fill out this form to request resources from another department.
+          </DialogDescription>
         </DialogHeader>
+
+        {error && (
+          <Alert variant="destructive">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+
+        {!emailConfig.enabled && (
+          <Alert variant="default" className="bg-amber-50 border-amber-200">
+            <AlertTriangle className="h-4 w-4 text-amber-500" />
+            <AlertTitle className="text-amber-800">Email notifications not enabled</AlertTitle>
+            <AlertDescription className="text-amber-700">
+              Email notifications are currently disabled. The request will be processed but no email will be sent.
+            </AlertDescription>
+          </Alert>
+        )}
+        
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
@@ -372,6 +331,24 @@ export default function CreateRequestDialog() {
                       )}
                     </SelectContent>
                   </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="targetLeadEmail"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Department Lead Email</FormLabel>
+                  <FormControl>
+                    <Input 
+                      placeholder="Department lead email" 
+                      type="email"
+                      {...field} 
+                    />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}

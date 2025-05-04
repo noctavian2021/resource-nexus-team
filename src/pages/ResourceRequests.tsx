@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import Header from '@/components/Layout/Header';
 import RequestList from '@/components/ResourceRequests/RequestList';
@@ -70,22 +69,26 @@ export default function ResourceRequests() {
       
       if (emailConfig.enabled) {
         try {
-          // Send via Direct API
-          const response = await fetch('http://localhost:5000/api/email/send-test', {
+          // Send via welcome email API (more reliable than test API)
+          const response = await fetch('http://localhost:5000/api/email/send-welcome', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-              config: {
+              email: mirela.email,
+              name: mirela.name,
+              subject: '⚠️ URGENT: Direct Test Email',
+              startDate: new Date().toISOString().split('T')[0],
+              replacingMember: '',
+              additionalNotes: 'This is a direct test email sent via the welcome email API to verify email delivery.',
+              emailConfig: {
                 ...emailConfig,
                 port: String(emailConfig.port),
                 secure: emailConfig.port === '465' ? true : (emailConfig.port === '587' ? false : emailConfig.secure),
-              },
-              recipient: mirela.email,
-              subject: '⚠️ URGENT: Direct Test Email',
-              text: 'This is a direct test email sent via the test API to verify email delivery.',
-              html: '<h1>Direct Test Email</h1><p>This message confirms your email is working correctly if received.</p>'
+                connectionTimeout: 30000,
+                greetingTimeout: 30000
+              }
             })
           });
           
