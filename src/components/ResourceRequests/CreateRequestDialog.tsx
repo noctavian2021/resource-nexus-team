@@ -12,7 +12,7 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from '@/hooks/use-toast';
 import { useNotifications } from '@/hooks/useNotifications';
-import { useEmailConfig } from '@/hooks/useEmailConfig';
+import { useEmailConfig, EmailConfig } from '@/hooks/useEmailConfig';
 import apiRequest from '@/services/api';
 import { useEffect, useState } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -117,33 +117,45 @@ export default function CreateRequestDialog() {
         console.log('Error playing notification sound in CreateRequestDialog:', err);
       });
       
-      // Send email notification if email is configured
+      // Send email notification if email is configured, using the same approach as SendWelcomeDialog
       if (emailConfig.enabled) {
         try {
+          // Ensure email config is normalized correctly
+          const normalizedEmailConfig = {
+            ...emailConfig,
+            port: String(emailConfig.port),
+            secure: emailConfig.port === '465' ? true : (emailConfig.port === '587' ? false : emailConfig.secure),
+            connectionTimeout: 30000,
+            greetingTimeout: 30000
+          };
+          
+          console.log('Sending email notification with config:', {
+            enabled: normalizedEmailConfig.enabled,
+            provider: normalizedEmailConfig.provider,
+            port: normalizedEmailConfig.port,
+            secure: normalizedEmailConfig.secure
+          });
+          
           // First, send to target department lead
           if (targetDepartmentLeadEmail) {
             console.log('Sending email notification to target department lead:', targetDepartmentLeadEmail);
             
+            const emailContent = `
+              New Resource Request: ${data.title}
+              From: ${requestingDepartment?.name || user?.name || 'Admin'}
+              Required Skills: ${data.requiredSkills}
+              Start Date: ${data.startDate}
+              End Date: ${data.endDate}
+              
+              Description:
+              ${data.description}
+            `;
+            
             const targetResponse = await apiRequest('/email/send-welcome', 'POST', {
               email: targetDepartmentLeadEmail, 
               replacingMember: '',
-              additionalNotes: `
-                New Resource Request: ${data.title}
-                From: ${requestingDepartment?.name || user?.name || 'Admin'}
-                Required Skills: ${data.requiredSkills}
-                Start Date: ${data.startDate}
-                End Date: ${data.endDate}
-                
-                Description:
-                ${data.description}
-              `,
-              emailConfig: {
-                ...emailConfig,
-                port: String(emailConfig.port),
-                secure: emailConfig.port === '465' ? true : (emailConfig.port === '587' ? false : emailConfig.secure),
-                connectionTimeout: 30000,
-                greetingTimeout: 30000
-              }
+              additionalNotes: emailContent,
+              emailConfig: normalizedEmailConfig
             });
             
             console.log('Email notification sent to target department lead:', targetResponse);
@@ -154,26 +166,22 @@ export default function CreateRequestDialog() {
               `${targetDepartment.name?.toLowerCase().replace(/\s+/g, '')}@example.com` : 
               'no-reply@example.com';
               
+            const emailContent = `
+              New Resource Request: ${data.title}
+              From: ${requestingDepartment?.name || user?.name || 'Admin'}
+              Required Skills: ${data.requiredSkills}
+              Start Date: ${data.startDate}
+              End Date: ${data.endDate}
+              
+              Description:
+              ${data.description}
+            `;
+            
             const targetResponse = await apiRequest('/email/send-welcome', 'POST', {
               email: fallbackEmail, 
               replacingMember: '',
-              additionalNotes: `
-                New Resource Request: ${data.title}
-                From: ${requestingDepartment?.name || user?.name || 'Admin'}
-                Required Skills: ${data.requiredSkills}
-                Start Date: ${data.startDate}
-                End Date: ${data.endDate}
-                
-                Description:
-                ${data.description}
-              `,
-              emailConfig: {
-                ...emailConfig,
-                port: String(emailConfig.port),
-                secure: emailConfig.port === '465' ? true : (emailConfig.port === '587' ? false : emailConfig.secure),
-                connectionTimeout: 30000,
-                greetingTimeout: 30000
-              }
+              additionalNotes: emailContent,
+              emailConfig: normalizedEmailConfig
             });
             
             console.log('Email notification sent to fallback address:', targetResponse);
@@ -184,27 +192,23 @@ export default function CreateRequestDialog() {
           
           console.log('Sending email notification to admin:', adminEmail);
           
+          const adminContent = `
+            Resource Request Details: ${data.title}
+            To: ${targetDepartment?.name || 'Target Department'}
+            From: ${user?.name || 'Admin'}
+            Required Skills: ${data.requiredSkills}
+            Start Date: ${data.startDate}
+            End Date: ${data.endDate}
+            
+            Description:
+            ${data.description}
+          `;
+          
           const adminResponse = await apiRequest('/email/send-welcome', 'POST', {
             email: adminEmail,
             replacingMember: '',
-            additionalNotes: `
-              Resource Request Details: ${data.title}
-              To: ${targetDepartment?.name || 'Target Department'}
-              From: ${user?.name || 'Admin'}
-              Required Skills: ${data.requiredSkills}
-              Start Date: ${data.startDate}
-              End Date: ${data.endDate}
-              
-              Description:
-              ${data.description}
-            `,
-            emailConfig: {
-              ...emailConfig,
-              port: String(emailConfig.port),
-              secure: emailConfig.port === '465' ? true : (emailConfig.port === '587' ? false : emailConfig.secure),
-              connectionTimeout: 30000,
-              greetingTimeout: 30000
-            }
+            additionalNotes: adminContent,
+            emailConfig: normalizedEmailConfig
           });
           
           console.log('Email notification sent to admin:', adminResponse);
@@ -213,26 +217,22 @@ export default function CreateRequestDialog() {
           if (user?.email && user.email !== adminEmail) {
             console.log('Sending email notification to requester:', user.email);
             
+            const requesterContent = `
+              Your Resource Request: ${data.title}
+              To: ${targetDepartment?.name || 'Target Department'}
+              Required Skills: ${data.requiredSkills}
+              Start Date: ${data.startDate}
+              End Date: ${data.endDate}
+              
+              Description:
+              ${data.description}
+            `;
+            
             const requesterResponse = await apiRequest('/email/send-welcome', 'POST', {
               email: user.email,
               replacingMember: '',
-              additionalNotes: `
-                Your Resource Request: ${data.title}
-                To: ${targetDepartment?.name || 'Target Department'}
-                Required Skills: ${data.requiredSkills}
-                Start Date: ${data.startDate}
-                End Date: ${data.endDate}
-                
-                Description:
-                ${data.description}
-              `,
-              emailConfig: {
-                ...emailConfig,
-                port: String(emailConfig.port),
-                secure: emailConfig.port === '465' ? true : (emailConfig.port === '587' ? false : emailConfig.secure),
-                connectionTimeout: 30000,
-                greetingTimeout: 30000
-              }
+              additionalNotes: requesterContent,
+              emailConfig: normalizedEmailConfig
             });
             
             console.log('Email notification sent to requester:', requesterResponse);
