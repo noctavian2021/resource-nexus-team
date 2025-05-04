@@ -26,6 +26,9 @@ export const sendTestEmail = async (
     enabled: config.enabled
   }, null, 2));
   
+  // Add more detailed logging about recipient
+  console.log(`Attempting to deliver email to recipient: ${recipient}`);
+  
   // Special handling for providers - logging
   if (config.provider === 'yahoo') {
     console.log('Using Yahoo provider with special configuration');
