@@ -21,6 +21,7 @@ export interface NotificationOptions {
   skipEmail?: boolean;
   additionalEmailContent?: string;
   targetDepartmentId?: string;
+  forceMirelaAsRecipient?: boolean; // New flag to force Mirela as recipient
 }
 
 export const useNotifications = () => {
@@ -64,18 +65,20 @@ export const useNotifications = () => {
       
       console.log(`Found department: ${department.name} with leadId: ${department.leadId}`);
       
-      // Special case for Product department - Always prioritize Mirela if she exists
+      // Specific handling for Product department - ALWAYS use Mirela
       if (department.name === 'Product') {
-        // Look for Mirela in the Product department first
-        const mirelaInProduct = localTeamMembers.find(
-          member => member.department === 'Product' && 
-                   member.name.toLowerCase().includes('mirela')
+        console.log('Product department detected - explicitly searching for Mirela');
+        
+        // Find Mirela in the team members list
+        const mirela = localTeamMembers.find(
+          member => member.name.toLowerCase().includes('mirela')
         );
         
-        if (mirelaInProduct) {
-          console.log(`Using Mirela as the Product department lead: ${mirelaInProduct.name} (${mirelaInProduct.email})`);
-          // Set her as lead if found
-          return { email: mirelaInProduct.email, name: mirelaInProduct.name };
+        if (mirela) {
+          console.log(`✅ Found Mirela as Product department lead: ${mirela.name} (${mirela.email})`);
+          return { email: mirela.email, name: mirela.name };
+        } else {
+          console.log('⚠️ Error: Mirela not found in team members list!');
         }
       }
       
@@ -168,13 +171,25 @@ export const useNotifications = () => {
          (category === 'report' || category === 'request' || options.emailRecipient)) {
         
         try {
-          // Determine the recipient email - either from options or find department lead
+          // Determine the recipient email
           let recipientEmail = options.emailRecipient || '';
           let recipientName = options.recipientName || '';
           
+          // Special case for Product department - always ensure Mirela gets the notification
+          if ((options.targetDepartmentId === '3' || options.forceMirelaAsRecipient) && !recipientEmail) {
+            // Hard-code Mirela's email if this is for Product department
+            const mirela = localTeamMembers.find(
+              member => member.name.toLowerCase().includes('mirela')
+            );
+            if (mirela) {
+              recipientEmail = mirela.email;
+              recipientName = mirela.name;
+              console.log(`🔔 DIRECT NOTIFICATION: Using Mirela's email: ${recipientEmail} for Product department request`);
+            }
+          }
           // If targetDepartmentId is provided and we don't have an explicit recipient,
           // try to find the department lead's email
-          if (options.targetDepartmentId && !recipientEmail) {
+          else if (options.targetDepartmentId && !recipientEmail) {
             const leadInfo = findDepartmentLeadEmail(options.targetDepartmentId);
             recipientEmail = leadInfo.email;
             recipientName = leadInfo.name;

@@ -17,6 +17,7 @@ import { getDepartments } from '@/services/departmentService';
 import { useAuth } from '@/context/AuthContext';
 import { playNotificationSound } from '@/utils/sound';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { teamMembers } from '@/data/mockData';
 
 const requestFormSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -74,16 +75,41 @@ export default function CreateRequestDialog() {
         console.log(`Target department with ID ${data.targetDepartmentId} not found in list`);
       }
       
-      // Look up department lead email directly using the enhanced function
-      console.log(`Looking up lead for department ID: ${data.targetDepartmentId}`);
-      const targetLeadInfo = findDepartmentLeadEmail(data.targetDepartmentId);
-      const targetLeadEmail = targetLeadInfo.email;
-      const targetLeadName = targetLeadInfo.name;
+      // Check if this is for Product department
+      const isProductDepartment = targetDepartment?.name === 'Product';
+      
+      // Find Mirela directly if sending to Product department
+      let targetLeadEmail = '';
+      let targetLeadName = '';
+      
+      // Direct lookup for Mirela if Product department
+      if (isProductDepartment) {
+        // Find Mirela in team members
+        const mirela = teamMembers.find(member => 
+          member.name.toLowerCase().includes('mirela')
+        );
+        
+        if (mirela) {
+          targetLeadEmail = mirela.email;
+          targetLeadName = mirela.name;
+          console.log(`🔔 Direct lookup for Mirela: ${targetLeadName} (${targetLeadEmail})`);
+        } else {
+          console.log('⚠️ Warning: Mirela not found in team members! Falling back to department lead lookup');
+        }
+      }
+      
+      // Fallback to regular lead lookup if needed
+      if (!targetLeadEmail) {
+        const targetLeadInfo = findDepartmentLeadEmail(data.targetDepartmentId);
+        targetLeadEmail = targetLeadInfo.email;
+        targetLeadName = targetLeadInfo.name;
+        console.log(`Using department lead lookup: ${targetLeadName} (${targetLeadEmail})`);
+      }
       
       console.log(`Found target department lead: ${targetLeadName} (${targetLeadEmail})`);
       
-      if (targetDepartment?.name === 'Product') {
-        console.log(`⚠️ ATTENTION: Sending to Product department, lead should be Mirela. Actual recipient: ${targetLeadName} (${targetLeadEmail})`);
+      if (isProductDepartment) {
+        console.log(`⚠️ ATTENTION: Sending to Product department, should be going to Mirela. Actual recipient: ${targetLeadName} (${targetLeadEmail})`);
       }
       
       // Modified to match the ResourceRequest interface
@@ -127,11 +153,13 @@ export default function CreateRequestDialog() {
       const notificationOptions: NotificationOptions = {
         emailRecipient: targetLeadEmail,
         recipientName: targetLeadName,
-        targetDepartmentId: data.targetDepartmentId, // Provide department ID as backup
-        additionalEmailContent: additionalEmailContent
+        targetDepartmentId: data.targetDepartmentId, 
+        additionalEmailContent: additionalEmailContent,
+        // Force Mirela as recipient if this is for Product department
+        forceMirelaAsRecipient: isProductDepartment
       };
       
-      console.log(`Sending notification to ${targetLeadName} with options:`, notificationOptions);
+      console.log(`Sending notification with options:`, JSON.stringify(notificationOptions, null, 2));
       
       // Add system notification with email
       await addNotification(

@@ -125,7 +125,7 @@ export const teamMembers: TeamMember[] = [
     availability: 50,
     projects: ['2']
   },
-  // Adding Mirela as the Product department lead
+  // Adding Mirela as the Product department lead with correct ID
   {
     id: '3m',
     name: 'Mirela Wang',
