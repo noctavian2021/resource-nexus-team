@@ -8,15 +8,42 @@ import { Label } from '@/components/ui/label';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { Lock, User, Mail, Building2 } from 'lucide-react';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+
+// Define form schema for password change
+const passwordSchema = z.object({
+  currentPassword: z.string().min(1, "Current password is required"),
+  newPassword: z.string().min(8, "Password must be at least 8 characters"),
+  confirmPassword: z.string().min(8, "Please confirm your password"),
+}).refine((data) => data.newPassword === data.confirmPassword, {
+  message: "Passwords do not match",
+  path: ["confirmPassword"], 
+});
 
 export default function UserProfile() {
   const { user, changePassword } = useAuth();
   const { toast } = useToast();
-  const [currentPassword, setCurrentPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
   const [isChangingPassword, setIsChangingPassword] = useState(false);
-  const [passwordError, setPasswordError] = useState<string | null>(null);
+
+  // Set up form with validation
+  const form = useForm<z.infer<typeof passwordSchema>>({
+    resolver: zodResolver(passwordSchema),
+    defaultValues: {
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: "",
+    },
+  });
 
   if (!user) {
     return (
@@ -26,25 +53,11 @@ export default function UserProfile() {
     );
   }
 
-  const handlePasswordChange = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setPasswordError(null);
-    
-    // Validate passwords
-    if (newPassword !== confirmPassword) {
-      setPasswordError('New passwords do not match');
-      return;
-    }
-    
-    if (newPassword.length < 8) {
-      setPasswordError('Password must be at least 8 characters');
-      return;
-    }
-    
+  const onSubmit = async (values: z.infer<typeof passwordSchema>) => {
     setIsChangingPassword(true);
     
     try {
-      const success = await changePassword(currentPassword, newPassword);
+      const success = await changePassword(values.currentPassword, values.newPassword);
       
       if (success) {
         toast({
@@ -53,9 +66,7 @@ export default function UserProfile() {
         });
         
         // Reset form
-        setCurrentPassword('');
-        setNewPassword('');
-        setConfirmPassword('');
+        form.reset();
       } else {
         toast({
           title: 'Error',
@@ -134,57 +145,74 @@ export default function UserProfile() {
               <CardTitle>Change Password</CardTitle>
               <CardDescription>Update your account password</CardDescription>
             </CardHeader>
-            <form onSubmit={handlePasswordChange}>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="current-password">Current Password</Label>
-                  <Input 
-                    id="current-password" 
-                    type="password" 
-                    value={currentPassword}
-                    onChange={(e) => setCurrentPassword(e.target.value)}
-                    required
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)}>
+                <CardContent className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="currentPassword"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Current Password</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="password" 
+                            placeholder="Enter your current password" 
+                            {...field} 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="new-password">New Password</Label>
-                  <Input 
-                    id="new-password" 
-                    type="password" 
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    required
+                  
+                  <FormField
+                    control={form.control}
+                    name="newPassword"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>New Password</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="password" 
+                            placeholder="Enter your new password" 
+                            {...field} 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="confirm-password">Confirm New Password</Label>
-                  <Input 
-                    id="confirm-password" 
-                    type="password" 
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    required
+                  
+                  <FormField
+                    control={form.control}
+                    name="confirmPassword"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Confirm New Password</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="password" 
+                            placeholder="Confirm your new password" 
+                            {...field} 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
-                </div>
-                
-                {passwordError && (
-                  <div className="text-sm text-red-500">
-                    {passwordError}
-                  </div>
-                )}
-              </CardContent>
-              <CardFooter>
-                <Button 
-                  type="submit" 
-                  disabled={isChangingPassword}
-                  className="ml-auto"
-                >
-                  {isChangingPassword ? 'Changing Password...' : 'Change Password'}
-                </Button>
-              </CardFooter>
-            </form>
+                </CardContent>
+                <CardFooter>
+                  <Button 
+                    type="submit" 
+                    disabled={isChangingPassword}
+                    className="ml-auto"
+                  >
+                    {isChangingPassword ? 'Changing Password...' : 'Change Password'}
+                  </Button>
+                </CardFooter>
+              </form>
+            </Form>
           </Card>
         </div>
       </main>

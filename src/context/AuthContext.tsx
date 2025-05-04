@@ -75,6 +75,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           parsedUser.isLead = true;
         }
         
+        // Ensure team_lead users always have isLead set to true
+        if (parsedUser.role === 'team_lead') {
+          parsedUser.isLead = true;
+        }
+        
         setUser(parsedUser);
         
         // Store user email in localStorage for notification purposes
@@ -107,6 +112,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         
         // Ensure admin users always have isLead set to true
         if (userWithoutPassword.role === 'admin') {
+          userWithoutPassword.isLead = true;
+        }
+        
+        // Ensure team_lead users always have isLead set to true
+        if (userWithoutPassword.role === 'team_lead') {
           userWithoutPassword.isLead = true;
         }
         
