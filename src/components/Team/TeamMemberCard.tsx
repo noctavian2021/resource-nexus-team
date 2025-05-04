@@ -1,65 +1,94 @@
 
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { TeamMember } from '@/data/mockData';
-import TeamMemberHeader from './TeamMemberHeader';
-import VacationStatus from './VacationStatus';
-import AvailabilityIndicator from './AvailabilityIndicator';
-import MemberSkills from './MemberSkills';
-import ProjectInvolvements from './ProjectInvolvements';
-import RequiredResources from './RequiredResources';
-import OfficeDays from './OfficeDays';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { X } from 'lucide-react';
+import { MoreHorizontal } from 'lucide-react';
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { TeamMember } from '@/data/mockData';
+import { useAuth } from '@/context/AuthContext';
+import TeamMemberPasswordActions from '@/components/Admin/TeamMemberPasswordActions';
 
 interface TeamMemberCardProps {
   member: TeamMember;
-  onMemberUpdated: (updatedMember: TeamMember) => void;
-  onRemove?: () => void;
+  onEdit: (member: TeamMember) => void;
 }
 
-export default function TeamMemberCard({ member, onMemberUpdated, onRemove }: TeamMemberCardProps) {
-  const isDisabled = member.status === 'disabled';
-  
+const TeamMemberCard: React.FC<TeamMemberCardProps> = ({ member, onEdit }) => {
+  // Extract initials from name for avatar fallback
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(part => part[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
+  // Get user to check if current user is admin
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'admin';
+
   return (
-    <Card className={`overflow-hidden ${isDisabled ? 'opacity-70' : ''}`}>
-      <TeamMemberHeader 
-        member={member} 
-        onMemberUpdated={onMemberUpdated}
-        rightElement={
-          onRemove && (
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="text-destructive hover:text-destructive hover:bg-destructive/10"
-              onClick={onRemove}
-              title="Remove member"
-              aria-label="Remove team member"
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          )
-        } 
-      />
-      <CardContent className="space-y-3 pt-2">
-        {isDisabled && (
-          <div className="bg-destructive/10 text-destructive font-medium text-sm rounded px-2 py-1 inline-block">
-            Disabled
+    <Card className="shadow-sm hover:shadow transition-shadow duration-200">
+      <CardContent className="p-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <Avatar>
+              {member.profileImage ? (
+                <AvatarImage src={member.profileImage} alt={member.name} />
+              ) : null}
+              <AvatarFallback>{getInitials(member.name)}</AvatarFallback>
+            </Avatar>
+            <div>
+              <div className="font-medium">{member.name}</div>
+              <div className="text-sm text-muted-foreground">{member.email}</div>
+            </div>
           </div>
-        )}
-        <VacationStatus vacation={member.vacation} />
-        <AvailabilityIndicator availability={member.availability} />
-        
-        <div className="space-y-1">
-          <p className="text-sm font-medium">Department</p>
-          <p className="text-sm text-muted-foreground">{member.department}</p>
+          
+          <div className="flex items-center gap-2">
+            {isAdmin && (
+              <TeamMemberPasswordActions userId={member.id} userName={member.name} />
+            )}
+            
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <MoreHorizontal className="h-4 w-4" />
+                  <span className="sr-only">Open menu</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => onEdit(member)}>
+                  Edit
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
         
-        <MemberSkills skills={member.skills} />
-        <ProjectInvolvements member={member} />
-        <RequiredResources requiredResources={member.requiredResources} />
-        <OfficeDays officeDays={member.officeDays} />
+        <div className="mt-4 flex items-center space-x-2">
+          <Badge variant={member.status === 'active' ? 'default' : 'outline'}>
+            {member.status === 'active' ? 'Active' : 'Inactive'}
+          </Badge>
+          
+          <Badge variant="outline">
+            {member.department}
+          </Badge>
+          
+          <Badge variant="secondary">
+            {member.role}
+          </Badge>
+        </div>
       </CardContent>
     </Card>
   );
-}
+};
+
+export default TeamMemberCard;

@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
 // Define user type
@@ -20,6 +19,8 @@ interface AuthContextType {
   isLoading: boolean;
   error: string | null;
   changePassword: (currentPassword: string, newPassword: string) => Promise<boolean>;
+  resetUserPassword: (userId: string, newPassword: string) => Promise<boolean>;
+  getAllUsers: () => User[];
 }
 
 // Create the context
@@ -190,8 +191,70 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  // Method for admin to reset any user's password
+  const resetUserPassword = async (userId: string, newPassword: string): Promise<boolean> => {
+    setError(null);
+    
+    if (!user) {
+      setError('Not logged in');
+      return false;
+    }
+    
+    // Check if the current user is an admin
+    if (user.role !== 'admin') {
+      setError('Unauthorized: Only admins can reset passwords');
+      return false;
+    }
+    
+    try {
+      // Simulate API call delay
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
+      // Find user in our "database"
+      const userIndex = users.findIndex(u => u.id === userId);
+      
+      if (userIndex === -1) {
+        setError('User not found');
+        return false;
+      }
+      
+      // Update password
+      const updatedUsers = [...users];
+      updatedUsers[userIndex] = {
+        ...updatedUsers[userIndex],
+        password: newPassword
+      };
+      
+      setUsers(updatedUsers);
+      return true;
+    } catch (err) {
+      setError('An error occurred while resetting password');
+      console.error('Password reset error:', err);
+      return false;
+    }
+  };
+
+  // Method to get all users (for admin to manage)
+  const getAllUsers = (): User[] => {
+    if (!user || user.role !== 'admin') {
+      return [];
+    }
+    
+    // Return users without passwords
+    return users.map(({ password, ...userWithoutPassword }) => userWithoutPassword);
+  };
+
   return (
-    <AuthContext.Provider value={{ user, login, logout, isLoading, error, changePassword }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      login, 
+      logout, 
+      isLoading, 
+      error, 
+      changePassword, 
+      resetUserPassword, 
+      getAllUsers 
+    }}>
       {children}
     </AuthContext.Provider>
   );
