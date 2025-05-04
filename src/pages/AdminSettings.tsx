@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import Header from '@/components/Layout/Header';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -46,8 +47,8 @@ export default function AdminSettings() {
   
   // Handle mock data toggle
   const handleMockDataToggle = (checked: boolean) => {
-    const newSetting = toggleMockData(checked);
-    setUseMockData(newSetting);
+    toggleMockData(checked); // Call the function without using its return value
+    setUseMockData(checked); // Use the input value to set the state directly
     toast({
       title: checked ? "Mock Data Enabled" : "Mock Data Disabled",
       description: checked ? 

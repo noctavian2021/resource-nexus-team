@@ -1,3 +1,4 @@
+
 import { handleMockRequest } from './mockApiHandler';
 
 export const API_URL = 'https://api.example.com';
@@ -6,9 +7,10 @@ export const API_URL = 'https://api.example.com';
 let useMockData = true;
 
 // Toggle mock data usage
-export const toggleMockData = (enabled: boolean) => {
+export const toggleMockData = (enabled: boolean): boolean => {
   useMockData = enabled;
   console.log(`Mock data is now ${useMockData ? 'enabled' : 'disabled'}`);
+  return useMockData; // Return the new state
 };
 
 // Check if mock data is enabled
