@@ -32,13 +32,9 @@ type RequestFormData = z.infer<typeof requestFormSchema>;
 export default function CreateRequestDialog() {
   const [open, setOpen] = React.useState(false);
   const [sending, setSending] = React.useState(false);
-  const { addNotification } = useNotifications();
+  const { addNotification, findDepartmentLeadEmail } = useNotifications();
   const { emailConfig } = useEmailConfig();
-  const { user, getAllUsers } = useAuth();
-  
-  // Get all users for mapping department leads
-  const allUsers = getAllUsers();
-  console.log('Available users for email lookup:', allUsers);
+  const { user } = useAuth();
   
   // Fetch departments using React Query
   const { data: departmentList = [], isLoading: isLoadingDepartments } = useQuery({
@@ -71,46 +67,13 @@ export default function CreateRequestDialog() {
       const targetDepartment = departmentList.find(dept => dept.id === data.targetDepartmentId);
       const requestingDepartment = departmentList.find(d => d.id === currentUserDepartmentId);
       
-      // Find the department lead's information
-      let targetLeadEmail = '';
-      let targetLeadName = '';
+      // Look up department lead email directly using the new function
+      console.log(`Looking up lead for department ID: ${data.targetDepartmentId}`);
+      const targetLeadInfo = findDepartmentLeadEmail(data.targetDepartmentId);
+      const targetLeadEmail = targetLeadInfo.email;
+      const targetLeadName = targetLeadInfo.name;
       
-      // Improve debugging for the lookup process
-      console.log('Looking up department lead for department:', targetDepartment);
-      console.log('Department lead ID to find:', targetDepartment?.leadId);
-      console.log('Current users available:', allUsers);
-      
-      // Get directly from API if allUsers is empty
-      if (targetDepartment?.leadId && (!allUsers || allUsers.length === 0)) {
-        try {
-          // In a real app, you would fetch the user directly
-          console.log(`Attempting direct fetch for lead with ID: ${targetDepartment.leadId}`);
-          
-          // Mock getting the user email from departmentId - in real app would be API call
-          targetLeadEmail = `${targetDepartment.name?.toLowerCase().replace(/\s+/g, '')}lead@example.com`;
-          targetLeadName = `${targetDepartment.name} Lead`;
-          console.log(`Using mock email for department lead: ${targetLeadEmail}`);
-        } catch (error) {
-          console.error('Error fetching department lead:', error);
-        }
-      } else if (targetDepartment?.leadId) {
-        // Find lead in allUsers array
-        const departmentLead = allUsers.find(u => u.id === targetDepartment.leadId);
-        console.log('Department lead found:', departmentLead);
-        
-        if (departmentLead && departmentLead.email) {
-          targetLeadEmail = departmentLead.email;
-          targetLeadName = departmentLead.name || 'Department Lead';
-          console.log(`Found target department lead email: ${targetLeadEmail} (${targetLeadName})`);
-        }
-      }
-      
-      // If still no email, create a fallback
-      if (!targetLeadEmail && targetDepartment) {
-        targetLeadEmail = `${targetDepartment.name?.toLowerCase().replace(/\s+/g, '')}@example.com`;
-        targetLeadName = targetDepartment.name || 'Department';
-        console.log(`Using fallback email: ${targetLeadEmail}`);
-      }
+      console.log(`Found target department lead: ${targetLeadName} (${targetLeadEmail})`);
       
       // Modified to match the ResourceRequest interface
       const newRequest: Partial<ResourceRequest> = {
@@ -146,6 +109,7 @@ export default function CreateRequestDialog() {
       const notificationOptions: NotificationOptions = {
         emailRecipient: targetLeadEmail,
         recipientName: targetLeadName,
+        targetDepartmentId: data.targetDepartmentId, // Provide department ID as backup
         additionalEmailContent: additionalEmailContent
       };
       

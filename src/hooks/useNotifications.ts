@@ -4,6 +4,7 @@ import { toast } from '@/hooks/use-toast';
 import { useEmailConfig } from '@/hooks/useEmailConfig';
 import { playNotificationSound } from '@/utils/sound';
 import apiRequest from '@/services/api';
+import { departments, teamMembers as localTeamMembers } from '@/data/mockData';
 
 interface Notification {
   id: string;
@@ -19,6 +20,7 @@ export interface NotificationOptions {
   recipientName?: string;
   skipEmail?: boolean;
   additionalEmailContent?: string;
+  targetDepartmentId?: string;
 }
 
 export const useNotifications = () => {
@@ -49,6 +51,43 @@ export const useNotifications = () => {
       window.removeEventListener('receive-notification', handleReceiveNotification);
     };
   }, []);
+
+  // Find department lead's email directly from team members data
+  const findDepartmentLeadEmail = (departmentId: string): { email: string, name: string } => {
+    try {
+      // First find the department to get the leadId
+      const department = departments.find(dept => dept.id === departmentId);
+      if (!department || !department.leadId) {
+        console.log(`Department not found or no lead assigned for department ID: ${departmentId}`);
+        return { email: '', name: '' };
+      }
+      
+      console.log(`Looking for lead with ID ${department.leadId} for department ${department.name}`);
+      
+      // Find the team member who is the lead
+      const leadMember = localTeamMembers.find(member => member.id === department.leadId);
+      if (leadMember) {
+        console.log(`Found department lead: ${leadMember.name} (${leadMember.email})`);
+        return { email: leadMember.email, name: leadMember.name };
+      } else {
+        // Try to find any team member who is marked as lead in this department
+        const departmentLead = localTeamMembers.find(
+          member => member.department === department.name && member.isLead
+        );
+        
+        if (departmentLead) {
+          console.log(`Found department lead by role: ${departmentLead.name} (${departmentLead.email})`);
+          return { email: departmentLead.email, name: departmentLead.name };
+        }
+      }
+      
+      console.log(`Could not find lead for department ID: ${departmentId}`);
+      return { email: '', name: '' };
+    } catch (error) {
+      console.error('Error finding department lead:', error);
+      return { email: '', name: '' };
+    }
+  };
 
   // Add a new notification
   const addNotification = async (
@@ -89,9 +128,25 @@ export const useNotifications = () => {
          (category === 'report' || category === 'request' || options.emailRecipient)) {
         
         try {
-          // Get recipient email - either from options or fallback
-          const recipientEmail = options.emailRecipient || localStorage.getItem('userEmail') || 'admin@example.com';
-          const recipientName = options.recipientName || localStorage.getItem('userName') || 'User';
+          // Determine the recipient email - either from options or find department lead
+          let recipientEmail = options.emailRecipient || '';
+          let recipientName = options.recipientName || '';
+          
+          // If targetDepartmentId is provided and we don't have an explicit recipient,
+          // try to find the department lead's email
+          if (options.targetDepartmentId && !recipientEmail) {
+            const leadInfo = findDepartmentLeadEmail(options.targetDepartmentId);
+            recipientEmail = leadInfo.email;
+            recipientName = leadInfo.name;
+            console.log(`Using department lead email: ${recipientEmail} (${recipientName})`);
+          }
+          
+          // Fallback if we still don't have an email
+          if (!recipientEmail) {
+            recipientEmail = localStorage.getItem('userEmail') || 'admin@example.com';
+            recipientName = localStorage.getItem('userName') || 'User';
+            console.log(`Using fallback email: ${recipientEmail}`);
+          }
           
           console.log(`Sending ${category} notification email to:`, recipientEmail);
           
@@ -185,6 +240,7 @@ export const useNotifications = () => {
     markAsRead,
     clearNotifications,
     getNotificationsByCategory,
-    getUnreadCount
+    getUnreadCount,
+    findDepartmentLeadEmail
   };
 };
