@@ -5,6 +5,8 @@ export const teamMemberFormSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
   role: z.string().min(2, { message: "Role must be at least 2 characters." }),
   department: z.string().min(1, { message: "Please select a department." }),
+  isLead: z.boolean().default(false),
+  isDirector: z.boolean().default(false),
   email: z.string().email({ message: "Please enter a valid email." }),
   skills: z.string().optional(),
   availability: z.coerce.number().min(0).max(100),

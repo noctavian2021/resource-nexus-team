@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useFieldArray } from "react-hook-form";
@@ -11,11 +12,13 @@ import { teamMemberFormSchema, TeamMemberFormValues } from './TeamMemberFormSche
 import AvatarUpload from './AvatarUpload';
 import BasicInfoSection from './BasicInfoSection';
 import VacationSection from './VacationSection';
+import LeadDirectorSection from './LeadDirectorSection';
 import { Plus, Minus } from 'lucide-react';
 import { getProjects } from '@/services/projectService';
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useAuth } from '@/context/AuthContext';
 
 interface EditTeamMemberDialogProps {
   member: TeamMember;
@@ -90,6 +93,10 @@ export default function EditTeamMemberDialog({
   const [isLoadingProjects, setIsLoadingProjects] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
+  
+  // Check if current user is admin
+  const isAdmin = user?.role === 'admin';
   
   // Determine which open state to use (controlled or uncontrolled)
   const isOpen = open !== undefined ? open : internalOpen;
@@ -153,6 +160,8 @@ export default function EditTeamMemberDialog({
       name: member.name,
       role: member.role,
       department: member.department,
+      isLead: member.isLead || false,
+      isDirector: member.role === 'Director' || false,
       email: member.email,
       skills: member.skills.join(", "),
       availability: member.availability,
@@ -190,10 +199,14 @@ export default function EditTeamMemberDialog({
         console.log(`Avatar size: ${Math.round(optimizedAvatar.length / 1024)}KB`);
       }
       
+      // Handle role setting based on isDirector flag
+      const role = values.isDirector ? 'Director' : values.role;
+      
       const updatedMember = await updateTeamMember(member.id, {
         name: values.name,
-        role: values.role,
+        role: role,
         department: values.department,
+        isLead: values.isLead,
         email: values.email,
         skills: values.skills ? values.skills.split(",").map(skill => skill.trim()).filter(Boolean) : member.skills,
         availability: values.availability,
@@ -247,6 +260,14 @@ export default function EditTeamMemberDialog({
                 control={form.control}
                 departments={departments}
               />
+              
+              {/* Lead and Director Section (only for admins) */}
+              {isAdmin && (
+                <LeadDirectorSection 
+                  control={form.control}
+                  isAdmin={isAdmin}
+                />
+              )}
               
               {/* Project Involvements Section */}
               <div className="border rounded-md p-3">

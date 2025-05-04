@@ -4,7 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal, Edit, Lock } from 'lucide-react';
+import { MoreHorizontal, Edit, Lock, UserCog } from 'lucide-react';
 import { 
   DropdownMenu,
   DropdownMenuContent,
@@ -108,6 +108,13 @@ const TeamMemberCard: React.FC<TeamMemberCardProps> = ({
           <Badge variant="secondary">
             {member.role}
           </Badge>
+          
+          {member.isLead && (
+            <Badge variant="secondary" className="bg-blue-100 text-blue-800 hover:bg-blue-200">
+              <UserCog className="h-3 w-3 mr-1" />
+              Lead
+            </Badge>
+          )}
         </div>
         
         {isAdmin && user.id !== member.id && (
