@@ -14,6 +14,7 @@ import {
 import { TeamMember } from '@/data/mockData';
 import { useAuth } from '@/context/AuthContext';
 import TeamMemberPasswordActions from '@/components/Admin/TeamMemberPasswordActions';
+import EditTeamMemberDialog from './EditTeamMemberDialog';
 
 interface TeamMemberCardProps {
   member: TeamMember;
@@ -28,6 +29,8 @@ const TeamMemberCard: React.FC<TeamMemberCardProps> = ({
   onMemberUpdated,
   onRemove 
 }) => {
+  const [showEditDialog, setShowEditDialog] = React.useState(false);
+  
   // Extract initials from name for avatar fallback
   const getInitials = (name: string) => {
     return name
@@ -42,12 +45,17 @@ const TeamMemberCard: React.FC<TeamMemberCardProps> = ({
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin';
 
-  // Handler for edit action that calls both edit and update if provided
-  const handleEdit = () => {
-    onEdit(member);
+  // Handler for opening edit dialog
+  const handleShowEditDialog = () => {
+    setShowEditDialog(true);
+  };
+  
+  // Handler for when a member is updated through the dialog
+  const handleMemberUpdated = (updatedMember: TeamMember) => {
     if (onMemberUpdated) {
-      onMemberUpdated(member);
+      onMemberUpdated(updatedMember);
     }
+    onEdit(updatedMember);
   };
 
   return (
@@ -80,7 +88,7 @@ const TeamMemberCard: React.FC<TeamMemberCardProps> = ({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={handleEdit}>
+                <DropdownMenuItem onClick={handleShowEditDialog}>
                   <Edit className="h-4 w-4 mr-2" />
                   Edit
                 </DropdownMenuItem>
@@ -108,6 +116,14 @@ const TeamMemberCard: React.FC<TeamMemberCardProps> = ({
           </Badge>
         </div>
       </CardContent>
+      
+      {/* Add EditTeamMemberDialog component */}
+      <EditTeamMemberDialog
+        open={showEditDialog}
+        onOpenChange={setShowEditDialog}
+        member={member}
+        onMemberUpdated={handleMemberUpdated}
+      />
     </Card>
   );
 };
