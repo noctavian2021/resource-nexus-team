@@ -80,11 +80,15 @@ export const useNotifications = () => {
           
           console.log(`Sending ${category} notification email to:`, recipientEmail);
           
+          // Use the send-welcome endpoint which is known to work
           await apiRequest('/email/send-welcome', 'POST', {
             email: recipientEmail,
+            name: localStorage.getItem('userName') || 'User',
+            subject: `${title} - Notification`,
+            startDate: new Date().toISOString().split('T')[0],
             replacingMember: '',
             additionalNotes: `
-              Notification: ${title}
+              ${title}
               
               ${message}
               

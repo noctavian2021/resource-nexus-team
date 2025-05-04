@@ -30,8 +30,11 @@ export const useEmailConfig = () => {
       let updatedConfig: EmailConfig;
       
       if (config.provider && config.provider !== emailConfig.provider) {
+        // Safely cast provider to EmailProviderType
+        const providerType = config.provider as EmailProviderType;
+        
         // If provider changed, update with default settings for that provider
-        const providerDefaults = defaultConfigs[config.provider as EmailProviderType];
+        const providerDefaults = defaultConfigs[providerType] || defaultConfigs.custom;
         updatedConfig = {
           ...emailConfig,
           ...config,
@@ -123,8 +126,11 @@ export const useEmailConfig = () => {
         setError(result.error);
         
         if (result.error.includes('Greeting never received')) {
+          // Safely cast provider to EmailProviderType for the helper function
+          const providerType = emailConfig.provider as EmailProviderType;
+          
           // Provide specific guidance for connection issues
-          const helpMessage = getConnectionErrorHelp(result.error, emailConfig.provider as EmailProviderType);
+          const helpMessage = getConnectionErrorHelp(result.error, providerType);
           toast({
             title: "Connection Error",
             description: helpMessage,
@@ -149,9 +155,12 @@ export const useEmailConfig = () => {
       const errorMsg = err.message || 'Unknown error sending test email';
       setError(errorMsg);
       
+      // Safely cast provider to EmailProviderType for the helper function
+      const providerType = emailConfig.provider as EmailProviderType;
+      
       // Provide helpful guidance for common errors
       if (errorMsg.includes('Greeting never received')) {
-        const helpMessage = getConnectionErrorHelp(errorMsg, emailConfig.provider as EmailProviderType);
+        const helpMessage = getConnectionErrorHelp(errorMsg, providerType);
         toast({
           title: "Connection Error",
           description: helpMessage,

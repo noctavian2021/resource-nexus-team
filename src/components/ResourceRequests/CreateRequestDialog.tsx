@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -78,14 +77,17 @@ export default function CreateRequestDialog() {
       let targetDepartmentLeadName = '';
       
       if (targetDepartment && targetDepartment.leadId) {
-        // Find the lead user by ID
+        // Find the lead user by ID - improved debug logging
         const departmentLead = allUsers.find(u => u.id === targetDepartment.leadId);
+        console.log('Department lead found:', departmentLead);
+        console.log('All available users:', allUsers.map(u => ({ id: u.id, name: u.name, email: u.email })));
+        
         if (departmentLead && departmentLead.email) {
           targetDepartmentLeadEmail = departmentLead.email;
           targetDepartmentLeadName = departmentLead.name || '';
           console.log(`Found target department lead email: ${targetDepartmentLeadEmail} (${targetDepartmentLeadName})`);
         } else {
-          console.warn(`Department lead found (ID: ${targetDepartment.leadId}), but email is missing`);
+          console.warn(`Department lead found (ID: ${targetDepartment.leadId}), but email is missing or undefined`);
         }
       } else {
         console.warn(`No department lead ID found for department ${targetDepartment?.name || data.targetDepartmentId}`);
@@ -179,15 +181,18 @@ export default function CreateRequestDialog() {
             Please review this request in the Resource Management System.
           `;
           
-          // First, send to target department lead if we have a valid email
+          // First, send to target department lead if we have a valid email - use send-welcome endpoint which works
           if (targetDepartmentLeadEmail) {
             console.log(`Sending email notification to ${targetDepartmentLeadName} (${targetDepartmentLeadEmail})`);
             
-            const targetResponse = await apiRequest('/email/send', 'POST', {
-              to: targetDepartmentLeadEmail,
+            // Using send-welcome endpoint which is known to work
+            const targetResponse = await apiRequest('/email/send-welcome', 'POST', {
+              email: targetDepartmentLeadEmail,
               subject: emailSubject,
-              text: emailText,
-              html: emailHtml,
+              name: targetDepartmentLeadName || 'Department Lead',
+              startDate: new Date().toISOString().split('T')[0],
+              replacingMember: '', 
+              additionalNotes: `**Resource Request Details**\n\n${data.description}\n\nRequired Skills: ${data.requiredSkills}\nDuration: ${data.startDate} to ${data.endDate}`,
               emailConfig: normalizedEmailConfig
             });
             
@@ -199,40 +204,31 @@ export default function CreateRequestDialog() {
               `${targetDepartment.name?.toLowerCase().replace(/\s+/g, '')}@example.com` : 
               'no-reply@example.com';
               
-            const targetResponse = await apiRequest('/email/send', 'POST', {
-              to: fallbackEmail,
+            // Using send-welcome endpoint which is known to work  
+            const targetResponse = await apiRequest('/email/send-welcome', 'POST', {
+              email: fallbackEmail,
               subject: emailSubject,
-              text: emailText,
-              html: emailHtml,
+              name: targetDepartment?.name || 'Department',
+              startDate: new Date().toISOString().split('T')[0],
+              replacingMember: '',
+              additionalNotes: `**Resource Request Details**\n\n${data.description}\n\nRequired Skills: ${data.requiredSkills}\nDuration: ${data.startDate} to ${data.endDate}`,
               emailConfig: normalizedEmailConfig
             });
             
             console.log('Email notification sent to fallback address:', targetResponse);
           }
           
-          // Always send a copy to the admin email
-          const adminEmail = 'admin@example.com';
-          console.log('Sending email notification to admin:', adminEmail);
-          
-          const adminResponse = await apiRequest('/email/send', 'POST', {
-            to: adminEmail,
-            subject: `[ADMIN COPY] ${emailSubject}`,
-            text: emailText,
-            html: emailHtml,
-            emailConfig: normalizedEmailConfig
-          });
-          
-          console.log('Email notification sent to admin:', adminResponse);
-          
           // Send a copy to the requester if they're not the admin
-          if (user?.email && user.email !== adminEmail) {
+          if (user?.email) {
             console.log('Sending email notification to requester:', user.email);
             
-            const requesterResponse = await apiRequest('/email/send', 'POST', {
-              to: user.email,
+            const requesterResponse = await apiRequest('/email/send-welcome', 'POST', {
+              email: user.email,
               subject: `Your Resource Request: ${data.title}`,
-              text: emailText,
-              html: emailHtml,
+              name: user.name || 'User',
+              startDate: new Date().toISOString().split('T')[0],
+              replacingMember: '',
+              additionalNotes: `**Your Request Details**\n\n${data.description}\n\nRequired Skills: ${data.requiredSkills}\nDuration: ${data.startDate} to ${data.endDate}\n\nYour request has been submitted to ${targetDepartment?.name || 'the department'}.`,
               emailConfig: normalizedEmailConfig
             });
             
