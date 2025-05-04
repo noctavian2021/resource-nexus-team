@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -58,6 +59,44 @@ export default function CreateRequestDialog() {
     }
   });
 
+  // Function to send a test email to verify configuration
+  const sendTestEmailToMirela = async () => {
+    try {
+      console.log('🚨 SENDING TEST EMAIL TO MIRELA');
+      const mirelaMember = teamMembers.find(m => m.name.toLowerCase().includes('mirela'));
+      
+      if (mirelaMember && emailConfig.enabled) {
+        console.log(`Found Mirela: ${mirelaMember.name} with email ${mirelaMember.email}`);
+        
+        const testEmailResult = await fetch('http://localhost:5000/api/email/send-test', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            config: {
+              ...emailConfig,
+              port: String(emailConfig.port),
+              secure: emailConfig.port === '465' ? true : (emailConfig.port === '587' ? false : emailConfig.secure),
+            },
+            recipient: mirelaMember.email,
+            subject: 'URGENT TEST: Product Department Request',
+            text: 'This is a DIRECT test email to verify you are receiving Product department notifications.',
+            html: '<h1>Product Department Test Notification</h1><p>This is a DIRECT test email to verify you are receiving Product department notifications.</p>'
+          })
+        }).then(res => res.json());
+        
+        console.log('Test email response:', testEmailResult);
+        return testEmailResult;
+      }
+      
+      return { success: false, error: 'Email not enabled or Mirela not found' };
+    } catch (error) {
+      console.error('Error sending test email to Mirela:', error);
+      return { success: false, error: String(error) };
+    }
+  };
+  
   const onSubmit = async (data: RequestFormData) => {
     setSending(true);
     
@@ -82,34 +121,56 @@ export default function CreateRequestDialog() {
       let targetLeadEmail = '';
       let targetLeadName = '';
       
-      // Direct lookup for Mirela if Product department
-      if (isProductDepartment) {
-        // Find Mirela in team members
-        const mirela = teamMembers.find(member => 
-          member.name.toLowerCase().includes('mirela')
-        );
-        
-        if (mirela) {
+      // Always use Mirela for Product department (revised logic)
+      const mirela = teamMembers.find(member => 
+        member.name.toLowerCase().includes('mirela')
+      );
+      
+      if (mirela) {
+        // If this is for Product department, directly use Mirela
+        if (isProductDepartment) {
           targetLeadEmail = mirela.email;
           targetLeadName = mirela.name;
-          console.log(`🔔 Direct lookup for Mirela: ${targetLeadName} (${targetLeadEmail})`);
-        } else {
-          console.log('⚠️ Warning: Mirela not found in team members! Falling back to department lead lookup');
+          console.log(`🔔 DIRECTLY USING MIRELA: ${targetLeadName} (${targetLeadEmail})`);
+          
+          // Send a test message to verify
+          sendTestEmailToMirela().then(result => {
+            if (!result.success) {
+              console.error('Test email to Mirela failed:', result.error);
+            } else {
+              console.log('Test email to Mirela succeeded!');
+            }
+          });
+        } 
+        // For other departments, use standard lookup but with a backup option
+        else {
+          const targetLeadInfo = findDepartmentLeadEmail(data.targetDepartmentId);
+          targetLeadEmail = targetLeadInfo.email;
+          targetLeadName = targetLeadInfo.name;
+          
+          // If we couldn't find a lead, CC Mirela anyway
+          if (!targetLeadEmail) {
+            targetLeadEmail = mirela.email;
+            targetLeadName = mirela.name;
+            console.log(`⚠️ Using Mirela as fallback for department ${targetDepartment?.name}: ${targetLeadName} (${targetLeadEmail})`);
+          } else {
+            console.log(`Using department lead: ${targetLeadName} (${targetLeadEmail})`);
+          }
         }
-      }
-      
-      // Fallback to regular lead lookup if needed
-      if (!targetLeadEmail) {
+      } else {
+        console.log('⚠️ WARNING: Mirela not found in team members list! Using standard lookup.');
+        
+        // Fall back to standard department lead lookup
         const targetLeadInfo = findDepartmentLeadEmail(data.targetDepartmentId);
         targetLeadEmail = targetLeadInfo.email;
         targetLeadName = targetLeadInfo.name;
-        console.log(`Using department lead lookup: ${targetLeadName} (${targetLeadEmail})`);
       }
       
-      console.log(`Found target department lead: ${targetLeadName} (${targetLeadEmail})`);
+      // Debug logging
+      console.log(`Final recipient: ${targetLeadName} (${targetLeadEmail})`);
       
       if (isProductDepartment) {
-        console.log(`⚠️ ATTENTION: Sending to Product department, should be going to Mirela. Actual recipient: ${targetLeadName} (${targetLeadEmail})`);
+        console.log(`⚠️ ATTENTION: Sending to Product department, recipient: ${targetLeadName} (${targetLeadEmail})`);
       }
       
       // Modified to match the ResourceRequest interface
@@ -140,6 +201,8 @@ export default function CreateRequestDialog() {
         From Department: ${requestingDepartment?.name || user?.name || 'Admin'}
         
         Please review this request in the Resource Management System.
+        
+        *** THIS IS A HIGH PRIORITY REQUEST ***
       `;
 
       // Email debug info
@@ -192,6 +255,28 @@ export default function CreateRequestDialog() {
           `Your request has been submitted to ${targetDepartment?.name}`,
           'general',
           requesterOptions
+        );
+      }
+      
+      // Also CC Mirela on all department communications if not already the target
+      if (mirela && !isProductDepartment && targetLeadEmail !== mirela.email && emailConfig.enabled) {
+        const mirelaOptions: NotificationOptions = {
+          emailRecipient: mirela.email,
+          recipientName: mirela.name,
+          skipEmail: !emailConfig.enabled,
+          additionalEmailContent: `
+            This is a CC of a request sent to ${targetDepartment?.name || 'another department'}.
+            Original recipient: ${targetLeadName} (${targetLeadEmail})
+            
+            ${additionalEmailContent}
+          `
+        };
+        
+        await addNotification(
+          `CC: Resource Request for ${targetDepartment?.name}`,
+          `${data.title} - Resource request from ${requestingDepartment?.name || 'Admin'}`,
+          'request',
+          mirelaOptions
         );
       }
       

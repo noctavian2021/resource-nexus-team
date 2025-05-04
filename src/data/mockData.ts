@@ -125,9 +125,9 @@ export const teamMembers: TeamMember[] = [
     availability: 50,
     projects: ['2']
   },
-  // Adding Mirela as the Product department lead with correct ID
+  // Using a consistent, standard ID '3' for Mirela as the Product department lead
   {
-    id: '3m',
+    id: '3',
     name: 'Mirela Wang',
     role: 'Product Manager',
     department: 'Product',
@@ -139,7 +139,7 @@ export const teamMembers: TeamMember[] = [
     isLead: true // Explicitly marking her as lead
   },
   {
-    id: '3',
+    id: '4',
     name: 'Michael Chen',
     role: 'Project Manager',
     department: 'Product',
@@ -156,7 +156,7 @@ export const teamMembers: TeamMember[] = [
     }
   },
   {
-    id: '4',
+    id: '5',
     name: 'Emily Davis',
     role: 'Marketing Specialist',
     department: 'Marketing',
@@ -167,7 +167,7 @@ export const teamMembers: TeamMember[] = [
     projects: ['3']
   },
   {
-    id: '5',
+    id: '6',
     name: 'James Wilson',
     role: 'DevOps Engineer',
     department: 'Engineering',
@@ -202,7 +202,7 @@ export const departments: Department[] = [
     id: '3',
     name: 'Product',
     description: 'Product management and strategy',
-    leadId: '3m', // Updated to Mirela's ID
+    leadId: '3', // Updated to use the standard ID '3' for Mirela
     memberCount: 6,
     color: '#10b981', // emerald-500
     isHidden: false

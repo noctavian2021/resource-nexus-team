@@ -47,6 +47,18 @@ export const normalizeProviderConfig = (config: EmailConfig): EmailConfig => {
     }
   }
   
+  // Handle example.com domain email addresses
+  if (config.username?.includes('@example.com') || config.fromEmail?.includes('@example.com')) {
+    console.log('⚠️ Example.com domain detected - these are simulator emails and may not be delivered to real addresses');
+    
+    // Log detailed debug info for example.com domains
+    try {
+      console.log('Email config with example.com domain:', JSON.stringify(normalizedConfig, null, 2));
+    } catch (err) {
+      console.error('Error logging email config:', err);
+    }
+  }
+  
   return normalizedConfig;
 };
 
@@ -62,6 +74,11 @@ export const getConnectionErrorHelp = (errorMessage: string, provider: EmailProv
   
   if (errorMessage.includes('SSL routines') || errorMessage.includes('wrong version number')) {
     return 'SSL/TLS connection failed. Your secure setting may not match what the server expects. If your port is 587, try setting secure=false. If your port is 465, try setting secure=true.';
+  }
+  
+  // Special handling for example.com domain emails
+  if (errorMessage.includes('example.com')) {
+    return 'You are using example.com domain email addresses which are not valid for real email delivery. Please use valid email addresses in your configuration.';
   }
   
   return `Email error: ${errorMessage}`;
