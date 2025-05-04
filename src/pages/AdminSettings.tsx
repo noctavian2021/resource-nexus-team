@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { useEmailConfig } from '@/hooks/useEmailConfig';
+import { useEmailConfig, EmailProviderType } from '@/hooks/useEmailConfig';
 import { toast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useBackupConfig } from '@/hooks/useBackupConfig';
@@ -56,7 +56,7 @@ export default function AdminSettings() {
     });
   };
 
-  const handleProviderChange = (provider: typeof emailConfig.provider) => {
+  const handleProviderChange = (provider: EmailProviderType) => {
     updateEmailConfig({ provider });
     
     // Show provider-specific help tips
@@ -418,7 +418,7 @@ export default function AdminSettings() {
   };
 
   const getProviderNote = () => {
-    const help = getProviderHelp(emailConfig.provider);
+    const help = getProviderHelp(emailConfig.provider as EmailProviderType);
     if (!help) return null;
     
     return (
@@ -511,7 +511,7 @@ export default function AdminSettings() {
                 <div className="flex flex-col space-y-1.5">
                   <Label htmlFor="emailProvider">Email Provider</Label>
                   <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
-                    {(['gmail', 'yahoo', 'outlook365', 'resend', 'custom'] as const).map((provider) => (
+                    {(['gmail', 'yahoo', 'outlook365', 'resend', 'custom'] as EmailProviderType[]).map((provider) => (
                       <Button
                         key={provider}
                         type="button"

@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { toast } from '@/hooks/use-toast';
-import { EmailConfig, TestEmailResponse } from './types';
+import { EmailConfig, TestEmailResponse, EmailProviderType } from './types';
 import { defaultEmailConfig, defaultConfigs } from './emailDefaults';
 import { validateEmailConfig } from './validation';
 import { getProviderHelp, normalizeProviderConfig, getConnectionErrorHelp } from './providerUtils';
@@ -31,7 +31,7 @@ export const useEmailConfig = () => {
       
       if (config.provider && config.provider !== emailConfig.provider) {
         // If provider changed, update with default settings for that provider
-        const providerDefaults = defaultConfigs[config.provider];
+        const providerDefaults = defaultConfigs[config.provider as EmailProviderType];
         updatedConfig = {
           ...emailConfig,
           ...config,
@@ -124,7 +124,7 @@ export const useEmailConfig = () => {
         
         if (result.error.includes('Greeting never received')) {
           // Provide specific guidance for connection issues
-          const helpMessage = getConnectionErrorHelp(result.error, emailConfig.provider);
+          const helpMessage = getConnectionErrorHelp(result.error, emailConfig.provider as EmailProviderType);
           toast({
             title: "Connection Error",
             description: helpMessage,
@@ -151,7 +151,7 @@ export const useEmailConfig = () => {
       
       // Provide helpful guidance for common errors
       if (errorMsg.includes('Greeting never received')) {
-        const helpMessage = getConnectionErrorHelp(errorMsg, emailConfig.provider);
+        const helpMessage = getConnectionErrorHelp(errorMsg, emailConfig.provider as EmailProviderType);
         toast({
           title: "Connection Error",
           description: helpMessage,
