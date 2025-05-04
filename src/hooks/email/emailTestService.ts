@@ -1,4 +1,3 @@
-
 import { EmailConfig, TestEmailResponse } from './types';
 import apiRequest from '@/services/apiClient';
 
@@ -41,23 +40,15 @@ export const sendTestEmail = async (
   }
   
   try {
+    // Updated to use a more consistent endpoint for email sending
     const result = await apiRequest<{
       success: boolean;
       message?: string;
       error?: string;
       messageId?: string;
       smtpResponse?: string;
-    }>('/email/send-test', 'POST', {
-      config: {
-        ...config,
-        // Ensure port is string and secured is properly set based on port
-        port: String(config.port),
-        secure: config.port === '465' ? true : (config.port === '587' ? false : config.secure),
-        // Add connection timeout settings
-        connectionTimeout: 30000, // 30 seconds
-        greetingTimeout: 30000    // 30 seconds
-      },
-      recipient,
+    }>('/email/send', 'POST', {
+      to: recipient,
       subject: 'Test Email from Resource Management System',
       text: 'This is a test email to verify your SMTP configuration is working correctly.',
       html: `
@@ -68,7 +59,17 @@ export const sendTestEmail = async (
           <hr>
           <p style="color: #666; font-size: 12px;">Resource Management System</p>
         </div>
-      `
+      `,
+      // Ensure config is normalized correctly
+      emailConfig: {
+        ...config,
+        // Ensure port is string and secured is properly set based on port
+        port: String(config.port),
+        secure: config.port === '465' ? true : (config.port === '587' ? false : config.secure),
+        // Add connection timeout settings
+        connectionTimeout: 30000, // 30 seconds
+        greetingTimeout: 30000    // 30 seconds
+      }
     });
     
     if (result.success) {
