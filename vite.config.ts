@@ -26,6 +26,7 @@ export default defineConfig(({ mode }) => ({
     include: [
       'base64-js',
       'unicode-properties',
+      'brotli',
     ],
     exclude: [
       // Add problematic dependencies here to exclude them from optimization
@@ -42,7 +43,7 @@ export default defineConfig(({ mode }) => ({
   build: {
     commonjsOptions: {
       // Ensure base64-js and related packages are properly transformed
-      include: [/base64-js/, /unicode-properties/, /node_modules/],
+      include: [/base64-js/, /unicode-properties/, /brotli/, /node_modules/],
       transformMixedEsModules: true,
     },
   }
