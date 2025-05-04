@@ -61,7 +61,7 @@ const TeamMemberCard: React.FC<TeamMemberCardProps> = ({
   return (
     <Card className="shadow-sm hover:shadow transition-shadow duration-200">
       <CardContent className="p-4">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between mb-4">
           <div className="flex items-center space-x-4">
             <Avatar>
               {member.avatar ? (
@@ -102,7 +102,7 @@ const TeamMemberCard: React.FC<TeamMemberCardProps> = ({
           </div>
         </div>
         
-        <div className="mt-4 flex items-center space-x-2">
+        <div className="mt-2 flex flex-wrap gap-2">
           <Badge variant={member.status === 'active' ? 'default' : 'outline'}>
             {member.status === 'active' ? 'Active' : 'Inactive'}
           </Badge>
