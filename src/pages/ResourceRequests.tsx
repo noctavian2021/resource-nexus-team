@@ -6,7 +6,7 @@ import { resourceRequests } from '@/data/mockData';
 import CreateRequestDialog from '@/components/ResourceRequests/CreateRequestDialog';
 import { useEmailConfig } from '@/hooks/useEmailConfig';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle, Settings, Bell, Mail, Users, Filter } from 'lucide-react';
+import { AlertTriangle, Settings, Bell, Mail, Users, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -46,17 +46,18 @@ export default function ResourceRequests() {
       <Header title="Resource Requests" />
       <main className="flex-1 space-y-6 p-6">
         {showEmailAlert && (
-          <Alert variant="default" className="bg-amber-50 border-amber-200">
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Email notifications not configured</AlertTitle>
+          <Alert variant="warning" className="bg-amber-50 border-amber-200">
+            <AlertTriangle className="h-4 w-4 text-amber-500" />
+            <AlertTitle className="text-amber-800">Email notifications not enabled</AlertTitle>
             <div className="flex items-center justify-between">
-              <AlertDescription>
-                Configure email settings to enable notification emails for resource requests.
+              <AlertDescription className="text-amber-700">
+                Configure and enable email settings to send notification emails when creating resource requests.
+                Recipients will only see in-app notifications until email is configured.
               </AlertDescription>
-              <Button asChild variant="outline" size="sm" className="ml-4">
+              <Button asChild variant="outline" size="sm" className="ml-4 bg-amber-100 hover:bg-amber-200 border-amber-300">
                 <Link to="/admin/settings">
                   <Settings className="h-4 w-4 mr-1" />
-                  Configure
+                  Configure Email
                 </Link>
               </Button>
             </div>
@@ -79,9 +80,19 @@ export default function ResourceRequests() {
             <div className="flex gap-1 items-center text-sm text-muted-foreground">
               <Bell className="h-4 w-4" />
               <span>In-app notifications</span>
-              <span className="mx-1">•</span>
-              <Mail className="h-4 w-4" />
-              <span>Email alerts</span>
+              {emailConfig.enabled ? (
+                <>
+                  <span className="mx-1">•</span>
+                  <Mail className="h-4 w-4 text-green-600" />
+                  <span className="text-green-600">Email alerts enabled</span>
+                </>
+              ) : (
+                <>
+                  <span className="mx-1">•</span>
+                  <Mail className="h-4 w-4 text-muted-foreground opacity-50" />
+                  <span className="text-muted-foreground opacity-50">Email alerts disabled</span>
+                </>
+              )}
             </div>
           </div>
           

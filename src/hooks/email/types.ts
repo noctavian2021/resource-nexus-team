@@ -1,19 +1,16 @@
 
+// Define email config type
 export interface EmailConfig {
-  provider: 'gmail' | 'resend' | 'yahoo' | 'outlook365' | 'custom';
+  enabled: boolean;
+  provider: string;
   host: string;
   port: string;
+  secure: boolean;
   username: string;
   password: string;
   fromEmail: string;
   fromName: string;
-  secure: boolean;
-  enabled: boolean;
-  connectionTimeout?: number; // Added optional connectionTimeout property
-  greetingTimeout?: number;   // Added optional greetingTimeout property
 }
-
-export interface EmailProviderConfig extends Partial<EmailConfig> {}
 
 export interface TestEmailResponse {
   success: boolean;
@@ -23,5 +20,3 @@ export interface TestEmailResponse {
     smtpResponse?: string;
   };
 }
-
-export type EmailProviderType = EmailConfig['provider'];

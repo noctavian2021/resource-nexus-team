@@ -37,7 +37,10 @@ export default function CreateRequestDialog() {
   const [sending, setSending] = React.useState(false);
   const { addNotification } = useNotifications();
   const { emailConfig } = useEmailConfig();
-  const { user } = useAuth();
+  const { user, getAllUsers } = useAuth();
+  
+  // Get all users for mapping department leads
+  const allUsers = getAllUsers();
   
   // Fetch departments using React Query
   const { data: departmentList = [], isLoading: isLoadingDepartments } = useQuery({
@@ -69,6 +72,17 @@ export default function CreateRequestDialog() {
       
       const targetDepartment = departmentList.find(dept => dept.id === data.targetDepartmentId);
       const requestingDepartment = departmentList.find(d => d.id === currentUserDepartmentId);
+      
+      // Find the actual department lead's email
+      let targetDepartmentLeadEmail = '';
+      if (targetDepartment && targetDepartment.leadId) {
+        // Find the lead user by ID
+        const departmentLead = allUsers.find(u => u.id === targetDepartment.leadId);
+        if (departmentLead && departmentLead.email) {
+          targetDepartmentLeadEmail = departmentLead.email;
+          console.log(`Found target department lead email: ${targetDepartmentLeadEmail}`);
+        }
+      }
       
       // Modified to match the ResourceRequest interface
       const newRequest: Partial<ResourceRequest> = {
@@ -106,23 +120,12 @@ export default function CreateRequestDialog() {
       // Send email notification if email is configured
       if (emailConfig.enabled) {
         try {
-          // First, send to target department
-          if (targetDepartment) {
-            // Get target department lead email (or construct default if not available)
-            let targetDeptEmail = '';
-            
-            if (targetDepartment.leadId) {
-              // If there's a lead ID, we could fetch their email (simplified in this implementation)
-              targetDeptEmail = `${targetDepartment.name?.toLowerCase().replace(/\s+/g, '')}@example.com`;
-            } else {
-              // Default fallback email for department
-              targetDeptEmail = `${targetDepartment.name?.toLowerCase().replace(/\s+/g, '')}@example.com`;
-            }
-            
-            console.log('Sending email notification to target department:', targetDeptEmail);
+          // First, send to target department lead
+          if (targetDepartmentLeadEmail) {
+            console.log('Sending email notification to target department lead:', targetDepartmentLeadEmail);
             
             const targetResponse = await apiRequest('/email/send-welcome', 'POST', {
-              email: targetDeptEmail, 
+              email: targetDepartmentLeadEmail, 
               replacingMember: '',
               additionalNotes: `
                 New Resource Request: ${data.title}
@@ -144,6 +147,36 @@ export default function CreateRequestDialog() {
             });
             
             console.log('Email notification sent to target department lead:', targetResponse);
+          } else {
+            console.warn('Could not find target department lead email. Using fallback address.');
+            // Fallback to a generic department email if we can't find the lead's email
+            const fallbackEmail = targetDepartment ? 
+              `${targetDepartment.name?.toLowerCase().replace(/\s+/g, '')}@example.com` : 
+              'no-reply@example.com';
+              
+            const targetResponse = await apiRequest('/email/send-welcome', 'POST', {
+              email: fallbackEmail, 
+              replacingMember: '',
+              additionalNotes: `
+                New Resource Request: ${data.title}
+                From: ${requestingDepartment?.name || user?.name || 'Admin'}
+                Required Skills: ${data.requiredSkills}
+                Start Date: ${data.startDate}
+                End Date: ${data.endDate}
+                
+                Description:
+                ${data.description}
+              `,
+              emailConfig: {
+                ...emailConfig,
+                port: String(emailConfig.port),
+                secure: emailConfig.port === '465' ? true : (emailConfig.port === '587' ? false : emailConfig.secure),
+                connectionTimeout: 30000,
+                greetingTimeout: 30000
+              }
+            });
+            
+            console.log('Email notification sent to fallback address:', targetResponse);
           }
           
           // Always send a copy to the admin email (regardless of who is creating the request)
@@ -204,6 +237,8 @@ export default function CreateRequestDialog() {
             
             console.log('Email notification sent to requester:', requesterResponse);
           }
+          
+          console.log('Email notification for request sent successfully');
         } catch (error) {
           console.error('Failed to send email notification:', error);
         }
