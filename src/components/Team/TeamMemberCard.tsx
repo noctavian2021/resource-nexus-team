@@ -117,7 +117,6 @@ const TeamMemberCard: React.FC<TeamMemberCardProps> = ({
         )}
       </CardContent>
       
-      {/* Add EditTeamMemberDialog component */}
       <EditTeamMemberDialog
         open={showEditDialog}
         onOpenChange={setShowEditDialog}

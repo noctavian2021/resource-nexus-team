@@ -28,9 +28,9 @@ const TeamMemberPasswordActions: React.FC<TeamMemberPasswordActionsProps> = ({
         variant="outline"
         size="sm"
         onClick={() => setIsResetDialogOpen(true)}
-        className="flex items-center gap-1"
+        className="flex items-center gap-1 w-full"
       >
-        <Lock className="h-4 w-4" />
+        <Lock className="h-4 w-4 mr-1" />
         <span>Reset Password</span>
       </Button>
       

@@ -3,8 +3,6 @@ import React, { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
   Dialog,
   DialogContent,
@@ -24,6 +22,7 @@ import {
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Input } from '@/components/ui/input';
 
 // Create form schema for password reset
 const resetPasswordSchema = z.object({
@@ -62,10 +61,16 @@ const ResetPasswordDialog: React.FC<ResetPasswordDialogProps> = ({
     },
   });
 
+  const handleClose = () => {
+    form.reset();
+    onClose();
+  };
+
   const onSubmit = async (values: z.infer<typeof resetPasswordSchema>) => {
     setIsResettingPassword(true);
 
     try {
+      console.log(`Attempting to reset password for user: ${userId}`);
       const success = await resetUserPassword(userId, values.newPassword);
 
       if (success) {
@@ -74,7 +79,7 @@ const ResetPasswordDialog: React.FC<ResetPasswordDialogProps> = ({
           description: `Password for ${userName} has been successfully reset.`,
         });
         form.reset();
-        onClose();
+        handleClose();
       } else {
         toast({
           title: 'Error',
@@ -83,6 +88,7 @@ const ResetPasswordDialog: React.FC<ResetPasswordDialogProps> = ({
         });
       }
     } catch (error) {
+      console.error('Password reset error:', error);
       toast({
         title: 'Error',
         description: 'An unexpected error occurred.',
@@ -94,7 +100,7 @@ const ResetPasswordDialog: React.FC<ResetPasswordDialogProps> = ({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Reset Password</DialogTitle>
@@ -115,6 +121,7 @@ const ResetPasswordDialog: React.FC<ResetPasswordDialogProps> = ({
                     <Input
                       type="password"
                       placeholder="Enter new password"
+                      autoComplete="new-password"
                       {...field}
                     />
                   </FormControl>
@@ -133,6 +140,7 @@ const ResetPasswordDialog: React.FC<ResetPasswordDialogProps> = ({
                     <Input
                       type="password"
                       placeholder="Confirm new password"
+                      autoComplete="new-password"
                       {...field}
                     />
                   </FormControl>
@@ -145,7 +153,7 @@ const ResetPasswordDialog: React.FC<ResetPasswordDialogProps> = ({
               <Button
                 type="button"
                 variant="outline"
-                onClick={onClose}
+                onClick={handleClose}
                 disabled={isResettingPassword}
               >
                 Cancel
