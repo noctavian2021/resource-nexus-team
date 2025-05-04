@@ -4,7 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal, Edit } from 'lucide-react';
+import { MoreHorizontal, Edit, Lock } from 'lucide-react';
 import { 
   DropdownMenu,
   DropdownMenuContent,
@@ -75,31 +75,25 @@ const TeamMemberCard: React.FC<TeamMemberCardProps> = ({
             </div>
           </div>
           
-          <div className="flex items-center gap-2">
-            {isAdmin && (
-              <TeamMemberPasswordActions userId={member.id} userName={member.name} />
-            )}
-            
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  <MoreHorizontal className="h-4 w-4" />
-                  <span className="sr-only">Open menu</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={handleShowEditDialog}>
-                  <Edit className="h-4 w-4 mr-2" />
-                  Edit
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <MoreHorizontal className="h-4 w-4" />
+                <span className="sr-only">Open menu</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={handleShowEditDialog}>
+                <Edit className="h-4 w-4 mr-2" />
+                Edit
+              </DropdownMenuItem>
+              {onRemove && (
+                <DropdownMenuItem onClick={onRemove} className="text-destructive">
+                  Remove
                 </DropdownMenuItem>
-                {onRemove && (
-                  <DropdownMenuItem onClick={onRemove} className="text-destructive">
-                    Remove
-                  </DropdownMenuItem>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
         
         <div className="mt-2 flex flex-wrap gap-2">
@@ -115,6 +109,12 @@ const TeamMemberCard: React.FC<TeamMemberCardProps> = ({
             {member.role}
           </Badge>
         </div>
+        
+        {isAdmin && user.id !== member.id && (
+          <div className="mt-3">
+            <TeamMemberPasswordActions userId={member.id} userName={member.name} />
+          </div>
+        )}
       </CardContent>
       
       {/* Add EditTeamMemberDialog component */}
