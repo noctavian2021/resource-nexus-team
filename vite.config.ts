@@ -19,14 +19,31 @@ export default defineConfig(({ mode }) => ({
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
+    // Add mainFields to prefer module format
+    mainFields: ['module', 'jsnext:main', 'jsnext', 'main'],
   },
   optimizeDeps: {
+    include: [
+      'base64-js',
+      'unicode-properties',
+    ],
     exclude: [
       // Add problematic dependencies here to exclude them from optimization
       '@react-pdf/renderer',
       'embla-carousel-react',
       'vaul',
       'cmdk'
-    ]
+    ],
+    esbuildOptions: {
+      // Use proper platform setting for browser environment
+      platform: 'browser',
+    }
+  },
+  build: {
+    commonjsOptions: {
+      // Ensure base64-js and related packages are properly transformed
+      include: [/base64-js/, /unicode-properties/, /node_modules/],
+      transformMixedEsModules: true,
+    },
   }
 }));
