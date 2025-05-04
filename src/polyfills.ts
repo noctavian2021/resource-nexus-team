@@ -2,17 +2,19 @@
 // Add necessary polyfills for browser environment
 import { Buffer as BufferPolyfill } from 'buffer';
 
+// Create a minimal Process interface with only the properties we need
+interface MinimalProcess {
+  env: { NODE_ENV: string };
+  browser?: boolean;
+  version: string;
+  versions: Record<string, string>;
+}
+
 // Declare custom window properties to avoid TypeScript errors
 declare global {
   interface Window {
     Buffer: typeof BufferPolyfill;
-    process: {
-      env: { NODE_ENV: string };
-      // Use any to allow browser property that doesn't exist in Node's Process interface
-      browser?: boolean;
-      version: string;
-      versions: Record<string, string>;
-    };
+    process: MinimalProcess;
     __customModuleShims?: Record<string, any>;
   }
 }
@@ -24,6 +26,7 @@ if (typeof window !== 'undefined') {
 
 // Create shims for Node.js modules used by PDF libraries
 if (typeof window !== 'undefined') {
+  // Create a minimal browser-compatible process object
   window.process = window.process || {
     env: { NODE_ENV: 'production' },
     browser: true,

@@ -1,10 +1,10 @@
-import { defineConfig, ConfigEnv, Plugin } from "vite";
+import { defineConfig, ConfigEnv, Plugin, UserConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
 
 // https://vitejs.dev/config/
-export default defineConfig(({ mode }: ConfigEnv) => ({
+export default defineConfig(({ mode }: ConfigEnv): UserConfig => ({
   server: {
     host: "::",
     port: 8080,
@@ -54,15 +54,15 @@ export default defineConfig(({ mode }: ConfigEnv) => ({
     alias: {
       "@": path.resolve(__dirname, "./src"),
       // Add aliases for problematic Node.js built-ins
-      stream: 'stream-browserify',
-      path: 'path-browserify',
-      zlib: 'browserify-zlib',
-      util: 'util',
-      buffer: 'buffer',
-      process: 'process/browser',
-      crypto: 'crypto-browserify',
-      fs: false,
-      os: false,
+      "stream": 'stream-browserify',
+      "path": 'path-browserify',
+      "zlib": 'browserify-zlib',
+      "util": 'util',
+      "buffer": 'buffer',
+      "process": 'process/browser',
+      "crypto": 'crypto-browserify',
+      "fs": false,
+      "os": false,
     },
     // Add mainFields to prefer module format
     mainFields: ['browser', 'module', 'jsnext:main', 'jsnext', 'main'],
