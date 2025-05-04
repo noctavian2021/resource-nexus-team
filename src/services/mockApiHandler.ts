@@ -14,7 +14,7 @@ const mockData = {
       client: 'Internal',
       startDate: '2023-01-15T00:00:00.000Z',
       endDate: '2023-04-30T00:00:00.000Z',
-      status: 'Active',
+      status: 'Active' as const,
       priority: 'High',
       progress: 65,
       departmentId: '1',
@@ -28,7 +28,7 @@ const mockData = {
       client: 'TechCorp',
       startDate: '2023-03-01T00:00:00.000Z',
       endDate: '2023-08-31T00:00:00.000Z',
-      status: 'Active',
+      status: 'Active' as const,
       priority: 'Urgent',
       progress: 30,
       departmentId: '2',
@@ -42,7 +42,7 @@ const mockData = {
       client: 'Internal',
       startDate: '2023-02-15T00:00:00.000Z',
       endDate: '2023-05-15T00:00:00.000Z',
-      status: 'On Hold',
+      status: 'On Hold' as const,
       priority: 'Medium',
       progress: 20,
       departmentId: '3',
@@ -56,14 +56,14 @@ const mockData = {
       client: 'Internal',
       startDate: '2023-04-01T00:00:00.000Z',
       endDate: '2023-05-15T00:00:00.000Z',
-      status: 'Planning',
+      status: 'Planning' as const,
       priority: 'Medium',
       progress: 5,
       departmentId: '1',
       teamMembers: ['8', '9'],
       isHidden: false
     }
-  ]
+  ] as Project[]
 };
 
 // Mock data access functions
@@ -75,6 +75,11 @@ export const getMockProjects = async (): Promise<Project[]> => {
 // Get mock team members
 export const getMockTeamMembers = async (): Promise<TeamMember[]> => {
   return [...mockData.teamMembers];
+};
+
+// Get mock departments
+export const getMockDepartments = async () => {
+  return [...mockData.departments];
 };
 
 // Add a new team member to mock data
@@ -170,6 +175,25 @@ export const handleMockRequest = async <T>(
           mockData.teamMembers.splice(index, 1);
         }
         return { success: true, message: 'Team member deleted' } as unknown as T;
+      }
+    }
+  }
+  
+  // Handle department requests
+  if (endpoint.startsWith('/departments')) {
+    if (endpoint === '/departments' && method === 'GET') {
+      return getMockDepartments() as unknown as T;
+    }
+    
+    // Handle specific department endpoints
+    const match = endpoint.match(/\/departments\/(.+)/);
+    if (match) {
+      const departmentId = match[1];
+      if (method === 'GET') {
+        const departments = await getMockDepartments();
+        const department = departments.find(d => d.id === departmentId);
+        if (!department) throw new Error('Department not found');
+        return department as unknown as T;
       }
     }
   }
