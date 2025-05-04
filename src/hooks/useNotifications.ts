@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { toast } from '@/hooks/use-toast';
 import { useEmailConfig } from '@/hooks/useEmailConfig';
@@ -21,7 +20,7 @@ export interface NotificationOptions {
   skipEmail?: boolean;
   additionalEmailContent?: string;
   targetDepartmentId?: string;
-  forceMirelaAsRecipient?: boolean; // New flag to force Mirela as recipient
+  forceMirelaAsRecipient?: boolean; // Flag to force Mirela as recipient
 }
 
 export const useNotifications = () => {
@@ -208,22 +207,41 @@ export const useNotifications = () => {
           // Add additional content if provided
           const additionalContent = options.additionalEmailContent || '';
           
-          // Use the send-welcome endpoint which is known to work
-          await apiRequest('/email/send-welcome', 'POST', {
-            email: recipientEmail,
-            name: recipientName,
-            subject: `${title} - Notification`,
-            startDate: new Date().toISOString().split('T')[0],
-            replacingMember: '',
-            additionalNotes: `
-              ${title}
+          // Use the send-welcome endpoint which is known to work, but adjust content based on notification type
+          let subject = `${title} - Notification`;
+          let emailBody = `
+            ${title}
+            
+            ${message}
+            
+            Category: ${category}
+            Time: ${new Date().toLocaleString()}
+            ${additionalContent}
+          `;
+          
+          // For resource requests, use a more appropriate subject and format
+          if (category === 'request') {
+            subject = `Resource Request: ${title}`;
+            emailBody = `
+              RESOURCE REQUEST NOTIFICATION
               
               ${message}
               
-              Category: ${category}
-              Time: ${new Date().toLocaleString()}
               ${additionalContent}
-            `,
+              
+              Time: ${new Date().toLocaleString()}
+            `;
+          }
+          
+          await apiRequest('/email/send-welcome', 'POST', {
+            email: recipientEmail,
+            name: recipientName,
+            subject: subject,
+            isResourceRequest: category === 'request', // Signal this is a resource request, not a welcome
+            startDate: new Date().toISOString().split('T')[0],
+            endDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 2 weeks from now
+            replacingMember: '',
+            additionalNotes: emailBody,
             emailConfig: {
               ...emailConfig,
               port: String(emailConfig.port),
