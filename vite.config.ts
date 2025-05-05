@@ -107,6 +107,10 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => ({
           // Return the hyphen shim for any pattern imports
           return path.resolve(__dirname, './src/shims/hyphen-shim.js');
         }
+        // Check for queue imports
+        if (id === 'queue' || id === 'queue/index.js') {
+          return path.resolve(__dirname, './src/shims/queue-shim.js');
+        }
         return null;
       },
       transform(code: string, id: string) {
@@ -358,6 +362,17 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => ({
             map: null
           };
         }
+        // Handle queue module
+        if (id.includes('queue') && !id.includes('queue-shim')) {
+          return {
+            code: `
+              import queueShim, { createQueue, Queue } from '${path.resolve(__dirname, './src/shims/queue-shim.js')}';
+              export default queueShim;
+              export { createQueue, Queue };
+            `,
+            map: null
+          };
+        }
         return null;
       }
     }
@@ -437,6 +452,9 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => ({
       "hyphen/patterns": path.resolve(__dirname, './src/shims/hyphen-shim.js'),
       "hyphen/patterns/en-us": path.resolve(__dirname, './src/shims/hyphen-shim.js'),
       "hyphen/patterns/en-us.js": path.resolve(__dirname, './src/shims/hyphen-shim.js'),
+      // Add direct alias for queue
+      "queue": path.resolve(__dirname, './src/shims/queue-shim.js'),
+      "queue/index.js": path.resolve(__dirname, './src/shims/queue-shim.js'),
     },
     // Add mainFields to prefer module format
     mainFields: ['browser', 'module', 'jsnext:main', 'jsnext', 'main'],
@@ -465,6 +483,7 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => ({
       'media-engine', // Add media-engine to include
       'postcss-value-parser', // Add postcss-value-parser to include
       'hyphen', // Add hyphen to include
+      'queue', // Add queue to include
     ],
     exclude: [
       // Add problematic dependencies here to exclude them from optimization

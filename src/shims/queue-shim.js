@@ -28,7 +28,7 @@ class Queue {
       const callback = this.callbacks.shift();
       
       if (callback) {
-        callback(item);
+        callback(null, item);
       }
     } finally {
       this.processing = false;
@@ -56,12 +56,29 @@ class Queue {
   get end() {
     return this.items.length === 0;
   }
+  
+  // Add error-first callback pattern as used by the original queue module
+  push(item, callback) {
+    if (callback) {
+      this.callbacks.push(callback);
+    }
+    this.items.push(item);
+    this.process();
+    return this;
+  }
+  
+  // Implement pull method
+  pull(callback) {
+    this.callbacks.push(callback);
+    this.process();
+    return this;
+  }
 }
 
-// Create the queue factory function
+// Create the queue factory function as expected by React PDF
 const createQueue = () => new Queue();
 
-// Add all expected exports
+// Make sure we match the module.exports signature that React PDF expects
 createQueue.Queue = Queue;
 
 // Export as both default and named exports

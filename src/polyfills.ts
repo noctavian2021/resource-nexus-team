@@ -19,7 +19,7 @@ import hslToHexModule from './shims/hsl-to-hex-shim';
 import mediaEngineModule from './shims/media-engine-shim';
 import postcssValueParserModule from './shims/postcss-value-parser-shim';
 import hyphenModule from './shims/hyphen-shim';
-import queueModule from './shims/queue-shim';
+import queueModule, { createQueue, Queue } from './shims/queue-shim';
 
 console.log('Polyfills loaded:', {
   pakoZstream: pakoZstreamModule,
@@ -29,7 +29,8 @@ console.log('Polyfills loaded:', {
   md5Module: md5Module,
   hslToHex: hslToHexModule,
   mediaEngine: mediaEngineModule,
-  postcssValueParser: postcssValueParserModule
+  postcssValueParser: postcssValueParserModule,
+  queue: queueModule
 });
 
 // Create a minimal Process interface with only the properties we need
@@ -421,8 +422,8 @@ const customHyphenShim = {
 const customQueueShim = {
   __esModule: true,
   default: queueModule,
-  createQueue: queueModule,
-  Queue: queueModule.Queue
+  createQueue: createQueue,
+  Queue: Queue
 };
 
 // This will be used by our import interception logic in vite.config.ts
