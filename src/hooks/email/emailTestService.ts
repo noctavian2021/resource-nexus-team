@@ -1,7 +1,7 @@
 
 import { EmailConfig, TestEmailResponse } from './types';
 import apiRequest from '@/services/apiClient';
-import { isMockDataEnabled } from '@/services/apiClient';
+import { isMockDataEnabled, toggleMockData } from '@/services/apiClient';
 
 export const sendTestEmail = async (
   config: EmailConfig, 
@@ -41,119 +41,140 @@ export const sendTestEmail = async (
     console.log('Gmail connection may fail if the account has security restrictions. Check for emails about security alerts.');
   }
   
+  // Store original mock data state to restore later if needed
+  const wasMockDataEnabled = isMockDataEnabled();
+  
   try {
-    // Check if we're using mock data - but now this would be false by default
-    if (isMockDataEnabled()) {
-      console.log('Using mock data for email test');
-      // Simulate email sending with mock data
-      return await simulateMockEmailSending(config, recipient);
+    // Always attempt to use real API first
+    if (wasMockDataEnabled) {
+      // Temporarily disable mock data for this request
+      toggleMockData(false);
+      console.log('Temporarily disabled mock data for email test');
     }
     
-    // If not using mock data, proceed with real API call
-    const result = await apiRequest<{
-      success: boolean;
-      message?: string;
-      error?: string;
-      messageId?: string;
-      smtpResponse?: string;
-    }>('/email/send', 'POST', {
-      to: recipient,
-      subject: 'Test Email from Resource Management System',
-      text: 'This is a test email to verify your SMTP configuration is working correctly.',
-      html: `
-        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2>Test Email</h2>
-          <p>This is a test email to verify your SMTP configuration is working correctly.</p>
-          <p>If you received this email, your email system is properly configured!</p>
-          <hr>
-          <p style="color: #666; font-size: 12px;">Resource Management System</p>
-        </div>
-      `,
-      // Ensure config is normalized correctly
-      emailConfig: {
-        ...config,
-        // Ensure port is string and secured is properly set based on port
-        port: String(config.port),
-        secure: config.port === '465' ? true : (config.port === '587' ? false : config.secure),
-        // Add connection timeout settings
-        connectionTimeout: 30000, // 30 seconds
-        greetingTimeout: 30000    // 30 seconds
-      }
-    });
-    
-    if (result.success) {
-      console.log('Email sent successfully:', result);
-      return { 
-        success: true, 
-        details: {
-          messageId: result.messageId,
-          smtpResponse: result.smtpResponse
+    // Make the real API call
+    try {
+      const result = await apiRequest<{
+        success: boolean;
+        message?: string;
+        error?: string;
+        messageId?: string;
+        smtpResponse?: string;
+      }>('/email/send', 'POST', {
+        to: recipient,
+        subject: 'Test Email from Resource Management System',
+        text: 'This is a test email to verify your SMTP configuration is working correctly.',
+        html: `
+          <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2>Test Email</h2>
+            <p>This is a test email to verify your SMTP configuration is working correctly.</p>
+            <p>If you received this email, your email system is properly configured!</p>
+            <hr>
+            <p style="color: #666; font-size: 12px;">Resource Management System</p>
+          </div>
+        `,
+        // Ensure config is normalized correctly
+        emailConfig: {
+          ...config,
+          // Ensure port is string and secured is properly set based on port
+          port: String(config.port),
+          secure: config.port === '465' ? true : (config.port === '587' ? false : config.secure),
+          // Add connection timeout settings
+          connectionTimeout: 30000, // 30 seconds
+          greetingTimeout: 30000    // 30 seconds
         }
-      };
-    } else {
-      const errorMsg = result.error || 'Unknown error sending email';
-      console.error('Email error:', errorMsg);
+      });
       
-      // Enhanced error handling for specific providers
-      if (config.provider === 'yahoo' && 
-          (errorMsg.includes('535') || errorMsg.includes('authentication') || 
-          errorMsg.includes('auth') || errorMsg.includes('login'))) {
+      if (result.success) {
+        console.log('Email sent successfully:', result);
         return { 
-          success: false, 
-          error: `Yahoo authentication failed. Make sure you've generated an App Password specifically for this app and you're not using your regular Yahoo account password. Error: ${errorMsg}`,
-          details: undefined // Explicitly set details to undefined for failed attempts
+          success: true, 
+          details: {
+            messageId: result.messageId,
+            smtpResponse: result.smtpResponse
+          }
         };
-      }
-      
-      if (config.provider === 'gmail') {
-        if (errorMsg.includes('Greeting never received')) {
-          return {
-            success: false,
-            error: `Gmail connection timed out. Please try: 1) Using an App Password if you have 2FA enabled 2) Verifying your username is a Gmail address 3) Checking for security alerts in your Gmail 4) Waiting a few minutes before trying again. Error: ${errorMsg}`,
-            details: undefined // Explicitly set details to undefined for failed attempts
+      } else {
+        const errorMsg = result.error || 'Unknown error sending email';
+        console.error('Email error:', errorMsg);
+        
+        // Provide more helpful error messages for common issues
+        if (config.provider === 'yahoo' && 
+            (errorMsg.includes('535') || errorMsg.includes('authentication') || 
+            errorMsg.includes('auth') || errorMsg.includes('login'))) {
+          return { 
+            success: false, 
+            error: `Yahoo authentication failed. Make sure you've generated an App Password specifically for this app and you're not using your regular Yahoo account password. Error: ${errorMsg}`,
+            details: undefined 
           };
         }
         
-        if (errorMsg.includes('535') || errorMsg.includes('authentication') || 
-          errorMsg.includes('auth') || errorMsg.includes('login')) {
-          return {
-            success: false,
-            error: `Gmail authentication failed. If you have 2FA enabled on your Google account, you must generate and use an App Password instead of your regular password. Error: ${errorMsg}`,
-            details: undefined // Explicitly set details to undefined for failed attempts
-          };
+        if (config.provider === 'gmail') {
+          if (errorMsg.includes('Greeting never received')) {
+            return {
+              success: false,
+              error: `Gmail connection timed out. Please try: 1) Using an App Password if you have 2FA enabled 2) Verifying your username is a Gmail address 3) Checking for security alerts in your Gmail 4) Waiting a few minutes before trying again. Error: ${errorMsg}`,
+              details: undefined 
+            };
+          }
+          
+          if (errorMsg.includes('535') || errorMsg.includes('authentication') || 
+            errorMsg.includes('auth') || errorMsg.includes('login')) {
+            return {
+              success: false,
+              error: `Gmail authentication failed. If you have 2FA enabled on your Google account, you must generate and use an App Password instead of your regular password. Error: ${errorMsg}`,
+              details: undefined 
+            };
+          }
         }
+        
+        return { 
+          success: false, 
+          error: errorMsg,
+          details: undefined 
+        };
+      }
+    } catch (apiError: any) {
+      // If real API call fails with a connection error, fall back to simulation
+      console.error('API connection error:', apiError.message);
+      
+      if (apiError.message.includes('Unable to connect') || 
+          apiError.message.includes('Failed to fetch') || 
+          apiError.message.includes('timed out')) {
+        console.log('API connection failed, falling back to simulated email test');
+        
+        // Enable mock data temporarily for simulating the response
+        toggleMockData(true);
+        
+        // Use simulated email test with detailed result
+        const simulatedResult = await simulateMockEmailSending(config, recipient);
+        
+        // Add a warning that this was simulated
+        if (simulatedResult.success) {
+          simulatedResult.details = {
+            ...simulatedResult.details,
+            smtpResponse: (simulatedResult.details?.smtpResponse || '') + ' [SIMULATED - API UNREACHABLE]'
+          };
+        } else {
+          simulatedResult.error = (simulatedResult.error || '') + ' [SIMULATED - API UNREACHABLE]';
+        }
+        
+        // Restore original mock data state
+        toggleMockData(wasMockDataEnabled);
+        
+        return simulatedResult;
       }
       
-      return { 
-        success: false, 
-        error: errorMsg,
-        details: undefined // Explicitly set details to undefined for failed attempts 
+      // For other API errors, just pass through the error
+      return {
+        success: false,
+        error: `API Error: ${apiError.message}`,
+        details: undefined
       };
     }
-  } catch (err: any) {
-    const errorMsg = `Email sending failed: ${err.message || 'Unknown error'}`;
-    console.error(errorMsg);
-    
-    // If using mock data and we get an error, fall back to simulation
-    if (isMockDataEnabled()) {
-      console.log('API error with mock data, falling back to simulated response');
-      return await simulateMockEmailSending(config, recipient);
-    }
-    
-    // Provide more specific guidance for common errors
-    if (err.message && err.message.includes('Greeting never received')) {
-      return { 
-        success: false, 
-        error: "SMTP connection timeout - server didn't respond. This could be due to: 1) Network connectivity issues 2) Email provider blocking access 3) Incorrect port or security settings. For Gmail, try using port 587 with secure=false. If using a corporate email, check with your IT department about firewall restrictions.",
-        details: undefined // Explicitly set details to undefined for failed attempts
-      };
-    }
-    
-    return { 
-      success: false, 
-      error: errorMsg,
-      details: undefined // Explicitly set details to undefined for failed attempts
-    };
+  } finally {
+    // Always restore original mock data state
+    toggleMockData(wasMockDataEnabled);
   }
 };
 

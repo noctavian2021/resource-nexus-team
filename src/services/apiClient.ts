@@ -1,4 +1,3 @@
-
 import { handleMockRequest } from './mockApiHandler';
 
 export const API_URL = 'https://api.example.com';
@@ -40,7 +39,7 @@ const apiRequest = async <T>(
     }
   }
 
-  // Otherwise make a real API request
+  // Otherwise attempt a real API request with better error handling
   try {
     const fetchOptions: RequestInit = {
       method,
@@ -55,18 +54,39 @@ const apiRequest = async <T>(
       fetchOptions.body = JSON.stringify(data);
     }
 
-    const response = await fetch(`${API_URL}${endpoint}`, fetchOptions);
+    // Add a timeout to the fetch request
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+    
+    fetchOptions.signal = controller.signal;
+    
+    try {
+      const response = await fetch(`${API_URL}${endpoint}`, fetchOptions);
+      clearTimeout(timeoutId);
+      
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status} ${response.statusText}`);
+      }
 
-    if (!response.ok) {
-      throw new Error(`API error: ${response.status} ${response.statusText}`);
+      // For DELETE requests with no content
+      if (response.status === 204) {
+        return {} as T;
+      }
+
+      return await response.json();
+    } catch (fetchError: any) {
+      // Clear timeout if fetch failed for any reason
+      clearTimeout(timeoutId);
+      
+      // Handle specific fetch errors
+      if (fetchError.name === 'AbortError') {
+        throw new Error('Request timed out after 10 seconds');
+      } else if (fetchError.message === 'Failed to fetch') {
+        throw new Error('Unable to connect to the API server. Please check your network connection or try enabling mock data.');
+      } else {
+        throw fetchError;
+      }
     }
-
-    // For DELETE requests with no content
-    if (response.status === 204) {
-      return {} as T;
-    }
-
-    return await response.json();
   } catch (error) {
     console.error('API request error:', error);
     throw error;
