@@ -44,7 +44,9 @@ export default defineConfig(({ mode }) => ({
       // Fix for cross-fetch import issues
       "cross-fetch": path.resolve(__dirname, "node_modules/cross-fetch"),
       // Fix for abs-svg-path import issues
-      "abs-svg-path": path.resolve(__dirname, "node_modules/abs-svg-path")
+      "abs-svg-path": path.resolve(__dirname, "node_modules/abs-svg-path"),
+      // Fix for color-string import issues
+      "color-string": path.resolve(__dirname, "node_modules/color-string")
     },
   },
   optimizeDeps: {
@@ -61,7 +63,8 @@ export default defineConfig(({ mode }) => ({
       "linebreak",
       "fontkit",
       "cross-fetch",
-      "abs-svg-path"
+      "abs-svg-path",
+      "color-string"
     ],
     exclude: [
       // Add problematic dependencies here to exclude them from optimization
@@ -92,6 +95,7 @@ export default defineConfig(({ mode }) => ({
         /pdfkit/,
         /cross-fetch/,
         /abs-svg-path/,
+        /color-string/,
         /node_modules/
       ]
     }
