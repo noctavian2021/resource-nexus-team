@@ -14,7 +14,7 @@ interface MinimalProcess {
 declare global {
   interface Window {
     Buffer: typeof BufferPolyfill;
-    process: MinimalProcess;
+    process: any; // Use 'any' to avoid TypeScript errors with the process object
     __customModuleShims?: Record<string, any>;
   }
 }
@@ -28,8 +28,7 @@ if (typeof window !== 'undefined') {
 if (typeof window !== 'undefined') {
   // Create a minimal browser-compatible process object
   if (!window.process) {
-    // Define a process object that satisfies our MinimalProcess interface
-    // without trying to implement the full Node.js Process interface
+    // Define a minimal process object that won't cause type errors
     window.process = {
       env: { NODE_ENV: 'production' },
       browser: true,
@@ -53,7 +52,7 @@ if (typeof window !== 'undefined') {
         unicode: '',
         electron: '',
       }
-    } as MinimalProcess; // Cast to MinimalProcess to avoid type errors
+    }; 
   }
 }
 
