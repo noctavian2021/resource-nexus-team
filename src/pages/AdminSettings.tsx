@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import Header from '@/components/Layout/Header';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -37,6 +36,7 @@ export default function AdminSettings() {
   const [emailTestDetails, setEmailTestDetails] = useState<{
     messageId?: string;
     smtpResponse?: string;
+    simulated?: boolean;
   } | null>(null);
   const isMobile = useIsMobile();
   
@@ -97,7 +97,8 @@ export default function AdminSettings() {
         if (result.details) {
           setEmailTestDetails({
             messageId: result.details.messageId,
-            smtpResponse: result.details.smtpResponse
+            smtpResponse: result.details.smtpResponse,
+            simulated: result.details.simulated
           });
         }
       } else {
@@ -468,11 +469,29 @@ export default function AdminSettings() {
                 <span className="font-semibold">SMTP Response:</span> {emailTestDetails.smtpResponse}
               </div>
             )}
+            {emailTestDetails.simulated && (
+              <Alert variant="warning" className="mt-2 mb-2 bg-yellow-50 border-yellow-200">
+                <AlertTriangle className="h-4 w-4 text-yellow-600" />
+                <AlertTitle className="text-yellow-800">Simulated Email</AlertTitle>
+                <AlertDescription className="text-yellow-700">
+                  This was a simulated email send. In a production environment, you would need a server-side API with Nodemailer or similar to actually send emails.
+                </AlertDescription>
+              </Alert>
+            )}
             <p className="text-xs text-muted-foreground mt-2">
               If the SMTP response shows a success code (usually starting with 2xx), the email was successfully handed over to the mail server.
             </p>
           </div>
         )}
+        
+        <Alert variant="default" className="mb-4 bg-blue-50 border-blue-100">
+          <Info className="h-4 w-4 text-blue-600" />
+          <AlertTitle className="text-blue-800">Important Note About Email Testing</AlertTitle>
+          <AlertDescription className="text-blue-700">
+            This is a client-side application that can't directly connect to SMTP servers. The email test simulates what would happen if a real server-side email API were used.
+            To send real emails, you would need to implement a server-side API with a library like Nodemailer.
+          </AlertDescription>
+        </Alert>
       </div>
     );
   };

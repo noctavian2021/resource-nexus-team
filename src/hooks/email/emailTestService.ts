@@ -1,3 +1,4 @@
+
 import { EmailConfig, TestEmailResponse } from './types';
 import apiRequest from '@/services/apiClient';
 import { isMockDataEnabled, toggleMockData } from '@/services/apiClient';
@@ -27,7 +28,7 @@ export const sendTestEmail = async (
   }, null, 2));
   
   // Add more detailed logging about recipient
-  console.log(`Attempting to deliver real email to recipient: ${recipient}`);
+  console.log(`Attempting to deliver email to recipient: ${recipient}`);
   
   // Special handling for providers - logging
   if (config.provider === 'yahoo') {
@@ -56,6 +57,7 @@ export const sendTestEmail = async (
       messageId?: string;
       smtpResponse?: string;
       fallback?: boolean;
+      simulated?: boolean;
     }>('/email/send', 'POST', {
       to: recipient,
       subject: 'Test Email from Resource Management System',
@@ -85,6 +87,11 @@ export const sendTestEmail = async (
     // Enhanced logging of the email sending result
     if (result.success) {
       console.log('Email API responded with success:', result);
+      
+      if (result.simulated) {
+        console.log('⚠️ IMPORTANT: This was a simulated email send. In a production environment, you need a server-side API that can connect to SMTP servers.');
+      }
+      
       if (result.fallback) {
         console.log('Email was sent using the fallback method');
       }
@@ -94,7 +101,8 @@ export const sendTestEmail = async (
         details: {
           messageId: result.messageId,
           smtpResponse: result.smtpResponse,
-          fallback: result.fallback
+          fallback: result.fallback,
+          simulated: result.simulated
         }
       };
     } else {
