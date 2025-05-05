@@ -1,6 +1,7 @@
 
 // Add necessary polyfills for browser environment
 import { Buffer as BufferPolyfill } from 'buffer';
+import streamBrowserify from 'stream-browserify';
 
 // Create a minimal Process interface with only the properties we need
 interface MinimalProcess {
@@ -16,12 +17,18 @@ declare global {
     Buffer: typeof BufferPolyfill;
     process: any; // Use 'any' to avoid TypeScript errors with the process object
     __customModuleShims?: Record<string, any>;
+    Stream?: any;
   }
 }
 
 // Polyfill Buffer for browser environment
 if (typeof window !== 'undefined') {
   window.Buffer = window.Buffer || BufferPolyfill;
+  
+  // Add stream polyfill
+  if (!window.Stream) {
+    window.Stream = streamBrowserify;
+  }
 }
 
 // Create shims for Node.js modules used by PDF libraries
@@ -65,9 +72,18 @@ const customBrotliShim = {
   }
 };
 
+// Add stream module shims
+const customStreamShim = {
+  __esModule: true,
+  default: streamBrowserify,
+  ...streamBrowserify
+};
+
 // This will be used by our import interception logic in vite.config.ts
 if (typeof window !== 'undefined') {
   window.__customModuleShims = {
     '/node_modules/brotli/decompress.js': customBrotliShim,
+    'stream': customStreamShim,
+    'stream-browserify': customStreamShim
   };
 }

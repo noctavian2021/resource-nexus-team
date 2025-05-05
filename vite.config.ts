@@ -74,6 +74,7 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => ({
       'unicode-properties',
       'buffer',
       'process/browser',
+      'stream-browserify',  // Add stream-browserify to include
     ],
     exclude: [
       // Add problematic dependencies here to exclude them from optimization
