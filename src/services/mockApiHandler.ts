@@ -100,6 +100,19 @@ export const updateMockTeamMember = async (id: string, updates: Partial<TeamMemb
   return mockData.teamMembers[index];
 };
 
+// Handle mock email sending
+export const handleMockEmailSend = async (emailData: any) => {
+  console.log('Mock email sending:', emailData);
+  
+  // Simulate successful email sending
+  return {
+    success: true,
+    message: 'Email sent successfully (mock)',
+    messageId: `mock-email-${Date.now()}`,
+    smtpResponse: 'Mock SMTP response'
+  };
+};
+
 // Handle mock requests
 export const handleMockRequest = async <T>(
   endpoint: string, 
@@ -195,6 +208,33 @@ export const handleMockRequest = async <T>(
         if (!department) throw new Error('Department not found');
         return department as unknown as T;
       }
+    }
+  }
+  
+  // Handle email sending requests
+  if (endpoint === '/email/send' && method === 'POST') {
+    const response = await handleMockEmailSend(data);
+    return response as unknown as T;
+  }
+  
+  // Handle other email-related endpoints
+  if (endpoint.startsWith('/email/')) {
+    // Handle sending test emails
+    if (endpoint === '/email/send-test' && method === 'POST') {
+      const response = await handleMockEmailSend(data);
+      return response as unknown as T;
+    }
+    
+    // Handle welcome emails
+    if (endpoint === '/email/send-welcome' && method === 'POST') {
+      const response = await handleMockEmailSend(data);
+      return response as unknown as T;
+    }
+    
+    // Handle activity report emails
+    if (endpoint === '/email/send-activity-report' && method === 'POST') {
+      const response = await handleMockEmailSend(data);
+      return response as unknown as T;
     }
   }
   

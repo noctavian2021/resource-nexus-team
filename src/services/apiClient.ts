@@ -1,10 +1,10 @@
 
 import { handleMockRequest } from './mockApiHandler';
 
-export const API_URL = 'https://api.example.com';
+export const API_URL = process.env.API_URL || 'https://api.example.com';
 
 // Flag to control mock data usage
-let useMockData = true;
+let useMockData = false; // Changed to false by default for production
 
 // Toggle mock data usage
 export const toggleMockData = (enabled: boolean): boolean => {
@@ -55,7 +55,15 @@ const apiRequest = async <T>(
       fetchOptions.body = JSON.stringify(data);
     }
 
-    const response = await fetch(`${API_URL}${endpoint}`, fetchOptions);
+    // For email endpoints, use the server endpoint directly
+    let url = endpoint;
+    if (endpoint.startsWith('/email/')) {
+      url = `http://localhost:5000/api${endpoint}`;
+    } else {
+      url = `${API_URL}${endpoint}`;
+    }
+
+    const response = await fetch(url, fetchOptions);
 
     if (!response.ok) {
       throw new Error(`API error: ${response.status} ${response.statusText}`);
