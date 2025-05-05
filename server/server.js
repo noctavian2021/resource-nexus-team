@@ -239,6 +239,12 @@ app.post('/api/email/send', async (req, res) => {
         errorMessage = 'SSL/TLS connection failed. Your secure setting may not match what the server expects. If your port is 587, try setting secure=false. If your port is 465, try setting secure=true.';
       }
       
+      // Special handling for Gmail authentication errors
+      if (verifyError.message.includes('Username and Password not accepted') && 
+          emailConfig.provider === 'gmail') {
+        errorMessage = 'Gmail authentication failed. If you have 2-factor authentication enabled on your Google account, you must use an App Password instead of your regular password. Generate one from your Google Account > Security > App passwords.';
+      }
+      
       return res.status(400).json({ 
         success: false, 
         error: errorMessage
@@ -283,6 +289,12 @@ app.post('/api/email/send', async (req, res) => {
     
     if (error.message.includes('Greeting never received')) {
       errorMessage = 'SMTP connection timed out waiting for greeting. This could be due to network issues or security measures. Try again in a few minutes or check your credentials.';
+    }
+    
+    // Gmail specific auth error messages
+    if (error.message.includes('Username and Password not accepted') &&
+        req.body.emailConfig && req.body.emailConfig.provider === 'gmail') {
+      errorMessage = 'Gmail authentication failed. If you have 2-factor authentication enabled on your Google account, you must use an App Password instead of your regular password. Generate one from your Google Account > Security > App passwords.';
     }
     
     res.status(500).json({ 
@@ -336,7 +348,7 @@ app.post('/api/email/send-test', async (req, res) => {
     
     // Add TLS options for all email providers to improve connection reliability
     transportOptions.tls = {
-      // Don't reject connections with self-signed certificates
+      // Don't fail on invalid certificates - many email providers use self-signed certs
       rejectUnauthorized: false,
       // Ensure we use modern TLS versions
       minVersion: 'TLSv1.2',
@@ -353,16 +365,16 @@ app.post('/api/email/send-test', async (req, res) => {
     // Create a transporter with the provided configuration
     const transporter = nodemailer.createTransport(transportOptions);
 
-    // Verify connection configuration
+    // Verify connection first
     try {
-      console.log('Verifying SMTP connection...');
       await transporter.verify();
       console.log('SMTP connection verified successfully');
     } catch (verifyError) {
       console.error('SMTP verification failed:', verifyError);
+      
+      // Provide detailed error message based on the specific error
       let errorMessage = `Failed to connect to SMTP server: ${verifyError.message}`;
       
-      // Enhanced error messages for common issues
       if (verifyError.message.includes('Greeting never received')) {
         errorMessage = 'SMTP greeting timeout. This might be due to network issues, temporarily blocked IP, or incorrect credentials. Try again in a few minutes.';
       }
@@ -373,7 +385,7 @@ app.post('/api/email/send-test', async (req, res) => {
       
       return res.status(400).json({ 
         success: false, 
-        error: errorMessage
+        error: errorMessage 
       });
     }
 
@@ -401,21 +413,17 @@ app.post('/api/email/send-test', async (req, res) => {
   } catch (error) {
     console.error('Email sending error:', error);
     
-    // Enhanced error handling with specific guidance
+    // Provide more specific error message based on the error type
     let errorMessage = `Failed to send email: ${error.message}`;
     
-    // SSL/TLS specific error messages
+    // Handle SSL/TLS specific errors with clear guidance
     if (error.message.includes('SSL routines') || error.message.includes('wrong version number')) {
       errorMessage = 'SSL/TLS connection failed. Your secure setting may not match what the server expects. If your port is 587, try setting secure=false. If your port is 465, try setting secure=true.';
     }
     
-    if (error.message.includes('Greeting never received')) {
-      errorMessage = 'SMTP connection timed out waiting for greeting. This could be due to network issues or security measures. Try again in a few minutes or check your credentials.';
-    }
-    
     res.status(500).json({ 
       success: false, 
-      error: errorMessage
+      error: errorMessage 
     });
   }
 });

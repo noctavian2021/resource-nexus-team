@@ -59,10 +59,17 @@ export const useEmailConfig = () => {
           }
         }
         
-        // For Gmail, provide safe defaults - always use 587 with STARTTLS
+        // For Gmail, provide safe defaults and app password guidance
         if (providerType === 'gmail') {
           updatedConfig.port = '587'; // Standard port for Gmail
           updatedConfig.secure = false; // Uses STARTTLS
+          
+          // Show a helpful toast about Gmail requiring app passwords with 2FA
+          toast({
+            title: "Gmail Authentication",
+            description: "If you have 2-factor authentication enabled on your Google account, you'll need to use an App Password instead of your regular password. Generate one from your Google Account > Security > App passwords.",
+            duration: 10000, // Show for 10 seconds
+          });
         }
       } else {
         updatedConfig = { ...emailConfig, ...config };
@@ -143,7 +150,15 @@ export const useEmailConfig = () => {
       if (!result.success && result.error) {
         setError(result.error);
         
-        if (result.error.includes('Greeting never received')) {
+        // Special handling for Gmail authentication errors
+        if (result.error.includes('Username and Password not accepted') && emailConfig.provider === 'gmail') {
+          toast({
+            title: "Gmail Authentication Failed",
+            description: "If you have 2-factor authentication enabled, you must use an App Password. Go to your Google Account > Security > App passwords to generate one.",
+            variant: "destructive",
+            duration: 10000
+          });
+        } else if (result.error.includes('Greeting never received')) {
           // Safely cast provider to EmailProviderType for the helper function
           const providerType = emailConfig.provider as EmailProviderType;
           
@@ -176,8 +191,15 @@ export const useEmailConfig = () => {
       // Safely cast provider to EmailProviderType for the helper function
       const providerType = emailConfig.provider as EmailProviderType;
       
-      // Provide helpful guidance for common errors
-      if (errorMsg.includes('Greeting never received')) {
+      // Special handling for Gmail authentication errors
+      if (errorMsg.includes('Username and Password not accepted') && emailConfig.provider === 'gmail') {
+        toast({
+          title: "Gmail Authentication Failed",
+          description: "If you have 2-factor authentication enabled, you must use an App Password. Go to your Google Account > Security > App passwords to generate one.",
+          variant: "destructive",
+          duration: 10000
+        });
+      } else if (errorMsg.includes('Greeting never received')) {
         const helpMessage = getConnectionErrorHelp(errorMsg, providerType);
         toast({
           title: "Connection Error",
