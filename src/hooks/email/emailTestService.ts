@@ -22,7 +22,7 @@ export const sendTestEmail = async (
 
     console.log(`Sending test email to ${recipient} using ${config.provider} configuration`);
     
-    // Modified: Use the correct path based on API endpoint availability
+    // Update: Use the consistent endpoint path with /api prefix
     const url = '/api/email/send';
     
     try {
@@ -58,6 +58,14 @@ export const sendTestEmail = async (
 
       // Check if response is ok before trying to parse JSON
       if (!response.ok) {
+        if (response.status === 404) {
+          return {
+            success: false,
+            error: "Email API endpoint not found. Try using http://localhost:5000/api/email/send directly."
+          };
+        }
+        
+        // Try to get error text first
         const errorText = await response.text();
         throw new Error(`API returned ${response.status}: ${errorText || response.statusText}`);
       }
@@ -97,6 +105,15 @@ export const sendTestEmail = async (
           error: "Email API endpoint not found. The server may not be configured to handle email requests."
         };
       }
+      
+      // Check for JSON parsing errors
+      if (error.message.includes('JSON')) {
+        return {
+          success: false,
+          error: "Received invalid JSON response from server. Check server logs for details."
+        };
+      }
+      
       throw error; // Re-throw other errors to be caught by the outer try-catch
     }
   } catch (error: any) {

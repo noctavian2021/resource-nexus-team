@@ -58,7 +58,8 @@ const apiRequest = async <T>(
 
     // For email endpoints, use the server endpoint directly
     let url = endpoint;
-    if (endpoint.startsWith('/email/')) {
+    // Updated: Check if endpoint is related to email by checking if it contains "/email/"
+    if (endpoint.includes('/email/')) {
       url = `http://localhost:5000/api${endpoint}`;
     } else {
       url = `${API_URL}${endpoint}`;
