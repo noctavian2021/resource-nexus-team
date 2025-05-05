@@ -20,6 +20,7 @@ export const getProviderHelp = (provider: string) => {
         `,
       };
     case 'outlook':
+    case 'outlook365':
       return {
         title: 'Outlook Configuration Help',
         content: `
@@ -49,6 +50,21 @@ export const getProviderHelp = (provider: string) => {
           1. Go to Yahoo Account Security settings
           2. Generate an app password under "App passwords"
           3. Use that instead of your regular password
+        `,
+      };
+    case 'resend':
+      return {
+        title: 'Resend Configuration Help',
+        content: `
+          To use Resend:
+          - Host: smtp.resend.com
+          - Port: 465
+          - Secure: Yes
+          - Username: Your Resend API key
+          - Password: Can be left blank
+          - From Email: Must use a verified domain or the default onboarding@resend.dev
+          
+          Resend requires domain verification for production use.
         `,
       };
     case 'custom':

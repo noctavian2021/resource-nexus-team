@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import Header from '@/components/Layout/Header';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -47,8 +46,8 @@ export default function AdminSettings() {
   
   // Handle mock data toggle
   const handleMockDataToggle = (checked: boolean) => {
-    toggleMockData(checked); // Call the function without using its return value
-    setUseMockData(checked); // Use the input value to set the state directly
+    toggleMockData(checked);
+    setUseMockData(checked);
     toast({
       title: checked ? "Mock Data Enabled" : "Mock Data Disabled",
       description: checked ? 
@@ -61,11 +60,11 @@ export default function AdminSettings() {
     updateEmailConfig({ provider });
     
     // Show provider-specific help tips
-    const helpText = getProviderHelp(provider);
-    if (helpText) {
+    const helpInfo = getProviderHelp(provider);
+    if (helpInfo) {
       toast({
-        title: `${provider.charAt(0).toUpperCase() + provider.slice(1)} Setup Tip`,
-        description: helpText,
+        title: helpInfo.title,
+        description: helpInfo.content.substring(0, 200) + "...",
         duration: 8000,
       });
     }
@@ -377,6 +376,23 @@ export default function AdminSettings() {
     );
   };
 
+  // Get SSL configuration help text based on current settings
+  const getSslHelpText = () => {
+    if (!emailConfig.secure) {
+      return (
+        <Alert variant="default" className="mb-4">
+          <Info className="h-4 w-4" />
+          <AlertTitle>SSL/TLS is not enabled</AlertTitle>
+          <AlertDescription>
+            Enable SSL/TLS to secure your email connections.
+          </AlertDescription>
+        </Alert>
+      );
+    }
+    
+    return null;
+  };
+
   // Get a visual indicator for email configuration status
   const getEmailStatusIndicator = () => {
     if (!emailConfig.enabled) {
@@ -419,14 +435,16 @@ export default function AdminSettings() {
   };
 
   const getProviderNote = () => {
-    const help = getProviderHelp(emailConfig.provider as EmailProviderType);
-    if (!help) return null;
+    const helpInfo = getProviderHelp(emailConfig.provider as EmailProviderType);
+    if (!helpInfo) return null;
     
     return (
       <Alert variant="default" className="mt-4">
         <Info className="h-4 w-4" />
-        <AlertTitle>{emailConfig.provider.charAt(0).toUpperCase() + emailConfig.provider.slice(1)} Setup Note</AlertTitle>
-        <AlertDescription>{help}</AlertDescription>
+        <AlertTitle>{helpInfo.title}</AlertTitle>
+        <AlertDescription>
+          <div dangerouslySetInnerHTML={{ __html: helpInfo.content.replace(/\n/g, '<br/>') }} />
+        </AlertDescription>
       </Alert>
     );
   };
