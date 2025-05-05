@@ -1,3 +1,4 @@
+
 // Add necessary polyfills for browser environment
 import { Buffer as BufferPolyfill } from 'buffer';
 import streamBrowserify from 'stream-browserify';
@@ -49,6 +50,7 @@ declare global {
     md5?: any;
     pakoZstream?: any;
     pakoDeflate?: any;
+    pakoInflate?: any; // Add this missing declaration
   }
 }
 
