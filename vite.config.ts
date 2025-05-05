@@ -31,11 +31,27 @@ export default defineConfig(({ mode }) => ({
       // Fix for fast-deep-equal import issues
       "fast-deep-equal": path.resolve(__dirname, "node_modules/fast-deep-equal"),
       // Fix for tiny-inflate import issues
-      "tiny-inflate": path.resolve(__dirname, "node_modules/tiny-inflate")
+      "tiny-inflate": path.resolve(__dirname, "node_modules/tiny-inflate"),
+      // Additional aliases for common problem packages with @react-pdf
+      "unicode-properties": path.resolve(__dirname, "node_modules/unicode-properties"),
+      "restructure": path.resolve(__dirname, "node_modules/restructure"),
+      "fontkit": path.resolve(__dirname, "node_modules/fontkit"),
+      "linebreak": path.resolve(__dirname, "node_modules/linebreak")
     },
   },
   optimizeDeps: {
-    include: ["base64-js", "unicode-trie", "brotli", "clone", "dfa", "fast-deep-equal", "tiny-inflate"],
+    include: [
+      "base64-js", 
+      "unicode-trie", 
+      "brotli", 
+      "clone", 
+      "dfa", 
+      "fast-deep-equal", 
+      "tiny-inflate",
+      "unicode-properties",
+      "restructure",
+      "linebreak"
+    ],
     exclude: [
       // Add problematic dependencies here to exclude them from optimization
       '@react-pdf/renderer',
@@ -48,7 +64,20 @@ export default defineConfig(({ mode }) => ({
     commonjsOptions: {
       // Handle CommonJS dependencies properly
       transformMixedEsModules: true,
-      include: [/base64-js/, /unicode-trie/, /unicode-properties/, /brotli/, /clone/, /dfa/, /fast-deep-equal/, /tiny-inflate/, /node_modules/]
+      include: [
+        /base64-js/, 
+        /unicode-trie/, 
+        /unicode-properties/, 
+        /brotli/, 
+        /clone/, 
+        /dfa/, 
+        /fast-deep-equal/, 
+        /tiny-inflate/,
+        /restructure/,
+        /linebreak/,
+        /fontkit/,
+        /node_modules/
+      ]
     }
   }
 }));
