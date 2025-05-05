@@ -26,6 +26,7 @@ export function Toaster() {
     const handleToastEvent = (e: any) => {
       if (e.detail) {
         toast(e.detail);
+        console.log("Toast event received:", e.detail);
       }
     };
 

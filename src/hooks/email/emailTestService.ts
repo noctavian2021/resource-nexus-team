@@ -8,6 +8,12 @@ export const sendTestEmail = async (
   try {
     if (!config.enabled) {
       console.log('Email test aborted: Email notifications are disabled');
+      // Show immediate toast feedback without waiting for server
+      showToast({
+        title: "Email Test Failed",
+        description: "Email notifications are disabled",
+        variant: "destructive"
+      });
       return {
         success: false,
         error: "Email notifications are disabled"
@@ -16,6 +22,12 @@ export const sendTestEmail = async (
 
     if (!config.host || !config.port || !config.username || !config.password) {
       console.log('Email test aborted: Incomplete email configuration');
+      // Show immediate toast feedback without waiting for server
+      showToast({
+        title: "Email Test Failed",
+        description: "Incomplete email configuration",
+        variant: "destructive"
+      });
       return {
         success: false,
         error: "Incomplete email configuration"
@@ -27,6 +39,13 @@ export const sendTestEmail = async (
     // Use the consistent endpoint path with /api prefix
     const url = '/api/email/send';
     console.log(`Sending test email to endpoint: ${url}`);
+    
+    // Show sending status toast
+    showToast({
+      title: "Sending Test Email",
+      description: `Attempting to send email to ${recipient}...`,
+      duration: 3000
+    });
     
     try {
       // Call the email API endpoint with added error handling
@@ -62,18 +81,12 @@ export const sendTestEmail = async (
       console.log('Email test response status:', response.status);
       
       // Display toast immediately when the server responds
-      if (typeof window !== 'undefined') {
-        // For client-side, show a toast for the server response
-        const eventName = "lovable-toast-event";
-        const toastEvent = new CustomEvent(eventName, { 
-          detail: {
-            title: response.ok ? "Email Server Response" : "Email Server Error",
-            description: `Status: ${response.status} - ${response.ok ? "Server accepted the request" : "Server error occurred"}`,
-            variant: response.ok ? "default" : "destructive",
-          } 
-        });
-        window.dispatchEvent(toastEvent);
-      }
+      showToast({
+        title: response.ok ? "Email Server Response" : "Email Server Error",
+        description: `Status: ${response.status} - ${response.ok ? "Server accepted the request" : "Server error occurred"}`,
+        variant: response.ok ? "default" : "destructive",
+        duration: 5000
+      });
       
       // Handle different error codes specifically
       if (!response.ok) {
@@ -147,17 +160,12 @@ export const sendTestEmail = async (
       console.error('Fetch error in sendTestEmail:', error);
       
       // Show a toast for network errors
-      if (typeof window !== 'undefined') {
-        const eventName = "lovable-toast-event";
-        const toastEvent = new CustomEvent(eventName, { 
-          detail: {
-            title: "Network Error",
-            description: error.message || "Failed to connect to email server",
-            variant: "destructive",
-          } 
-        });
-        window.dispatchEvent(toastEvent);
-      }
+      showToast({
+        title: "Network Error",
+        description: error.message || "Failed to connect to email server",
+        variant: "destructive",
+        duration: 5000
+      });
       
       return {
         success: false,
@@ -172,3 +180,22 @@ export const sendTestEmail = async (
     };
   }
 };
+
+// Helper function to show toast messages
+function showToast(props: { 
+  title: string; 
+  description: string; 
+  variant?: "default" | "destructive"; 
+  duration?: number;
+}) {
+  if (typeof window !== 'undefined') {
+    const eventName = "lovable-toast-event";
+    const toastEvent = new CustomEvent(eventName, { 
+      detail: {
+        ...props,
+        duration: props.duration || 5000
+      } 
+    });
+    window.dispatchEvent(toastEvent);
+  }
+}
