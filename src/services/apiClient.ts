@@ -57,9 +57,9 @@ const apiRequest = async <T>(
       fetchOptions.body = JSON.stringify(data);
     }
 
-    // Add a timeout to the fetch request
+    // Add a timeout to the fetch request - increased from 10s to 30s
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
     
     fetchOptions.signal = controller.signal;
     
@@ -83,7 +83,7 @@ const apiRequest = async <T>(
       
       // Handle specific fetch errors
       if (fetchError.name === 'AbortError') {
-        throw new Error('Request timed out after 10 seconds');
+        throw new Error('Request timed out after 30 seconds');
       } else if (fetchError.message === 'Failed to fetch') {
         throw new Error('Unable to connect to the API server. Please check your network connection or try enabling mock data.');
       } else {

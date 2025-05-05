@@ -57,7 +57,12 @@ export const sendTestEmail = async (
       messageId?: string;
       smtpResponse?: string;
     }>('/api/email/send-test', 'POST', {
-      config: config,
+      config: {
+        ...config,
+        // Add extended timeout values for SMTP operations
+        connectionTimeout: 30000, // 30 seconds
+        greetingTimeout: 30000,   // 30 seconds
+      },
       recipient: recipient,
       subject: 'Test Email from Resource Management System',
       text: 'This is a test email to verify your SMTP configuration is working correctly.',
