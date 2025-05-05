@@ -13,10 +13,12 @@ import parseSvgPathModule from './shims/parse-svg-path-shim';
 import md5Module from './shims/crypto-js-md5-shim';
 import pakoZstreamModule from './shims/pako-zstream-shim';
 import pakoDeflateModule from './shims/pako-deflate-shim';
+import pakoInflateModule from './shims/pako-inflate-shim';
 
 console.log('Polyfills loaded:', {
   pakoZstream: pakoZstreamModule,
   pakoDeflate: pakoDeflateModule,
+  pakoInflate: pakoInflateModule,
   md5Module: md5Module
 });
 
@@ -119,6 +121,12 @@ if (typeof window !== 'undefined') {
   if (!window.pakoDeflate) {
     window.pakoDeflate = pakoDeflateModule;
     console.log('Added pako deflate polyfill to window', pakoDeflateModule);
+  }
+  
+  // Add pako inflate polyfill
+  if (!window.pakoInflate) {
+    window.pakoInflate = pakoInflateModule;
+    console.log('Added pako inflate polyfill to window', pakoInflateModule);
   }
 }
 
@@ -254,6 +262,17 @@ const customPakoDeflateShim = {
   deflateInfo: pakoDeflateModule.deflateInfo
 };
 
+// Add pako inflate module shims
+const customPakoInflateShim = {
+  __esModule: true,
+  default: pakoInflateModule,
+  inflateInit: pakoInflateModule.inflateInit,
+  inflate: pakoInflateModule.inflate,
+  inflateEnd: pakoInflateModule.inflateEnd,
+  inflateSetDictionary: pakoInflateModule.inflateSetDictionary,
+  inflateInfo: pakoInflateModule.inflateInfo
+};
+
 // This will be used by our import interception logic in vite.config.ts
 if (typeof window !== 'undefined') {
   window.__customModuleShims = {
@@ -283,6 +302,8 @@ if (typeof window !== 'undefined') {
     'pako/lib/zlib/zstream': customPakoZstreamShim,
     'pako/lib/zlib/zstream.js': customPakoZstreamShim,
     'pako/lib/zlib/deflate': customPakoDeflateShim,
-    'pako/lib/zlib/deflate.js': customPakoDeflateShim
+    'pako/lib/zlib/deflate.js': customPakoDeflateShim,
+    'pako/lib/zlib/inflate': customPakoInflateShim,
+    'pako/lib/zlib/inflate.js': customPakoInflateShim
   };
 }
