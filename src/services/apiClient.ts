@@ -56,11 +56,12 @@ const apiRequest = async <T>(
       fetchOptions.body = JSON.stringify(data);
     }
 
-    // For email endpoints, use the server endpoint directly
-    let url = endpoint;
-    // Updated: Check if endpoint is related to email by checking if it contains "/email/"
+    // For email endpoints, use the proxy configured in vite.config.ts
+    let url: string;
     if (endpoint.includes('/email/')) {
-      url = `http://localhost:5000/api${endpoint}`;
+      // Use the /api prefix that our proxy handles correctly
+      url = `/api${endpoint}`;
+      console.log(`Using email API endpoint: ${url}`);
     } else {
       url = `${API_URL}${endpoint}`;
     }
@@ -68,6 +69,7 @@ const apiRequest = async <T>(
     const response = await fetch(url, fetchOptions);
 
     if (!response.ok) {
+      console.error(`API error: ${response.status} ${response.statusText}`);
       throw new Error(`API error: ${response.status} ${response.statusText}`);
     }
 
@@ -76,7 +78,19 @@ const apiRequest = async <T>(
       return {} as T;
     }
 
-    return await response.json();
+    // Check if the response has content before trying to parse as JSON
+    const text = await response.text();
+    if (!text) {
+      console.log('Empty response received');
+      return {} as T;
+    }
+
+    try {
+      return JSON.parse(text) as T;
+    } catch (err) {
+      console.error('Failed to parse response as JSON:', text);
+      throw new Error(`Invalid JSON response: ${text.substring(0, 100)}...`);
+    }
   } catch (error) {
     console.error('API request error:', error);
     throw error;
