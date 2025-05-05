@@ -28,7 +28,7 @@ export const sendTestEmail = async (
   }, null, 2));
   
   // Add more detailed logging about recipient
-  console.log(`Attempting to deliver email to recipient: ${recipient}`);
+  console.log(`Attempting to deliver real email to recipient: ${recipient}`);
   
   // Special handling for providers - logging
   if (config.provider === 'yahoo') {
@@ -45,16 +45,18 @@ export const sendTestEmail = async (
   const wasMockDataEnabled = isMockDataEnabled();
   if (wasMockDataEnabled) {
     toggleMockData(false);
+    console.log('Temporarily disabled mock data to send a real email');
   }
   
   try {
-    // Always attempt to use real API for email sending
+    // Make an actual API request to send the email
     const result = await apiRequest<{
       success: boolean;
       message?: string;
       error?: string;
       messageId?: string;
       smtpResponse?: string;
+      fallback?: boolean;
     }>('/email/send', 'POST', {
       to: recipient,
       subject: 'Test Email from Resource Management System',
@@ -64,11 +66,12 @@ export const sendTestEmail = async (
           <h2>Test Email</h2>
           <p>This is a test email to verify your SMTP configuration is working correctly.</p>
           <p>If you received this email, your email system is properly configured!</p>
+          <p>Sent at: ${new Date().toLocaleString()}</p>
           <hr>
           <p style="color: #666; font-size: 12px;">Resource Management System</p>
         </div>
       `,
-      // Ensure config is normalized correctly
+      // Pass email configuration to the API
       emailConfig: {
         ...config,
         // Ensure port is string and secured is properly set based on port
@@ -80,18 +83,24 @@ export const sendTestEmail = async (
       }
     });
     
+    // Enhanced logging of the email sending result
     if (result.success) {
-      console.log('Email sent successfully:', result);
+      console.log('Email API responded with success:', result);
+      if (result.fallback) {
+        console.log('Email was sent using the fallback method');
+      }
+      
       return { 
         success: true, 
         details: {
           messageId: result.messageId,
-          smtpResponse: result.smtpResponse
+          smtpResponse: result.smtpResponse,
+          fallback: result.fallback
         }
       };
     } else {
       const errorMsg = result.error || 'Unknown error sending email';
-      console.error('Email error:', errorMsg);
+      console.error('Email error from API:', errorMsg);
       
       // Provide more helpful error messages for common issues
       if (config.provider === 'yahoo' && 
@@ -142,6 +151,7 @@ export const sendTestEmail = async (
     // If we temporarily disabled mock data, restore its previous state
     if (wasMockDataEnabled !== isMockDataEnabled()) {
       toggleMockData(wasMockDataEnabled);
+      console.log('Restored mock data setting to original state');
     }
   }
 };
