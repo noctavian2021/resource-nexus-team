@@ -14,6 +14,12 @@ import md5Module from './shims/crypto-js-md5-shim';
 import pakoZstreamModule from './shims/pako-zstream-shim';
 import pakoDeflateModule from './shims/pako-deflate-shim';
 
+console.log('Polyfills loaded:', {
+  pakoZstream: pakoZstreamModule,
+  pakoDeflate: pakoDeflateModule,
+  md5Module: md5Module
+});
+
 // Create a minimal Process interface with only the properties we need
 interface MinimalProcess {
   env: { NODE_ENV: string };
@@ -106,11 +112,13 @@ if (typeof window !== 'undefined') {
   // Add pako zstream polyfill
   if (!window.pakoZstream) {
     window.pakoZstream = pakoZstreamModule;
+    console.log('Added pako zstream polyfill to window', pakoZstreamModule);
   }
   
   // Add pako deflate polyfill
   if (!window.pakoDeflate) {
     window.pakoDeflate = pakoDeflateModule;
+    console.log('Added pako deflate polyfill to window', pakoDeflateModule);
   }
 }
 
