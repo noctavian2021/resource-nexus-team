@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import Header from '@/components/Layout/Header';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -36,7 +37,6 @@ export default function AdminSettings() {
   const [emailTestDetails, setEmailTestDetails] = useState<{
     messageId?: string;
     smtpResponse?: string;
-    simulated?: boolean;
   } | null>(null);
   const isMobile = useIsMobile();
   
@@ -97,8 +97,7 @@ export default function AdminSettings() {
         if (result.details) {
           setEmailTestDetails({
             messageId: result.details.messageId,
-            smtpResponse: result.details.smtpResponse,
-            simulated: result.details.simulated
+            smtpResponse: result.details.smtpResponse
           });
         }
       } else {
@@ -469,28 +468,11 @@ export default function AdminSettings() {
                 <span className="font-semibold">SMTP Response:</span> {emailTestDetails.smtpResponse}
               </div>
             )}
-            {emailTestDetails.simulated && (
-              <Alert variant="default" className="mt-2 mb-2 bg-yellow-50 border-yellow-200">
-                <AlertTriangle className="h-4 w-4 text-yellow-600" />
-                <AlertTitle className="text-yellow-800">Simulated Email</AlertTitle>
-                <AlertDescription className="text-yellow-700">
-                  This was a simulated email send. For actual email delivery, make sure your server is running and properly configured with Nodemailer.
-                </AlertDescription>
-              </Alert>
-            )}
             <p className="text-xs text-muted-foreground mt-2">
-              If the SMTP response shows a success code (usually starting with 2xx), the email was successfully sent.
+              If the SMTP response shows a success code (usually starting with 2xx), the email was successfully handed over to the mail server.
             </p>
           </div>
         )}
-        
-        <Alert variant="default" className="mb-4 bg-blue-50 border-blue-100">
-          <Info className="h-4 w-4 text-blue-600" />
-          <AlertTitle className="text-blue-800">Email Server Information</AlertTitle>
-          <AlertDescription className="text-blue-700">
-            This application now uses a NodeJS server with Nodemailer to send real emails. Make sure the server is running on port 5000 before sending test emails.
-          </AlertDescription>
-        </Alert>
       </div>
     );
   };

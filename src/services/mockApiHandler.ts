@@ -111,6 +111,17 @@ export const handleMockRequest = async <T>(
   // Add delay to simulate network
   await new Promise(resolve => setTimeout(resolve, 300));
   
+  // Add handler for email/send endpoint
+  if (endpoint === '/email/send' && method === 'POST') {
+    console.log('[MOCK] Handling email send request:', data);
+    return {
+      success: true,
+      message: 'Email sent successfully (mocked)',
+      messageId: `mock-${Date.now()}`,
+      smtpResponse: 'Mock SMTP response'
+    } as unknown as T;
+  }
+  
   // Process requests based on endpoint and method
   if (endpoint.startsWith('/projects')) {
     if (endpoint === '/projects' && method === 'GET') {

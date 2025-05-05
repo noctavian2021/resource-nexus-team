@@ -25,10 +25,5 @@ export interface TestEmailResponse {
   details?: {
     messageId?: string;
     smtpResponse?: string;
-    fallback?: boolean;
-    simulated?: boolean;
-    provider?: string;
-    errorType?: string;
-    errorTime?: string;
   };
 }

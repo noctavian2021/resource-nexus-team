@@ -1,12 +1,10 @@
 
 import { handleMockRequest } from './mockApiHandler';
-import { EmailConfig } from '@/hooks/email/types';
 
-// API URL configuration - set to production server URL
-export const API_URL = 'https://api.resourcenexus.com';
+export const API_URL = 'https://api.example.com';
 
-// Flag to control mock data usage - setting it to false for production
-let useMockData = false;
+// Flag to control mock data usage
+let useMockData = true;
 
 // Toggle mock data usage
 export const toggleMockData = (enabled: boolean): boolean => {
@@ -42,7 +40,7 @@ const apiRequest = async <T>(
     }
   }
 
-  // Otherwise attempt a real API request with better error handling
+  // Otherwise make a real API request
   try {
     const fetchOptions: RequestInit = {
       method,
@@ -57,39 +55,18 @@ const apiRequest = async <T>(
       fetchOptions.body = JSON.stringify(data);
     }
 
-    // Add a timeout to the fetch request - increased from 10s to 30s
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
-    
-    fetchOptions.signal = controller.signal;
-    
-    try {
-      const response = await fetch(`${API_URL}${endpoint}`, fetchOptions);
-      clearTimeout(timeoutId);
-      
-      if (!response.ok) {
-        throw new Error(`API error: ${response.status} ${response.statusText}`);
-      }
+    const response = await fetch(`${API_URL}${endpoint}`, fetchOptions);
 
-      // For DELETE requests with no content
-      if (response.status === 204) {
-        return {} as T;
-      }
-
-      return await response.json();
-    } catch (fetchError: any) {
-      // Clear timeout if fetch failed for any reason
-      clearTimeout(timeoutId);
-      
-      // Handle specific fetch errors
-      if (fetchError.name === 'AbortError') {
-        throw new Error('Request timed out after 30 seconds');
-      } else if (fetchError.message === 'Failed to fetch') {
-        throw new Error('Unable to connect to the API server. Please check your network connection or try enabling mock data.');
-      } else {
-        throw fetchError;
-      }
+    if (!response.ok) {
+      throw new Error(`API error: ${response.status} ${response.statusText}`);
     }
+
+    // For DELETE requests with no content
+    if (response.status === 204) {
+      return {} as T;
+    }
+
+    return await response.json();
   } catch (error) {
     console.error('API request error:', error);
     throw error;

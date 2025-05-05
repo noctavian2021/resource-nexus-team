@@ -22,20 +22,11 @@ export default defineConfig(({ mode }) => ({
   },
   optimizeDeps: {
     exclude: [
-      // Exclude chunks that are causing issues in the dependency optimizer
-      'chunk-HTXN6LXJ',
-      'chunk-VOOPJCT5',
-      'chunk-5UQEQXRT',
-      'chunk-OS7NTALB',
-      'chunk-GHWYJYKX',
-      'chunk-DTEILMPG',
-      'chunk-UDG5B74G',
-      'chunk-VJI4VKJ4',
-      'chunk-LGIWJDQW',
-      'chunk-2M7HY3UG',
-      'chunk-EFWZGOYR',
-      'chunk-T5ONMTIY',
-      'chunk-MEW2NBIK'
+      // Add problematic dependencies here to exclude them from optimization
+      '@react-pdf/renderer',
+      'embla-carousel-react',
+      'vaul',
+      'cmdk'
     ]
   }
 }));

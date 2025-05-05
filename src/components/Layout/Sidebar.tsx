@@ -47,10 +47,14 @@ export default function Sidebar() {
   const [isOpen, setIsOpen] = React.useState(true);
   const { user, logout } = useAuth();
   
-  console.log("Sidebar rendered, user:", user);
+  // Add error handling for user object
+  const safeUser = user || { name: 'Guest', role: 'member' as const };
+  
+  console.log("Sidebar rendered, user:", safeUser);
 
-  // Get user initials for avatar
+  // Get user initials for avatar - with error handling
   const getInitials = (name: string) => {
+    if (!name) return 'U';
     return name
       .split(' ')
       .map(part => part[0])
@@ -87,8 +91,8 @@ export default function Sidebar() {
           </button>
         </div>
         
-        {/* User info section */}
-        {user && (
+        {/* User info section - with error handling */}
+        {safeUser && (
           <div className="border-b border-white/10 pb-2 mb-2">
             <NavLink 
               to="/profile"
@@ -100,7 +104,7 @@ export default function Sidebar() {
             >
               <Avatar className="h-7 w-7 bg-white/20 text-sm">
                 <AvatarFallback className="text-white bg-blue-600">
-                  {getInitials(user.name)}
+                  {getInitials(safeUser.name)}
                 </AvatarFallback>
               </Avatar>
               <div className={cn(
@@ -108,10 +112,10 @@ export default function Sidebar() {
                 isOpen ? "w-auto opacity-100" : "w-0 opacity-0"
               )}>
                 <div className="text-sm font-medium text-white truncate">
-                  {user.name}
+                  {safeUser.name}
                 </div>
                 <div className="text-xs text-white/70 truncate">
-                  {user.role === 'admin' ? 'Administrator' : 'Team Lead'}
+                  {safeUser.role === 'admin' ? 'Administrator' : 'Team Lead'}
                 </div>
               </div>
             </NavLink>
@@ -128,7 +132,7 @@ export default function Sidebar() {
           <SidebarLink to="/profile" icon={User} title="Profile" />
         </div>
         <div className="mt-auto">
-          {user?.role === 'admin' && (
+          {safeUser?.role === 'admin' && (
             <SidebarLink to="/admin/settings" icon={Settings} title="Admin" />
           )}
           

@@ -14,7 +14,6 @@ import { useAuth } from '@/context/AuthContext';
 import { toast } from '@/hooks/use-toast';
 import { teamMembers } from '@/data/mockData';
 import { useNotifications } from '@/hooks/useNotifications';
-import { isMockDataEnabled } from '@/services/apiClient';
 
 export default function ResourceRequests() {
   const { emailConfig } = useEmailConfig();
@@ -70,49 +69,52 @@ export default function ResourceRequests() {
       
       if (emailConfig.enabled) {
         try {
-          // Check if using mock data
-          if (isMockDataEnabled()) {
-            // Simulate successful email for mock data mode
-            console.log('Using mock data for direct test email');
+          // Send resource request test email, not a welcome email
+          const response = await fetch('http://localhost:5000/api/email/send-welcome', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              email: mirela.email,
+              name: mirela.name,
+              subject: '⚠️ URGENT: Resource Request Test Email',
+              isResourceRequest: true, // Signal this is a resource request, not a welcome
+              startDate: new Date().toISOString().split('T')[0],
+              endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 1 week later
+              replacingMember: '',
+              additionalNotes: `
+                RESOURCE REQUEST TEST MESSAGE
+                
+                This is a test resource request email to verify email delivery.
+                
+                Request Title: Test Resource Request
+                Description: This is a test resource request to verify that the email delivery system is working properly.
+                Required Skills: Testing, Email Verification
+                Requested Duration: ${new Date().toLocaleDateString()} - ${new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString()}
+                
+                This is only a test message. No action is required.
+              `,
+              emailConfig: {
+                ...emailConfig,
+                port: String(emailConfig.port),
+                secure: emailConfig.port === '465' ? true : (emailConfig.port === '587' ? false : emailConfig.secure),
+                connectionTimeout: 30000,
+                greetingTimeout: 30000
+              }
+            })
+          });
+          
+          const result = await response.json();
+          console.log('Direct test email result:', result);
+          
+          if (result.success) {
             toast({
-              title: "Direct Test Email Sent (Simulated)",
-              description: `Test email to ${mirela.name} was simulated successfully`,
+              title: "Direct Test Email Sent",
+              description: `Test email sent directly to ${mirela.name}`,
             });
           } else {
-            // Send via welcome email API (more reliable than test API)
-            const response = await fetch('http://localhost:5000/api/email/send-welcome', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({
-                email: mirela.email,
-                name: mirela.name,
-                subject: '⚠️ URGENT: Direct Test Email',
-                startDate: new Date().toISOString().split('T')[0],
-                replacingMember: '',
-                additionalNotes: 'This is a direct test email sent via the welcome email API to verify email delivery.',
-                emailConfig: {
-                  ...emailConfig,
-                  port: String(emailConfig.port),
-                  secure: emailConfig.port === '465' ? true : (emailConfig.port === '587' ? false : emailConfig.secure),
-                  connectionTimeout: 30000,
-                  greetingTimeout: 30000
-                }
-              })
-            });
-            
-            const result = await response.json();
-            console.log('Direct test email result:', result);
-            
-            if (result.success) {
-              toast({
-                title: "Direct Test Email Sent",
-                description: `Test email sent directly to ${mirela.name}`,
-              });
-            } else {
-              throw new Error(result.error || 'Unknown error');
-            }
+            throw new Error(result.error || 'Unknown error');
           }
         } catch (error) {
           console.error('Error sending direct test email:', error);
@@ -127,14 +129,14 @@ export default function ResourceRequests() {
       // Also send via standard notification system
       await addNotification(
         "URGENT TEST NOTIFICATION",
-        `This is a test notification for ${mirela.name}`,
+        `This is a test resource request notification for ${mirela.name}`,
         'request',
         {
           emailRecipient: mirela.email, 
           recipientName: mirela.name,
           targetDepartmentId: productDept?.id,
           forceMirelaAsRecipient: true,
-          additionalEmailContent: "This notification was sent as a direct test from the Resource Requests page."
+          additionalEmailContent: "This is a test resource request notification sent from the Resource Requests page."
         }
       );
       
