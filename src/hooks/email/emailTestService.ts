@@ -15,32 +15,10 @@ export const sendTestEmail = async (
     return { success: false, error: 'Valid recipient email is required' };
   }
 
-  // Enhanced logging for better debugging
-  console.log('Sending test email to', recipient, 'with config:', JSON.stringify({
-    provider: config.provider,
-    host: config.host,
-    port: config.port,
-    secure: config.secure,
-    username: config.username,
-    fromEmail: config.fromEmail,
-    fromName: config.fromName,
-    enabled: config.enabled
-  }, null, 2));
+  // Production environment logging - more minimal
+  console.log('Sending test email to', recipient);
+  console.log('Provider:', config.provider);
   
-  // Add more detailed logging about recipient
-  console.log(`Attempting to deliver email to recipient: ${recipient}`);
-  
-  // Special handling for providers - logging
-  if (config.provider === 'yahoo') {
-    console.log('Using Yahoo provider with special configuration');
-    console.log('Note: Yahoo requires an app password, not regular account password');
-  }
-  
-  if (config.provider === 'gmail') {
-    console.log('Using Gmail provider - note that Gmail requires an App Password if 2FA is enabled');
-    console.log('Gmail connection may fail if the account has security restrictions. Check for emails about security alerts.');
-  }
-
   // Ensure mock data is disabled for real emails
   const wasMockDataEnabled = isMockDataEnabled();
   if (wasMockDataEnabled) {
@@ -78,9 +56,9 @@ export const sendTestEmail = async (
       `
     });
     
-    // Enhanced logging of the email sending result
+    // Production-appropriate logging
     if (result.success) {
-      console.log('Email server responded with success:', result);
+      console.log('Email sent successfully');
       
       return { 
         success: true, 
@@ -94,50 +72,9 @@ export const sendTestEmail = async (
       };
     } else {
       const errorMsg = result.error || 'Unknown error sending email';
-      console.error('Email error from server:', errorMsg);
+      console.error('Email error:', errorMsg);
       
-      // Provide more helpful error messages for common issues
-      if (config.provider === 'yahoo' && 
-          (errorMsg.includes('535') || errorMsg.includes('authentication') || 
-          errorMsg.includes('auth') || errorMsg.includes('login'))) {
-        return { 
-          success: false, 
-          error: `Yahoo authentication failed. Make sure you've generated an App Password specifically for this app and you're not using your regular Yahoo account password. Error: ${errorMsg}`,
-          details: {
-            errorType: 'AuthenticationError',
-            provider: config.provider,
-            errorTime: new Date().toISOString()
-          } 
-        };
-      }
-      
-      if (config.provider === 'gmail') {
-        if (errorMsg.includes('Greeting never received')) {
-          return {
-            success: false,
-            error: `Gmail connection timed out. Please try: 1) Using an App Password if you have 2FA enabled 2) Verifying your username is a Gmail address 3) Checking for security alerts in your Gmail 4) Waiting a few minutes before trying again. Error: ${errorMsg}`,
-            details: {
-              errorType: 'ConnectionTimeoutError',
-              provider: config.provider,
-              errorTime: new Date().toISOString()
-            }
-          };
-        }
-        
-        if (errorMsg.includes('535') || errorMsg.includes('authentication') || 
-          errorMsg.includes('auth') || errorMsg.includes('login')) {
-          return {
-            success: false,
-            error: `Gmail authentication failed. If you have 2FA enabled on your Google account, you must generate and use an App Password instead of your regular password. Error: ${errorMsg}`,
-            details: {
-              errorType: 'AuthenticationError',
-              provider: config.provider,
-              errorTime: new Date().toISOString()
-            }
-          };
-        }
-      }
-      
+      // Simpler error handling for production
       return { 
         success: false, 
         error: errorMsg,

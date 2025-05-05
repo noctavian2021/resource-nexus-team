@@ -2,11 +2,11 @@
 import { handleMockRequest } from './mockApiHandler';
 import { EmailConfig } from '@/hooks/email/types';
 
-// API URL configuration - change to point to local server
-export const API_URL = 'http://localhost:5000';
+// API URL configuration - set to production server URL
+export const API_URL = 'https://api.resourcenexus.com';
 
-// Flag to control mock data usage - setting it to true by default
-let useMockData = true;
+// Flag to control mock data usage - setting it to false for production
+let useMockData = false;
 
 // Toggle mock data usage
 export const toggleMockData = (enabled: boolean): boolean => {
