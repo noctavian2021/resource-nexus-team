@@ -66,6 +66,7 @@ declare global {
     postcssValueParserParse?: any;
     postcssValueParserUnit?: any;
     hyphen?: any;
+    hyphenPatterns?: any;
   }
 }
 
@@ -185,6 +186,10 @@ if (typeof window !== 'undefined') {
   // Add hyphen polyfill
   if (!window.hyphen) {
     window.hyphen = hyphenModule;
+    // Also expose patterns to make them easily accessible
+    window.hyphenPatterns = {
+      'en-us': {}
+    };
     console.log('Added hyphen polyfill to window', hyphenModule);
   }
 }
@@ -398,7 +403,10 @@ const customPostcssValueParserShim = {
 const customHyphenShim = {
   __esModule: true,
   default: hyphenModule,
-  ...hyphenModule
+  ...hyphenModule,
+  patterns: {
+    'en-us': {}
+  }
 };
 
 // This will be used by our import interception logic in vite.config.ts
@@ -464,5 +472,7 @@ if (typeof window !== 'undefined') {
     },
     'hyphen': customHyphenShim,
     'hyphen/hyphen.js': customHyphenShim,
+    'hyphen/patterns/en-us': { __esModule: true, default: {}, patterns: {} },
+    'hyphen/patterns/en-us.js': { __esModule: true, default: {}, patterns: {} },
   };
 }

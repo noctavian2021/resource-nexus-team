@@ -102,6 +102,11 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => ({
         if (id === 'hyphen' || id === 'hyphen/hyphen.js') {
           return path.resolve(__dirname, './src/shims/hyphen-shim.js');
         }
+        // Handle hyphen patterns
+        if (id.includes('hyphen') && id.includes('patterns')) {
+          // Return the hyphen shim for any pattern imports
+          return path.resolve(__dirname, './src/shims/hyphen-shim.js');
+        }
         return null;
       },
       transform(code: string, id: string) {
@@ -341,6 +346,18 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => ({
             map: null
           };
         }
+        // Handle hyphen patterns specifically
+        if (id.includes('hyphen') && id.includes('patterns')) {
+          return {
+            code: `
+              // Mock pattern data
+              const patternData = {};
+              export default patternData;
+              export const patterns = patternData;
+            `,
+            map: null
+          };
+        }
         return null;
       }
     }
@@ -416,6 +433,10 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => ({
       // Add direct alias for hyphen
       "hyphen": path.resolve(__dirname, './src/shims/hyphen-shim.js'),
       "hyphen/hyphen.js": path.resolve(__dirname, './src/shims/hyphen-shim.js'),
+      // Add direct alias for hyphen patterns
+      "hyphen/patterns": path.resolve(__dirname, './src/shims/hyphen-shim.js'),
+      "hyphen/patterns/en-us": path.resolve(__dirname, './src/shims/hyphen-shim.js'),
+      "hyphen/patterns/en-us.js": path.resolve(__dirname, './src/shims/hyphen-shim.js'),
     },
     // Add mainFields to prefer module format
     mainFields: ['browser', 'module', 'jsnext:main', 'jsnext', 'main'],
