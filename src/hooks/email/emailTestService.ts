@@ -1,4 +1,3 @@
-
 import { EmailConfig, TestEmailResponse } from './types';
 import apiRequest from '@/services/apiClient';
 import { isMockDataEnabled, toggleMockData } from '@/services/apiClient';

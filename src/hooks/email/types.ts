@@ -25,5 +25,6 @@ export interface TestEmailResponse {
   details?: {
     messageId?: string;
     smtpResponse?: string;
+    fallback?: boolean;
   };
 }
