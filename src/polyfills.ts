@@ -72,6 +72,7 @@ declare global {
     hyphen?: any;
     hyphenPatterns?: any;
     queue?: any;
+    objectAssign?: any; // Add objectAssign to Window interface
   }
 }
 

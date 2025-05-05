@@ -112,6 +112,10 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => ({
           // Return the hyphen shim for any pattern imports
           return path.resolve(__dirname, './src/shims/hyphen-shim.js');
         }
+        // Check for object-assign imports
+        if (id === 'object-assign' || id === 'object-assign/index.js') {
+          return path.resolve(__dirname, './src/shims/object-assign-shim.js');
+        }
         return null;
       },
       transform(code: string, id: string) {
@@ -376,6 +380,17 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => ({
             map: null
           };
         }
+        // Handle object-assign module
+        if (id.includes('object-assign') && !id.includes('object-assign-shim')) {
+          return {
+            code: `
+              import objectAssignShim, { objectAssign } from '${path.resolve(__dirname, './src/shims/object-assign-shim.js')}';
+              export default objectAssignShim;
+              export { objectAssign };
+            `,
+            map: null
+          };
+        }
         return null;
       }
     }
@@ -458,6 +473,9 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => ({
       "hyphen/patterns": path.resolve(__dirname, './src/shims/hyphen-shim.js'),
       "hyphen/patterns/en-us": path.resolve(__dirname, './src/shims/hyphen-shim.js'),
       "hyphen/patterns/en-us.js": path.resolve(__dirname, './src/shims/hyphen-shim.js'),
+      // Add direct alias for object-assign
+      "object-assign": path.resolve(__dirname, './src/shims/object-assign-shim.js'),
+      "object-assign/index.js": path.resolve(__dirname, './src/shims/object-assign-shim.js'),
     },
     // Add mainFields to prefer module format
     mainFields: ['browser', 'module', 'jsnext:main', 'jsnext', 'main'],
@@ -487,6 +505,7 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => ({
       'postcss-value-parser', // Add postcss-value-parser to include
       'hyphen', // Add hyphen to include
       'queue', // Add queue to include
+      'object-assign', // Add object-assign to include
     ],
     exclude: [
       // Add problematic dependencies here to exclude them from optimization
