@@ -5,6 +5,7 @@ import streamBrowserify from 'stream-browserify';
 import cloneModule from './shims/clone-shim';
 import dfaModule from './shims/dfa-shim';
 import equalModule from './shims/fast-deep-equal-shim';
+import tinyInflateModule from './shims/tiny-inflate-shim';
 
 // Create a minimal Process interface with only the properties we need
 interface MinimalProcess {
@@ -24,6 +25,7 @@ declare global {
     clone?: any;
     dfa?: any;
     equal?: any;
+    tinyInflate?: any;
   }
 }
 
@@ -49,6 +51,11 @@ if (typeof window !== 'undefined') {
   // Add fast-deep-equal polyfill
   if (!window.equal) {
     window.equal = equalModule;
+  }
+
+  // Add tiny-inflate polyfill
+  if (!window.tinyInflate) {
+    window.tinyInflate = tinyInflateModule;
   }
 }
 
@@ -119,6 +126,12 @@ const customEqualShim = {
   default: equalModule
 };
 
+// Add tiny-inflate module shims
+const customTinyInflateShim = {
+  __esModule: true,
+  default: tinyInflateModule
+};
+
 // This will be used by our import interception logic in vite.config.ts
 if (typeof window !== 'undefined') {
   window.__customModuleShims = {
@@ -130,6 +143,8 @@ if (typeof window !== 'undefined') {
     'dfa': customDfaShim,
     'dfa/index.js': customDfaShim,
     'fast-deep-equal': customEqualShim,
-    'fast-deep-equal/index.js': customEqualShim
+    'fast-deep-equal/index.js': customEqualShim,
+    'tiny-inflate': customTinyInflateShim,
+    'tiny-inflate/index.js': customTinyInflateShim
   };
 }

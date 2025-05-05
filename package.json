@@ -73,6 +73,7 @@
     "stream-browserify": "^3.0.0",
     "tailwind-merge": "^2.5.2",
     "tailwindcss-animate": "^1.0.7",
+    "tiny-inflate": "^1.0.3",
     "vaul": "^0.9.3",
     "zod": "^3.23.8"
   },

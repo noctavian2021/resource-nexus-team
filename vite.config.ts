@@ -36,6 +36,10 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => ({
         if (id === 'fast-deep-equal' || id === 'fast-deep-equal/index.js') {
           return path.resolve(__dirname, './src/shims/fast-deep-equal-shim.js');
         }
+        // Check for tiny-inflate imports
+        if (id === 'tiny-inflate' || id === 'tiny-inflate/index.js') {
+          return path.resolve(__dirname, './src/shims/tiny-inflate-shim.js');
+        }
         return null;
       },
       transform(code: string, id: string) {
@@ -85,6 +89,16 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => ({
             map: null
           };
         }
+        // Handle tiny-inflate module
+        if (id.includes('tiny-inflate') && !id.includes('tiny-inflate-shim')) {
+          return {
+            code: `
+              import tinyInflateShim from '${path.resolve(__dirname, './src/shims/tiny-inflate-shim.js')}';
+              export default tinyInflateShim;
+            `,
+            map: null
+          };
+        }
         return null;
       }
     }
@@ -113,7 +127,10 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => ({
       "dfa/index.js": path.resolve(__dirname, './src/shims/dfa-shim.js'),
       // Add direct alias for fast-deep-equal
       "fast-deep-equal": path.resolve(__dirname, './src/shims/fast-deep-equal-shim.js'),
-      "fast-deep-equal/index.js": path.resolve(__dirname, './src/shims/fast-deep-equal-shim.js')
+      "fast-deep-equal/index.js": path.resolve(__dirname, './src/shims/fast-deep-equal-shim.js'),
+      // Add direct alias for tiny-inflate
+      "tiny-inflate": path.resolve(__dirname, './src/shims/tiny-inflate-shim.js'),
+      "tiny-inflate/index.js": path.resolve(__dirname, './src/shims/tiny-inflate-shim.js')
     },
     // Add mainFields to prefer module format
     mainFields: ['browser', 'module', 'jsnext:main', 'jsnext', 'main'],
@@ -128,6 +145,7 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => ({
       'clone', // Add clone to include
       'dfa', // Add dfa to include
       'fast-deep-equal', // Add fast-deep-equal to include
+      'tiny-inflate', // Add tiny-inflate to include
     ],
     exclude: [
       // Add problematic dependencies here to exclude them from optimization
