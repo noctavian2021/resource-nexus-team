@@ -17,6 +17,7 @@ import pakoInflateModule from './shims/pako-inflate-shim';
 import pakoConstantsModule from './shims/pako-constants-shim';
 import hslToHexModule from './shims/hsl-to-hex-shim';
 import mediaEngineModule from './shims/media-engine-shim';
+import postcssValueParserModule from './shims/postcss-value-parser-shim';
 
 console.log('Polyfills loaded:', {
   pakoZstream: pakoZstreamModule,
@@ -25,7 +26,8 @@ console.log('Polyfills loaded:', {
   pakoConstants: pakoConstantsModule,
   md5Module: md5Module,
   hslToHex: hslToHexModule,
-  mediaEngine: mediaEngineModule
+  mediaEngine: mediaEngineModule,
+  postcssValueParser: postcssValueParserModule
 });
 
 // Create a minimal Process interface with only the properties we need
@@ -59,6 +61,7 @@ declare global {
     pakoConstants?: any;
     hslToHex?: any;
     mediaEngine?: any;
+    postcssValueParser?: any;
   }
 }
 
@@ -155,6 +158,12 @@ if (typeof window !== 'undefined') {
   if (!window.mediaEngine) {
     window.mediaEngine = mediaEngineModule;
     console.log('Added media-engine polyfill to window', mediaEngineModule);
+  }
+  
+  // Add postcss-value-parser polyfill
+  if (!window.postcssValueParser) {
+    window.postcssValueParser = postcssValueParserModule;
+    console.log('Added postcss-value-parser polyfill to window', postcssValueParserModule);
   }
 }
 
@@ -350,6 +359,13 @@ const customMediaEngineShim = {
   ...mediaEngineModule
 };
 
+// Add postcss-value-parser module shims
+const customPostcssValueParserShim = {
+  __esModule: true,
+  default: postcssValueParserModule,
+  ...postcssValueParserModule
+};
+
 // This will be used by our import interception logic in vite.config.ts
 if (typeof window !== 'undefined') {
   window.__customModuleShims = {
@@ -387,6 +403,9 @@ if (typeof window !== 'undefined') {
     'hsl-to-hex': customHslToHexShim,
     'hsl-to-hex/index.js': customHslToHexShim,
     'media-engine': customMediaEngineShim,
-    'media-engine/src/index.js': customMediaEngineShim
+    'media-engine/src/index.js': customMediaEngineShim,
+    'postcss-value-parser': customPostcssValueParserShim,
+    'postcss-value-parser/lib/index.js': customPostcssValueParserShim,
+    'postcss-value-parser/lib/parse.js': customPostcssValueParserShim,
   };
 }

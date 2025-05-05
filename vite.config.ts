@@ -83,6 +83,10 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => ({
         if (id === 'media-engine' || id === 'media-engine/src/index.js') {
           return path.resolve(__dirname, './src/shims/media-engine-shim.js');
         }
+        // Check for postcss-value-parser imports
+        if (id === 'postcss-value-parser' || id.includes('postcss-value-parser/lib')) {
+          return path.resolve(__dirname, './src/shims/postcss-value-parser-shim.js');
+        }
         return null;
       },
       transform(code: string, id: string) {
@@ -273,6 +277,17 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => ({
             map: null
           };
         }
+        // Handle postcss-value-parser module
+        if (id.includes('postcss-value-parser') && !id.includes('postcss-value-parser-shim')) {
+          return {
+            code: `
+              import postcssValueParserShim from '${path.resolve(__dirname, './src/shims/postcss-value-parser-shim.js')}';
+              export default postcssValueParserShim;
+              export * from '${path.resolve(__dirname, './src/shims/postcss-value-parser-shim.js')}';
+            `,
+            map: null
+          };
+        }
         return null;
       }
     }
@@ -338,6 +353,10 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => ({
       // Add direct alias for media-engine
       "media-engine": path.resolve(__dirname, './src/shims/media-engine-shim.js'),
       "media-engine/src/index.js": path.resolve(__dirname, './src/shims/media-engine-shim.js'),
+      // Add direct alias for postcss-value-parser
+      "postcss-value-parser": path.resolve(__dirname, './src/shims/postcss-value-parser-shim.js'),
+      "postcss-value-parser/lib/index.js": path.resolve(__dirname, './src/shims/postcss-value-parser-shim.js'),
+      "postcss-value-parser/lib/parse.js": path.resolve(__dirname, './src/shims/postcss-value-parser-shim.js'),
     },
     // Add mainFields to prefer module format
     mainFields: ['browser', 'module', 'jsnext:main', 'jsnext', 'main'],
@@ -364,6 +383,7 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => ({
       'pako/lib/zlib/inflate', // Add pako/lib/zlib/inflate to include
       'pako/lib/zlib/constants', // Add pako/lib/zlib/constants to include
       'media-engine', // Add media-engine to include
+      'postcss-value-parser', // Add postcss-value-parser to include
     ],
     exclude: [
       // Add problematic dependencies here to exclude them from optimization
