@@ -1,3 +1,4 @@
+
 import { defineConfig, ConfigEnv, Plugin, UserConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
@@ -46,6 +47,10 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => ({
         // Check for cross-fetch imports
         if (id === 'cross-fetch' || id === 'cross-fetch/dist/browser-ponyfill.js') {
           return path.resolve(__dirname, './src/shims/cross-fetch-shim.js');
+        }
+        // Check for abs-svg-path imports
+        if (id === 'abs-svg-path' || id === 'abs-svg-path/index.js') {
+          return path.resolve(__dirname, './src/shims/abs-svg-path-shim.js');
         }
         return null;
       },
@@ -127,6 +132,16 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => ({
             map: null
           };
         }
+        // Handle abs-svg-path module
+        if (id.includes('abs-svg-path') && !id.includes('abs-svg-path-shim')) {
+          return {
+            code: `
+              import absSvgPathShim from '${path.resolve(__dirname, './src/shims/abs-svg-path-shim.js')}';
+              export default absSvgPathShim;
+            `,
+            map: null
+          };
+        }
         return null;
       }
     }
@@ -164,7 +179,10 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => ({
       "unicode-trie/index.js": path.resolve(__dirname, './src/shims/unicode-trie-shim.js'),
       // Add direct alias for cross-fetch
       "cross-fetch": path.resolve(__dirname, './src/shims/cross-fetch-shim.js'),
-      "cross-fetch/dist/browser-ponyfill.js": path.resolve(__dirname, './src/shims/cross-fetch-shim.js')
+      "cross-fetch/dist/browser-ponyfill.js": path.resolve(__dirname, './src/shims/cross-fetch-shim.js'),
+      // Add direct alias for abs-svg-path
+      "abs-svg-path": path.resolve(__dirname, './src/shims/abs-svg-path-shim.js'),
+      "abs-svg-path/index.js": path.resolve(__dirname, './src/shims/abs-svg-path-shim.js')
     },
     // Add mainFields to prefer module format
     mainFields: ['browser', 'module', 'jsnext:main', 'jsnext', 'main'],
@@ -182,6 +200,7 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => ({
       'tiny-inflate', // Add tiny-inflate to include
       'unicode-trie', // Add unicode-trie to include
       'cross-fetch', // Add cross-fetch to include
+      'abs-svg-path', // Add abs-svg-path to include
     ],
     exclude: [
       // Add problematic dependencies here to exclude them from optimization
