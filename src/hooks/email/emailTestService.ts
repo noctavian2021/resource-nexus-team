@@ -1,5 +1,7 @@
+
 import { EmailConfig, TestEmailResponse } from './types';
 import apiRequest from '@/services/apiClient';
+import { isMockDataEnabled } from '@/services/apiClient';
 
 export const sendTestEmail = async (
   config: EmailConfig, 
@@ -40,7 +42,14 @@ export const sendTestEmail = async (
   }
   
   try {
-    // Updated to use a more consistent endpoint for email sending
+    // Check if we're using mock data
+    if (isMockDataEnabled()) {
+      console.log('Using mock data for email test');
+      // Simulate email sending with mock data
+      return await simulateMockEmailSending(config, recipient);
+    }
+    
+    // If not using mock data, proceed with real API call
     const result = await apiRequest<{
       success: boolean;
       message?: string;
@@ -125,6 +134,12 @@ export const sendTestEmail = async (
     const errorMsg = `Email sending failed: ${err.message || 'Unknown error'}`;
     console.error(errorMsg);
     
+    // If using mock data and we get an error, fall back to simulation
+    if (isMockDataEnabled()) {
+      console.log('API error with mock data, falling back to simulated response');
+      return await simulateMockEmailSending(config, recipient);
+    }
+    
     // Provide more specific guidance for common errors
     if (err.message && err.message.includes('Greeting never received')) {
       return { 
@@ -141,3 +156,59 @@ export const sendTestEmail = async (
     };
   }
 };
+
+// Helper function to simulate email sending with mock data
+async function simulateMockEmailSending(config: EmailConfig, recipient: string): Promise<TestEmailResponse> {
+  // Wait a moment to simulate network delay
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  
+  console.log('Simulating email sending with mock data');
+  
+  // Check for specific patterns in the email or configurations that might cause "errors"
+  // to simulate different scenarios
+  
+  // Simulate Yahoo authentication issues
+  if (config.provider === 'yahoo' && !config.password.includes('app-')) {
+    return {
+      success: false,
+      error: 'Yahoo authentication failed. Make sure you\'ve generated an App Password specifically for this app.',
+      details: undefined
+    };
+  }
+  
+  // Simulate Gmail auth issues
+  if (config.provider === 'gmail' && config.username && !config.username.includes('@gmail.com')) {
+    return {
+      success: false,
+      error: 'Gmail authentication failed. Username must be a valid Gmail address.',
+      details: undefined
+    };
+  }
+  
+  // Simulate connection issues for wrong port settings
+  if ((config.port === '465' && !config.secure) || (config.port === '587' && config.secure)) {
+    return {
+      success: false,
+      error: 'Connection failed due to mismatched port and security settings. For port 465, secure should be true. For port 587, secure should be false.',
+      details: undefined
+    };
+  }
+  
+  // Simulate invalid recipient issues
+  if (recipient.includes('invalid') || recipient.includes('fail')) {
+    return {
+      success: false,
+      error: 'Failed to send email: Invalid recipient address',
+      details: undefined
+    };
+  }
+
+  // By default, simulate successful sending
+  return {
+    success: true,
+    details: {
+      messageId: `mock-message-id-${Date.now()}@${config.provider}.mock`,
+      smtpResponse: `250 OK id=mock-${Date.now()}`
+    }
+  };
+}

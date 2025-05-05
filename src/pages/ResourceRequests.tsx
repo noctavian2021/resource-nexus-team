@@ -14,6 +14,7 @@ import { useAuth } from '@/context/AuthContext';
 import { toast } from '@/hooks/use-toast';
 import { teamMembers } from '@/data/mockData';
 import { useNotifications } from '@/hooks/useNotifications';
+import { isMockDataEnabled } from '@/services/apiClient';
 
 export default function ResourceRequests() {
   const { emailConfig } = useEmailConfig();
@@ -69,39 +70,49 @@ export default function ResourceRequests() {
       
       if (emailConfig.enabled) {
         try {
-          // Send via welcome email API (more reliable than test API)
-          const response = await fetch('http://localhost:5000/api/email/send-welcome', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              email: mirela.email,
-              name: mirela.name,
-              subject: '⚠️ URGENT: Direct Test Email',
-              startDate: new Date().toISOString().split('T')[0],
-              replacingMember: '',
-              additionalNotes: 'This is a direct test email sent via the welcome email API to verify email delivery.',
-              emailConfig: {
-                ...emailConfig,
-                port: String(emailConfig.port),
-                secure: emailConfig.port === '465' ? true : (emailConfig.port === '587' ? false : emailConfig.secure),
-                connectionTimeout: 30000,
-                greetingTimeout: 30000
-              }
-            })
-          });
-          
-          const result = await response.json();
-          console.log('Direct test email result:', result);
-          
-          if (result.success) {
+          // Check if using mock data
+          if (isMockDataEnabled()) {
+            // Simulate successful email for mock data mode
+            console.log('Using mock data for direct test email');
             toast({
-              title: "Direct Test Email Sent",
-              description: `Test email sent directly to ${mirela.name}`,
+              title: "Direct Test Email Sent (Simulated)",
+              description: `Test email to ${mirela.name} was simulated successfully`,
             });
           } else {
-            throw new Error(result.error || 'Unknown error');
+            // Send via welcome email API (more reliable than test API)
+            const response = await fetch('http://localhost:5000/api/email/send-welcome', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                email: mirela.email,
+                name: mirela.name,
+                subject: '⚠️ URGENT: Direct Test Email',
+                startDate: new Date().toISOString().split('T')[0],
+                replacingMember: '',
+                additionalNotes: 'This is a direct test email sent via the welcome email API to verify email delivery.',
+                emailConfig: {
+                  ...emailConfig,
+                  port: String(emailConfig.port),
+                  secure: emailConfig.port === '465' ? true : (emailConfig.port === '587' ? false : emailConfig.secure),
+                  connectionTimeout: 30000,
+                  greetingTimeout: 30000
+                }
+              })
+            });
+            
+            const result = await response.json();
+            console.log('Direct test email result:', result);
+            
+            if (result.success) {
+              toast({
+                title: "Direct Test Email Sent",
+                description: `Test email sent directly to ${mirela.name}`,
+              });
+            } else {
+              throw new Error(result.error || 'Unknown error');
+            }
           }
         } catch (error) {
           console.error('Error sending direct test email:', error);
