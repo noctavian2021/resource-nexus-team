@@ -52,7 +52,9 @@ export default defineConfig(({ mode }) => ({
       // Fix for crypto-js import issues
       "crypto-js": path.resolve(__dirname, "node_modules/crypto-js"),
       // Fix for pako import issues
-      "pako": path.resolve(__dirname, "node_modules/pako")
+      "pako": path.resolve(__dirname, "node_modules/pako"),
+      // Fix for hsl-to-hex import issues
+      "hsl-to-hex": path.resolve(__dirname, "node_modules/hsl-to-hex")
     },
   },
   optimizeDeps: {
@@ -73,7 +75,8 @@ export default defineConfig(({ mode }) => ({
       "color-string",
       "parse-svg-path",
       "crypto-js",
-      "pako"
+      "pako",
+      "hsl-to-hex"
     ],
     exclude: [
       // Add problematic dependencies here to exclude them from optimization
@@ -108,6 +111,7 @@ export default defineConfig(({ mode }) => ({
         /parse-svg-path/,
         /crypto-js/,
         /pako/,
+        /hsl-to-hex/,
         /node_modules/
       ]
     }
