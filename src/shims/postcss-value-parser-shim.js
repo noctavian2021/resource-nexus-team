@@ -1,15 +1,18 @@
 
 // This is a browser shim for postcss-value-parser module
-import * as postcssValueParserModule from 'postcss-value-parser';
-import parseModule from 'postcss-value-parser/lib/parse';
-import unitModule from 'postcss-value-parser/lib/unit';
+import postcssValueParser from 'postcss-value-parser';
 
-// Export the module as default
-export default postcssValueParserModule;
+// Import individual units directly from the installed package
+// but don't re-export them from within the shim file
+import parseFunc from 'postcss-value-parser/lib/parse.js';
+import unitFunc from 'postcss-value-parser/lib/unit.js';
 
-// Re-export all named exports
+// Export the main module as default
+export default postcssValueParser;
+
+// Re-export all named exports from the main module
 export * from 'postcss-value-parser';
 
-// Explicitly export the parse and unit modules
-export const parse = parseModule;
-export const unit = unitModule;
+// Explicitly export the parse and unit functions
+export const parse = parseFunc;
+export const unit = unitFunc;
