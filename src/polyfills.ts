@@ -27,12 +27,14 @@ if (typeof window !== 'undefined') {
 // Create shims for Node.js modules used by PDF libraries
 if (typeof window !== 'undefined') {
   // Create a minimal browser-compatible process object
-  window.process = window.process || {
-    env: { NODE_ENV: 'production' },
-    browser: true,
-    version: '',
-    versions: {},
-  };
+  if (!window.process) {
+    window.process = {
+      env: { NODE_ENV: 'production' },
+      browser: true,
+      version: '',
+      versions: {},
+    };
+  }
 }
 
 // Add brotli default export shims

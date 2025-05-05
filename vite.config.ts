@@ -1,3 +1,4 @@
+
 import { defineConfig, ConfigEnv, Plugin, UserConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
@@ -61,8 +62,9 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => ({
       "buffer": 'buffer',
       "process": 'process/browser',
       "crypto": 'crypto-browserify',
-      "fs": false,
-      "os": false,
+      // Use empty strings for Node.js built-ins that don't have browser equivalents
+      "fs": '',
+      "os": '',
     },
     // Add mainFields to prefer module format
     mainFields: ['browser', 'module', 'jsnext:main', 'jsnext', 'main'],
