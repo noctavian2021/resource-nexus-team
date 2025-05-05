@@ -55,6 +55,10 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => ({
         if (id === 'color-string' || id === 'color-string/index.js') {
           return path.resolve(__dirname, './src/shims/color-string-shim.js');
         }
+        // Check for parse-svg-path imports
+        if (id === 'parse-svg-path' || id === 'parse-svg-path/index.js') {
+          return path.resolve(__dirname, './src/shims/parse-svg-path-shim.js');
+        }
         return null;
       },
       transform(code: string, id: string) {
@@ -155,6 +159,16 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => ({
             map: null
           };
         }
+        // Handle parse-svg-path module
+        if (id.includes('parse-svg-path') && !id.includes('parse-svg-path-shim')) {
+          return {
+            code: `
+              import parseSvgPathShim from '${path.resolve(__dirname, './src/shims/parse-svg-path-shim.js')}';
+              export default parseSvgPathShim;
+            `,
+            map: null
+          };
+        }
         return null;
       }
     }
@@ -198,7 +212,10 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => ({
       "abs-svg-path/index.js": path.resolve(__dirname, './src/shims/abs-svg-path-shim.js'),
       // Add direct alias for color-string
       "color-string": path.resolve(__dirname, './src/shims/color-string-shim.js'),
-      "color-string/index.js": path.resolve(__dirname, './src/shims/color-string-shim.js')
+      "color-string/index.js": path.resolve(__dirname, './src/shims/color-string-shim.js'),
+      // Add direct alias for parse-svg-path
+      "parse-svg-path": path.resolve(__dirname, './src/shims/parse-svg-path-shim.js'),
+      "parse-svg-path/index.js": path.resolve(__dirname, './src/shims/parse-svg-path-shim.js')
     },
     // Add mainFields to prefer module format
     mainFields: ['browser', 'module', 'jsnext:main', 'jsnext', 'main'],
@@ -218,6 +235,7 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => ({
       'cross-fetch', // Add cross-fetch to include
       'abs-svg-path', // Add abs-svg-path to include
       'color-string', // Add color-string to include
+      'parse-svg-path', // Add parse-svg-path to include
     ],
     exclude: [
       // Add problematic dependencies here to exclude them from optimization
