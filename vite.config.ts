@@ -63,6 +63,10 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => ({
         if (id === 'crypto-js/md5' || id === 'crypto-js/md5.js') {
           return path.resolve(__dirname, './src/shims/crypto-js-md5-shim.js');
         }
+        // Check for pako/lib/zlib/zstream imports
+        if (id === 'pako/lib/zlib/zstream' || id === 'pako/lib/zlib/zstream.js') {
+          return path.resolve(__dirname, './src/shims/pako-zstream-shim.js');
+        }
         return null;
       },
       transform(code: string, id: string) {
@@ -184,6 +188,17 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => ({
             map: null
           };
         }
+        // Handle pako/lib/zlib/zstream module
+        if (id.includes('pako/lib/zlib/zstream') && !id.includes('pako-zstream-shim')) {
+          return {
+            code: `
+              import pakoZstreamShim, { ZStream } from '${path.resolve(__dirname, './src/shims/pako-zstream-shim.js')}';
+              export default pakoZstreamShim;
+              export { ZStream };
+            `,
+            map: null
+          };
+        }
         return null;
       }
     }
@@ -233,7 +248,10 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => ({
       "parse-svg-path/index.js": path.resolve(__dirname, './src/shims/parse-svg-path-shim.js'),
       // Add direct alias for crypto-js/md5
       "crypto-js/md5": path.resolve(__dirname, './src/shims/crypto-js-md5-shim.js'),
-      "crypto-js/md5.js": path.resolve(__dirname, './src/shims/crypto-js-md5-shim.js')
+      "crypto-js/md5.js": path.resolve(__dirname, './src/shims/crypto-js-md5-shim.js'),
+      // Add direct alias for pako/lib/zlib/zstream
+      "pako/lib/zlib/zstream": path.resolve(__dirname, './src/shims/pako-zstream-shim.js'),
+      "pako/lib/zlib/zstream.js": path.resolve(__dirname, './src/shims/pako-zstream-shim.js')
     },
     // Add mainFields to prefer module format
     mainFields: ['browser', 'module', 'jsnext:main', 'jsnext', 'main'],
@@ -255,6 +273,7 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => ({
       'color-string', // Add color-string to include
       'parse-svg-path', // Add parse-svg-path to include
       'crypto-js/md5', // Add crypto-js/md5 to include
+      'pako/lib/zlib/zstream', // Add pako/lib/zlib/zstream to include
     ],
     exclude: [
       // Add problematic dependencies here to exclude them from optimization

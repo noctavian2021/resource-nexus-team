@@ -1,3 +1,4 @@
+
 // Add necessary polyfills for browser environment
 import { Buffer as BufferPolyfill } from 'buffer';
 import streamBrowserify from 'stream-browserify';
@@ -11,6 +12,7 @@ import absSvgPathModule from './shims/abs-svg-path-shim';
 import colorStringModule from './shims/color-string-shim';
 import parseSvgPathModule from './shims/parse-svg-path-shim';
 import md5Module from './shims/crypto-js-md5-shim';
+import pakoZstreamModule from './shims/pako-zstream-shim';
 
 // Create a minimal Process interface with only the properties we need
 interface MinimalProcess {
@@ -37,6 +39,7 @@ declare global {
     colorString?: any;
     parseSvgPath?: any;
     md5?: any;
+    pakoZstream?: any;
   }
 }
 
@@ -97,6 +100,11 @@ if (typeof window !== 'undefined') {
   // Add md5 polyfill
   if (!window.md5) {
     window.md5 = md5Module;
+  }
+  
+  // Add pako zstream polyfill
+  if (!window.pakoZstream) {
+    window.pakoZstream = pakoZstreamModule;
   }
 }
 
@@ -214,6 +222,13 @@ const customMd5Shim = {
   MD5: md5Module
 };
 
+// Add pako zstream module shims
+const customPakoZstreamShim = {
+  __esModule: true,
+  default: pakoZstreamModule,
+  ZStream: pakoZstreamModule.ZStream
+};
+
 // This will be used by our import interception logic in vite.config.ts
 if (typeof window !== 'undefined') {
   window.__customModuleShims = {
@@ -239,6 +254,8 @@ if (typeof window !== 'undefined') {
     'parse-svg-path': customParseSvgPathShim,
     'parse-svg-path/index.js': customParseSvgPathShim,
     'crypto-js/md5': customMd5Shim,
-    'crypto-js/md5.js': customMd5Shim
+    'crypto-js/md5.js': customMd5Shim,
+    'pako/lib/zlib/zstream': customPakoZstreamShim,
+    'pako/lib/zlib/zstream.js': customPakoZstreamShim
   };
 }
