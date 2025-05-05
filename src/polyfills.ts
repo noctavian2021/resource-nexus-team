@@ -32,7 +32,26 @@ if (typeof window !== 'undefined') {
       env: { NODE_ENV: 'production' },
       browser: true,
       version: '',
-      versions: {},
+      // Create a minimal versions object that satisfies TypeScript
+      versions: {
+        node: '',
+        v8: '',
+        uv: '',
+        zlib: '',
+        brotli: '',
+        ares: '',
+        modules: '',
+        nghttp2: '',
+        napi: '',
+        llhttp: '',
+        http_parser: '',
+        openssl: '',
+        cldr: '',
+        icu: '',
+        tz: '',
+        unicode: '',
+        electron: '',
+      }
     };
   }
 }

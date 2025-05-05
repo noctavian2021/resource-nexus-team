@@ -1,4 +1,3 @@
-
 import { defineConfig, ConfigEnv, Plugin, UserConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
@@ -73,7 +72,6 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => ({
     include: [
       'base64-js',
       'unicode-properties',
-      'brotli',
       'buffer',
       'process/browser',
     ],
@@ -82,7 +80,8 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => ({
       '@react-pdf/renderer',
       'embla-carousel-react',
       'vaul',
-      'cmdk'
+      'cmdk',
+      'brotli', // Exclude brotli from optimization
     ],
     esbuildOptions: {
       // Use proper platform setting for browser environment
@@ -99,8 +98,10 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => ({
   build: {
     commonjsOptions: {
       // Ensure base64-js and related packages are properly transformed
-      include: [/base64-js/, /unicode-properties/, /brotli/, /node_modules/],
+      include: [/base64-js/, /unicode-properties/, /node_modules/],
       transformMixedEsModules: true,
+      // Skip problematic modules during build
+      ignore: ['brotli']
     },
     rollupOptions: {
       // Explicitly external modules that shouldn't be bundled
