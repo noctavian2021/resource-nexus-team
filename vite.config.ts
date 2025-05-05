@@ -67,6 +67,10 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => ({
         if (id === 'pako/lib/zlib/zstream' || id === 'pako/lib/zlib/zstream.js') {
           return path.resolve(__dirname, './src/shims/pako-zstream-shim.js');
         }
+        // Check for pako/lib/zlib/deflate imports
+        if (id === 'pako/lib/zlib/deflate' || id === 'pako/lib/zlib/deflate.js') {
+          return path.resolve(__dirname, './src/shims/pako-deflate-shim.js');
+        }
         return null;
       },
       transform(code: string, id: string) {
@@ -199,6 +203,17 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => ({
             map: null
           };
         }
+        // Handle pako/lib/zlib/deflate module
+        if (id.includes('pako/lib/zlib/deflate') && !id.includes('pako-deflate-shim')) {
+          return {
+            code: `
+              import pakoDeflateShim, { deflateInit, deflate, deflateEnd, deflateSetDictionary, deflateInfo } from '${path.resolve(__dirname, './src/shims/pako-deflate-shim.js')}';
+              export default pakoDeflateShim;
+              export { deflateInit, deflate, deflateEnd, deflateSetDictionary, deflateInfo };
+            `,
+            map: null
+          };
+        }
         return null;
       }
     }
@@ -251,7 +266,10 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => ({
       "crypto-js/md5.js": path.resolve(__dirname, './src/shims/crypto-js-md5-shim.js'),
       // Add direct alias for pako/lib/zlib/zstream
       "pako/lib/zlib/zstream": path.resolve(__dirname, './src/shims/pako-zstream-shim.js'),
-      "pako/lib/zlib/zstream.js": path.resolve(__dirname, './src/shims/pako-zstream-shim.js')
+      "pako/lib/zlib/zstream.js": path.resolve(__dirname, './src/shims/pako-zstream-shim.js'),
+      // Add direct alias for pako/lib/zlib/deflate
+      "pako/lib/zlib/deflate": path.resolve(__dirname, './src/shims/pako-deflate-shim.js'),
+      "pako/lib/zlib/deflate.js": path.resolve(__dirname, './src/shims/pako-deflate-shim.js')
     },
     // Add mainFields to prefer module format
     mainFields: ['browser', 'module', 'jsnext:main', 'jsnext', 'main'],
@@ -274,6 +292,7 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => ({
       'parse-svg-path', // Add parse-svg-path to include
       'crypto-js/md5', // Add crypto-js/md5 to include
       'pako/lib/zlib/zstream', // Add pako/lib/zlib/zstream to include
+      'pako/lib/zlib/deflate', // Add pako/lib/zlib/deflate to include
     ],
     exclude: [
       // Add problematic dependencies here to exclude them from optimization

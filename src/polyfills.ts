@@ -1,4 +1,3 @@
-
 // Add necessary polyfills for browser environment
 import { Buffer as BufferPolyfill } from 'buffer';
 import streamBrowserify from 'stream-browserify';
@@ -13,6 +12,7 @@ import colorStringModule from './shims/color-string-shim';
 import parseSvgPathModule from './shims/parse-svg-path-shim';
 import md5Module from './shims/crypto-js-md5-shim';
 import pakoZstreamModule from './shims/pako-zstream-shim';
+import pakoDeflateModule from './shims/pako-deflate-shim';
 
 // Create a minimal Process interface with only the properties we need
 interface MinimalProcess {
@@ -40,6 +40,7 @@ declare global {
     parseSvgPath?: any;
     md5?: any;
     pakoZstream?: any;
+    pakoDeflate?: any;
   }
 }
 
@@ -105,6 +106,11 @@ if (typeof window !== 'undefined') {
   // Add pako zstream polyfill
   if (!window.pakoZstream) {
     window.pakoZstream = pakoZstreamModule;
+  }
+  
+  // Add pako deflate polyfill
+  if (!window.pakoDeflate) {
+    window.pakoDeflate = pakoDeflateModule;
   }
 }
 
@@ -229,6 +235,17 @@ const customPakoZstreamShim = {
   ZStream: pakoZstreamModule.ZStream
 };
 
+// Add pako deflate module shims
+const customPakoDeflateShim = {
+  __esModule: true,
+  default: pakoDeflateModule,
+  deflateInit: pakoDeflateModule.deflateInit,
+  deflate: pakoDeflateModule.deflate,
+  deflateEnd: pakoDeflateModule.deflateEnd,
+  deflateSetDictionary: pakoDeflateModule.deflateSetDictionary,
+  deflateInfo: pakoDeflateModule.deflateInfo
+};
+
 // This will be used by our import interception logic in vite.config.ts
 if (typeof window !== 'undefined') {
   window.__customModuleShims = {
@@ -256,6 +273,8 @@ if (typeof window !== 'undefined') {
     'crypto-js/md5': customMd5Shim,
     'crypto-js/md5.js': customMd5Shim,
     'pako/lib/zlib/zstream': customPakoZstreamShim,
-    'pako/lib/zlib/zstream.js': customPakoZstreamShim
+    'pako/lib/zlib/zstream.js': customPakoZstreamShim,
+    'pako/lib/zlib/deflate': customPakoDeflateShim,
+    'pako/lib/zlib/deflate.js': customPakoDeflateShim
   };
 }
