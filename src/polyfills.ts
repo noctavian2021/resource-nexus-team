@@ -6,6 +6,7 @@ import cloneModule from './shims/clone-shim';
 import dfaModule from './shims/dfa-shim';
 import equalModule from './shims/fast-deep-equal-shim';
 import tinyInflateModule from './shims/tiny-inflate-shim';
+import unicodeTrieModule from './shims/unicode-trie-shim';
 
 // Create a minimal Process interface with only the properties we need
 interface MinimalProcess {
@@ -26,6 +27,7 @@ declare global {
     dfa?: any;
     equal?: any;
     tinyInflate?: any;
+    unicodeTrie?: any;
   }
 }
 
@@ -56,6 +58,11 @@ if (typeof window !== 'undefined') {
   // Add tiny-inflate polyfill
   if (!window.tinyInflate) {
     window.tinyInflate = tinyInflateModule;
+  }
+
+  // Add unicode-trie polyfill
+  if (!window.unicodeTrie) {
+    window.unicodeTrie = unicodeTrieModule;
   }
 }
 
@@ -132,6 +139,12 @@ const customTinyInflateShim = {
   default: tinyInflateModule
 };
 
+// Add unicode-trie module shims
+const customUnicodeTrieShim = {
+  __esModule: true,
+  default: unicodeTrieModule
+};
+
 // This will be used by our import interception logic in vite.config.ts
 if (typeof window !== 'undefined') {
   window.__customModuleShims = {
@@ -145,6 +158,8 @@ if (typeof window !== 'undefined') {
     'fast-deep-equal': customEqualShim,
     'fast-deep-equal/index.js': customEqualShim,
     'tiny-inflate': customTinyInflateShim,
-    'tiny-inflate/index.js': customTinyInflateShim
+    'tiny-inflate/index.js': customTinyInflateShim,
+    'unicode-trie': customUnicodeTrieShim,
+    'unicode-trie/index.js': customUnicodeTrieShim
   };
 }

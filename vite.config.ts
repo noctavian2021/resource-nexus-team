@@ -40,6 +40,10 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => ({
         if (id === 'tiny-inflate' || id === 'tiny-inflate/index.js') {
           return path.resolve(__dirname, './src/shims/tiny-inflate-shim.js');
         }
+        // Check for unicode-trie imports
+        if (id === 'unicode-trie' || id === 'unicode-trie/index.js') {
+          return path.resolve(__dirname, './src/shims/unicode-trie-shim.js');
+        }
         return null;
       },
       transform(code: string, id: string) {
@@ -99,6 +103,16 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => ({
             map: null
           };
         }
+        // Handle unicode-trie module
+        if (id.includes('unicode-trie') && !id.includes('unicode-trie-shim')) {
+          return {
+            code: `
+              import unicodeTrieShim from '${path.resolve(__dirname, './src/shims/unicode-trie-shim.js')}';
+              export default unicodeTrieShim;
+            `,
+            map: null
+          };
+        }
         return null;
       }
     }
@@ -130,7 +144,10 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => ({
       "fast-deep-equal/index.js": path.resolve(__dirname, './src/shims/fast-deep-equal-shim.js'),
       // Add direct alias for tiny-inflate
       "tiny-inflate": path.resolve(__dirname, './src/shims/tiny-inflate-shim.js'),
-      "tiny-inflate/index.js": path.resolve(__dirname, './src/shims/tiny-inflate-shim.js')
+      "tiny-inflate/index.js": path.resolve(__dirname, './src/shims/tiny-inflate-shim.js'),
+      // Add direct alias for unicode-trie
+      "unicode-trie": path.resolve(__dirname, './src/shims/unicode-trie-shim.js'),
+      "unicode-trie/index.js": path.resolve(__dirname, './src/shims/unicode-trie-shim.js')
     },
     // Add mainFields to prefer module format
     mainFields: ['browser', 'module', 'jsnext:main', 'jsnext', 'main'],
@@ -146,6 +163,7 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => ({
       'dfa', // Add dfa to include
       'fast-deep-equal', // Add fast-deep-equal to include
       'tiny-inflate', // Add tiny-inflate to include
+      'unicode-trie', // Add unicode-trie to include
     ],
     exclude: [
       // Add problematic dependencies here to exclude them from optimization
