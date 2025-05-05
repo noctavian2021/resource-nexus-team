@@ -50,7 +50,9 @@ export default defineConfig(({ mode }) => ({
       // Fix for parse-svg-path import issues
       "parse-svg-path": path.resolve(__dirname, "node_modules/parse-svg-path"),
       // Fix for crypto-js import issues
-      "crypto-js": path.resolve(__dirname, "node_modules/crypto-js")
+      "crypto-js": path.resolve(__dirname, "node_modules/crypto-js"),
+      // Fix for pako import issues
+      "pako": path.resolve(__dirname, "node_modules/pako")
     },
   },
   optimizeDeps: {
@@ -70,7 +72,8 @@ export default defineConfig(({ mode }) => ({
       "abs-svg-path",
       "color-string",
       "parse-svg-path",
-      "crypto-js"
+      "crypto-js",
+      "pako"
     ],
     exclude: [
       // Add problematic dependencies here to exclude them from optimization
@@ -104,6 +107,7 @@ export default defineConfig(({ mode }) => ({
         /color-string/,
         /parse-svg-path/,
         /crypto-js/,
+        /pako/,
         /node_modules/
       ]
     }
