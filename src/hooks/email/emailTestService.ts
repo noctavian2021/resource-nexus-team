@@ -61,6 +61,20 @@ export const sendTestEmail = async (
 
       console.log('Email test response status:', response.status);
       
+      // Display toast immediately when the server responds
+      if (typeof window !== 'undefined') {
+        // For client-side, show a toast for the server response
+        const eventName = "lovable-toast-event";
+        const toastEvent = new CustomEvent(eventName, { 
+          detail: {
+            title: response.ok ? "Email Server Response" : "Email Server Error",
+            description: `Status: ${response.status} - ${response.ok ? "Server accepted the request" : "Server error occurred"}`,
+            variant: response.ok ? "default" : "destructive",
+          } 
+        });
+        window.dispatchEvent(toastEvent);
+      }
+      
       // Handle different error codes specifically
       if (!response.ok) {
         let errorText = '';
@@ -131,6 +145,19 @@ export const sendTestEmail = async (
       };
     } catch (error: any) {
       console.error('Fetch error in sendTestEmail:', error);
+      
+      // Show a toast for network errors
+      if (typeof window !== 'undefined') {
+        const eventName = "lovable-toast-event";
+        const toastEvent = new CustomEvent(eventName, { 
+          detail: {
+            title: "Network Error",
+            description: error.message || "Failed to connect to email server",
+            variant: "destructive",
+          } 
+        });
+        window.dispatchEvent(toastEvent);
+      }
       
       return {
         success: false,

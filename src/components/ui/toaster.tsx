@@ -1,4 +1,5 @@
 
+import React, { useEffect } from "react";
 import { useToast } from "@/hooks/use-toast"
 import {
   Toast,
@@ -10,7 +11,29 @@ import {
 } from "@/components/ui/toast"
 
 export function Toaster() {
-  const { toasts } = useToast()
+  const { toasts, toast } = useToast()
+
+  // Setup global access to toast
+  useEffect(() => {
+    // Make the toast function globally accessible
+    if (typeof window !== "undefined") {
+      (window as any).toastHandler = { toast };
+    }
+  }, [toast]);
+
+  // Setup toast event listener
+  useEffect(() => {
+    const handleToastEvent = (e: any) => {
+      if (e.detail) {
+        toast(e.detail);
+      }
+    };
+
+    window.addEventListener("lovable-toast-event", handleToastEvent);
+    return () => {
+      window.removeEventListener("lovable-toast-event", handleToastEvent);
+    };
+  }, [toast]);
 
   return (
     <ToastProvider>

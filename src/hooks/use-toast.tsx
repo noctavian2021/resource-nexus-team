@@ -8,6 +8,7 @@ import {
   ToastTitle,
   ToastViewport,
 } from "@/components/ui/toast"
+import { Toaster } from "@/components/ui/toaster";
 
 export type ToastProps = React.ComponentProps<typeof Toast>
 
@@ -180,7 +181,12 @@ function useToastReducer() {
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const toast = useToastReducer()
   
-  return React.createElement(ToastContext.Provider, { value: toast }, children)
+  return (
+    <ToastContext.Provider value={toast}>
+      {children}
+      <Toaster />
+    </ToastContext.Provider>
+  )
 }
 
 // Hook for components to use the toast context
@@ -192,19 +198,41 @@ export function useToast() {
   return context
 }
 
-// Standalone function for use outside of React components
+// Export a standalone function for use outside of React components
+// This should use the single toast instance
+let toastHandler: ReturnType<typeof useToastReducer> | null = null;
+
 export const toast = (props: Toast) => {
-  // This is a fallback for non-React contexts or outside components
-  console.warn("Toast used outside of component context - this may not work as expected")
-  const toastId = genId()
-  // Implementation for standalone usage if needed
-  return {
-    id: toastId,
-    dismiss: () => {
-      // Implement if needed
-    },
-    update: () => {
-      // Implement if needed
-    },
+  if (typeof window !== "undefined") {
+    // If we're in browser context and the toast handler exists, use it
+    const eventName = "lovable-toast-event";
+    const event = new CustomEvent(eventName, { detail: props });
+    window.dispatchEvent(event);
+    
+    // We still provide a return value for API consistency
+    const id = genId();
+    return {
+      id,
+      dismiss: () => {},
+      update: () => {},
+    };
   }
+  
+  // Fallback for server-side or when context not available
+  console.warn("Toast used outside of component context - this may not work as expected");
+  return {
+    id: genId(),
+    dismiss: () => {},
+    update: () => {},
+  };
+};
+
+// Listen for toast events globally
+if (typeof window !== "undefined") {
+  window.addEventListener("lovable-toast-event", ((e: CustomEvent) => {
+    const toastProps = e.detail;
+    if (toastHandler) {
+      toastHandler.toast(toastProps);
+    }
+  }) as EventListener);
 }
