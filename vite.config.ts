@@ -1,3 +1,4 @@
+
 import { defineConfig, ConfigEnv, Plugin, UserConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
@@ -18,13 +19,10 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => ({
       name: 'module-shim',
       enforce: 'pre' as const, // Explicitly type as 'pre'
       resolveId(id: string) {
-        // Return the id unchanged to let Vite handle it
-        // but mark brotli modules for special handling
+        // Check for brotli imports
         if (id.includes('brotli/decompress')) {
-          return {
-            id,
-            moduleSideEffects: false,
-          };
+          // Return a resolved path to our local shim
+          return path.resolve(__dirname, './src/shims/brotli-shim.js');
         }
         return null;
       },
@@ -61,9 +59,11 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => ({
       "buffer": 'buffer',
       "process": 'process/browser',
       "crypto": 'crypto-browserify',
-      // Use empty strings for Node.js built-ins that don't have browser equivalents
+      // Use empty module for Node.js built-ins that don't have browser equivalents
       "fs": '',
       "os": '',
+      // Add direct alias for brotli
+      "brotli/decompress": path.resolve(__dirname, './src/shims/brotli-shim.js'),
     },
     // Add mainFields to prefer module format
     mainFields: ['browser', 'module', 'jsnext:main', 'jsnext', 'main'],

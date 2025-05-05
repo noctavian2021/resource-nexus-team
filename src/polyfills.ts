@@ -28,11 +28,12 @@ if (typeof window !== 'undefined') {
 if (typeof window !== 'undefined') {
   // Create a minimal browser-compatible process object
   if (!window.process) {
+    // Define a process object that satisfies our MinimalProcess interface
+    // without trying to implement the full Node.js Process interface
     window.process = {
       env: { NODE_ENV: 'production' },
       browser: true,
       version: '',
-      // Create a minimal versions object that satisfies TypeScript
       versions: {
         node: '',
         v8: '',
@@ -52,7 +53,7 @@ if (typeof window !== 'undefined') {
         unicode: '',
         electron: '',
       }
-    };
+    } as MinimalProcess; // Cast to MinimalProcess to avoid type errors
   }
 }
 
