@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
 interface ProtectedRouteProps {
@@ -9,27 +9,38 @@ interface ProtectedRouteProps {
 
 export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { user, isLoading } = useAuth();
-  const location = useLocation();
   const navigate = useNavigate();
+  const [currentPath, setCurrentPath] = React.useState(window.location.pathname);
   
-  console.log("ProtectedRoute check - User:", user, "Path:", location.pathname);
+  console.log("ProtectedRoute check - User:", user, "Path:", currentPath);
 
-  // React effect to handle navigation instead of Navigate component
+  // Update path when it changes
+  React.useEffect(() => {
+    const updatePath = () => {
+      setCurrentPath(window.location.pathname);
+    };
+    
+    // Listen for navigation events
+    window.addEventListener('popstate', updatePath);
+    return () => window.removeEventListener('popstate', updatePath);
+  }, []);
+
+  // React effect to handle navigation
   React.useEffect(() => {
     // Redirect to login if not authenticated
     if (!isLoading && !user) {
       console.log("No user found, redirecting to login");
-      navigate("/login", { state: { from: location }, replace: true });
+      navigate("/login", { replace: true });
       return;
     }
     
     // For role-based restrictions
-    if (!isLoading && user && location.pathname.includes('/admin') && user.role !== 'admin') {
+    if (!isLoading && user && currentPath.includes('/admin') && user.role !== 'admin') {
       console.log("User doesn't have admin access, redirecting to dashboard");
       navigate("/", { replace: true });
       return;
     }
-  }, [user, isLoading, location, navigate]);
+  }, [user, isLoading, currentPath, navigate]);
 
   // Show loading state while checking auth
   if (isLoading) {
@@ -45,7 +56,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
     return null; // Don't render anything while redirecting
   }
   
-  const isRestrictedAdminRoute = location.pathname.includes('/admin') && user.role !== 'admin';
+  const isRestrictedAdminRoute = currentPath.includes('/admin') && user.role !== 'admin';
   if (isRestrictedAdminRoute) {
     return null; // Don't render anything while redirecting
   }
