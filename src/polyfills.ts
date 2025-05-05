@@ -4,6 +4,7 @@ import { Buffer as BufferPolyfill } from 'buffer';
 import streamBrowserify from 'stream-browserify';
 import cloneModule from './shims/clone-shim';
 import dfaModule from './shims/dfa-shim';
+import equalModule from './shims/fast-deep-equal-shim';
 
 // Create a minimal Process interface with only the properties we need
 interface MinimalProcess {
@@ -22,6 +23,7 @@ declare global {
     Stream?: any;
     clone?: any;
     dfa?: any;
+    equal?: any;
   }
 }
 
@@ -42,6 +44,11 @@ if (typeof window !== 'undefined') {
   // Add dfa polyfill
   if (!window.dfa) {
     window.dfa = dfaModule;
+  }
+
+  // Add fast-deep-equal polyfill
+  if (!window.equal) {
+    window.equal = equalModule;
   }
 }
 
@@ -106,6 +113,12 @@ const customDfaShim = {
   ...dfaModule
 };
 
+// Add fast-deep-equal module shims
+const customEqualShim = {
+  __esModule: true,
+  default: equalModule
+};
+
 // This will be used by our import interception logic in vite.config.ts
 if (typeof window !== 'undefined') {
   window.__customModuleShims = {
@@ -115,6 +128,8 @@ if (typeof window !== 'undefined') {
     'clone': customCloneShim,
     'clone/clone.js': customCloneShim,
     'dfa': customDfaShim,
-    'dfa/index.js': customDfaShim
+    'dfa/index.js': customDfaShim,
+    'fast-deep-equal': customEqualShim,
+    'fast-deep-equal/index.js': customEqualShim
   };
 }

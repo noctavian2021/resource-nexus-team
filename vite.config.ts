@@ -32,6 +32,10 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => ({
         if (id === 'dfa' || id === 'dfa/index.js') {
           return path.resolve(__dirname, './src/shims/dfa-shim.js');
         }
+        // Check for fast-deep-equal imports
+        if (id === 'fast-deep-equal' || id === 'fast-deep-equal/index.js') {
+          return path.resolve(__dirname, './src/shims/fast-deep-equal-shim.js');
+        }
         return null;
       },
       transform(code: string, id: string) {
@@ -71,6 +75,16 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => ({
             map: null
           };
         }
+        // Handle fast-deep-equal module
+        if (id.includes('fast-deep-equal') && !id.includes('fast-deep-equal-shim')) {
+          return {
+            code: `
+              import equalShim from '${path.resolve(__dirname, './src/shims/fast-deep-equal-shim.js')}';
+              export default equalShim;
+            `,
+            map: null
+          };
+        }
         return null;
       }
     }
@@ -96,7 +110,10 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => ({
       "clone/clone.js": path.resolve(__dirname, './src/shims/clone-shim.js'),
       // Add direct alias for dfa
       "dfa": path.resolve(__dirname, './src/shims/dfa-shim.js'),
-      "dfa/index.js": path.resolve(__dirname, './src/shims/dfa-shim.js')
+      "dfa/index.js": path.resolve(__dirname, './src/shims/dfa-shim.js'),
+      // Add direct alias for fast-deep-equal
+      "fast-deep-equal": path.resolve(__dirname, './src/shims/fast-deep-equal-shim.js'),
+      "fast-deep-equal/index.js": path.resolve(__dirname, './src/shims/fast-deep-equal-shim.js')
     },
     // Add mainFields to prefer module format
     mainFields: ['browser', 'module', 'jsnext:main', 'jsnext', 'main'],
@@ -110,6 +127,7 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => ({
       'stream-browserify',  // Add stream-browserify to include
       'clone', // Add clone to include
       'dfa', // Add dfa to include
+      'fast-deep-equal', // Add fast-deep-equal to include
     ],
     exclude: [
       // Add problematic dependencies here to exclude them from optimization
