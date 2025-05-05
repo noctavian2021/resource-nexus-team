@@ -10,7 +10,6 @@ export default postcssValueParserModule;
 // Re-export all named exports
 export * from 'postcss-value-parser';
 
-// Explicitly export the parse module that's being imported
-export const parse = parseModule;
+// Explicitly export the parse and unit modules that are being imported
 export { default as parse } from 'postcss-value-parser/lib/parse';
 export { default as unit } from 'postcss-value-parser/lib/unit';
