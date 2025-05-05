@@ -5,8 +5,8 @@ import { EmailConfig } from '@/hooks/email/types';
 // API URL configuration - change to point to local server
 export const API_URL = 'http://localhost:5000';
 
-// Flag to control mock data usage - setting it to false by default
-let useMockData = false;
+// Flag to control mock data usage - setting it to true by default
+let useMockData = true;
 
 // Toggle mock data usage
 export const toggleMockData = (enabled: boolean): boolean => {
