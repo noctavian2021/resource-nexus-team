@@ -1,4 +1,3 @@
-
 const express = require('express');
 const cors = require('cors');
 const { db, getNextId } = require('./data');
@@ -167,6 +166,132 @@ app.delete('/api/projects/:id', (req, res) => {
 });
 
 // --- Email API ---
+// New endpoint for sending emails
+app.post('/api/email/send', async (req, res) => {
+  try {
+    const { to, subject, text, html, emailConfig } = req.body;
+    
+    if (!emailConfig || !to) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Email configuration and recipient are required' 
+      });
+    }
+
+    console.log('Sending email to:', to);
+    console.log('Using email configuration:', JSON.stringify({
+      host: emailConfig.host,
+      port: emailConfig.port,
+      secure: emailConfig.secure,
+      auth: {
+        user: emailConfig.username,
+        // Mask password in logs
+        pass: '********'
+      },
+      from: `"${emailConfig.fromName}" <${emailConfig.fromEmail}>`,
+    }, null, 2));
+
+    // Configure appropriate options based on port and provider
+    const transportOptions = {
+      host: emailConfig.host,
+      port: parseInt(emailConfig.port),
+      secure: emailConfig.secure,
+      auth: {
+        user: emailConfig.username,
+        pass: emailConfig.password,
+      },
+      // Extended timeout settings
+      connectionTimeout: 30000,  // 30 seconds
+      greetingTimeout: 30000,    // 30 seconds
+      socketTimeout: 30000,      // 30 seconds
+      debug: true,
+      logger: true,
+    };
+    
+    // Add TLS options for all email providers to improve connection reliability
+    transportOptions.tls = {
+      // Don't reject connections with self-signed certificates
+      rejectUnauthorized: false,
+      // Ensure we use modern TLS versions
+      minVersion: 'TLSv1.2',
+      // Use secure ciphers
+      ciphers: 'HIGH:!aNULL:!MD5',
+    };
+
+    // Create a transporter with the provided configuration
+    const transporter = nodemailer.createTransport(transportOptions);
+
+    // Verify connection configuration
+    try {
+      console.log('Verifying SMTP connection...');
+      await transporter.verify();
+      console.log('SMTP connection verified successfully');
+    } catch (verifyError) {
+      console.error('SMTP verification failed:', verifyError);
+      let errorMessage = `Failed to connect to SMTP server: ${verifyError.message}`;
+      
+      // Enhanced error messages for common issues
+      if (verifyError.message.includes('Greeting never received')) {
+        errorMessage = 'SMTP greeting timeout. This might be due to network issues, temporarily blocked IP, or incorrect credentials. Try again in a few minutes.';
+      }
+      
+      if (verifyError.message.includes('SSL routines') || verifyError.message.includes('wrong version number')) {
+        errorMessage = 'SSL/TLS connection failed. Your secure setting may not match what the server expects. If your port is 587, try setting secure=false. If your port is 465, try setting secure=true.';
+      }
+      
+      return res.status(400).json({ 
+        success: false, 
+        error: errorMessage
+      });
+    }
+
+    // Send mail
+    const mailOptions = {
+      from: `"${emailConfig.fromName}" <${emailConfig.fromEmail}>`,
+      to,
+      subject,
+      text,
+      html,
+    };
+
+    console.log('Sending email with these options:', JSON.stringify(mailOptions, null, 2));
+    const info = await transporter.sendMail(mailOptions);
+    console.log('Email sent successfully:', info);
+    console.log('Message ID:', info.messageId);
+    console.log('SMTP response:', info.response);
+
+    res.json({ 
+      success: true, 
+      message: 'Email sent successfully',
+      messageId: info.messageId,
+      smtpResponse: info.response,
+      details: {
+        messageId: info.messageId,
+        smtpResponse: info.response
+      }
+    });
+  } catch (error) {
+    console.error('Email sending error:', error);
+    
+    // Enhanced error handling with specific guidance
+    let errorMessage = `Failed to send email: ${error.message}`;
+    
+    // SSL/TLS specific error messages
+    if (error.message.includes('SSL routines') || error.message.includes('wrong version number')) {
+      errorMessage = 'SSL/TLS connection failed. Your secure setting may not match what the server expects. If your port is 587, try setting secure=false. If your port is 465, try setting secure=true.';
+    }
+    
+    if (error.message.includes('Greeting never received')) {
+      errorMessage = 'SMTP connection timed out waiting for greeting. This could be due to network issues or security measures. Try again in a few minutes or check your credentials.';
+    }
+    
+    res.status(500).json({ 
+      success: false, 
+      error: errorMessage
+    });
+  }
+});
+
 // New endpoint for sending test emails
 app.post('/api/email/send-test', async (req, res) => {
   try {
