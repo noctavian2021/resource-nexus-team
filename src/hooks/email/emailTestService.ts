@@ -27,7 +27,7 @@ export const sendTestEmail = async (
     console.log(`Sending test email to endpoint: ${url}`);
     
     try {
-      // Call the email API endpoint
+      // Call the email API endpoint with added error handling
       const response = await fetch(url, {
         method: 'POST',
         headers: {
@@ -61,154 +61,76 @@ export const sendTestEmail = async (
       
       // Handle different error codes specifically
       if (!response.ok) {
-        if (response.status === 404) {
-          return {
-            success: false,
-            error: "Email API endpoint not found. The server may not be running on port 5000."
-          };
-        }
+        let errorText = '';
         
-        if (response.status === 500) {
-          try {
-            // Try to get error text
-            const errorText = await response.text();
-            console.error('Server error response:', errorText);
-            
-            // Try to parse the error as JSON if possible
-            try {
-              const errorJson = JSON.parse(errorText);
-              return {
-                success: false,
-                error: errorJson.error || `Server error: ${errorText || 'Unknown internal server error'}`
-              };
-            } catch (jsonParseError) {
-              // If not valid JSON, just return the text
-              return {
-                success: false,
-                error: `Server error: ${errorText || 'Unknown internal server error'}`
-              };
-            }
-          } catch (textReadError) {
-            // If we can't even read the response text
-            return {
-              success: false,
-              error: "Server internal error. Check server logs for details."
-            };
-          }
-        }
-        
-        // For any other error status
         try {
-          const errorText = await response.text();
-          // Try to parse as JSON first
+          errorText = await response.text();
+          console.log('Error response text:', errorText);
+          
           try {
+            // Try to parse as JSON
             const errorJson = JSON.parse(errorText);
             return {
               success: false,
-              error: errorJson.error || `API returned ${response.status}: ${errorText || response.statusText}`
+              error: errorJson.error || `Error (${response.status}): ${errorText}`
             };
           } catch (jsonError) {
-            // If not valid JSON, return the text
+            // Not valid JSON, return as string
             return {
               success: false,
-              error: `API returned ${response.status}: ${errorText || response.statusText}`
+              error: `Error (${response.status}): ${errorText}`
             };
           }
-        } catch (textError) {
+        } catch (e) {
           return {
             success: false,
-            error: `API returned ${response.status}: ${response.statusText}`
+            error: `Server returned error status ${response.status}`
           };
         }
       }
       
-      // Handle empty response
-      let responseText;
+      // Handle successful response
+      let responseData;
       try {
-        responseText = await response.text();
-      } catch (error) {
-        console.error('Error reading response text:', error);
-        responseText = '';
-      }
-      
-      if (!responseText) {
-        console.log('Server returned empty response');
-        return {
-          success: true,
-          details: {
-            messageId: 'unknown',
-            smtpResponse: 'Server returned empty response but status was OK'
-          }
-        };
-      }
-      
-      // Parse the JSON only if we have content
-      try {
-        const result = JSON.parse(responseText);
-        
-        // Format the response according to our expected TestEmailResponse type
-        if (result.success) {
-          return {
-            success: true,
-            details: {
-              messageId: result.messageId || 'unknown',
-              smtpResponse: result.smtpResponse || 'Email sent successfully'
-            }
-          };
-        } else {
-          return {
-            success: false,
-            error: result.error || "Unknown error occurred while sending test email"
-          };
-        }
-      } catch (jsonError) {
-        console.error('JSON parsing error:', jsonError, 'Response text:', responseText);
-        
-        // If JSON parsing fails but status was OK, assume success
-        if (response.ok) {
+        const responseText = await response.text();
+        if (!responseText.trim()) {
+          // Empty response but status was OK
           return {
             success: true,
             details: {
               messageId: 'unknown',
-              smtpResponse: 'Email sent successfully, but response format was unexpected'
+              smtpResponse: 'Email sent successfully (no details returned)'
             }
           };
         }
         
+        responseData = JSON.parse(responseText);
+      } catch (parseError) {
+        console.error('Error parsing response:', parseError);
+        // If we can't parse but the status was OK, assume success
         return {
-          success: false,
-          error: `Failed to parse server response: ${responseText.substring(0, 100)}...`
+          success: true,
+          details: {
+            messageId: 'unknown',
+            smtpResponse: 'Email sent successfully (response parsing error)'
+          }
         };
       }
+      
+      // Return a properly structured response
+      return {
+        success: true,
+        details: {
+          messageId: responseData?.messageId || 'unknown',
+          smtpResponse: responseData?.smtpResponse || 'Email sent successfully'
+        }
+      };
     } catch (error: any) {
-      // This handles fetch errors or JSON parsing errors
       console.error('Fetch error in sendTestEmail:', error);
-      
-      if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
-        return {
-          success: false,
-          error: "Network error: Unable to connect to the email server. Make sure the server is running at http://localhost:5000."
-        };
-      }
-      
-      if (error.message.includes('404')) {
-        return {
-          success: false,
-          error: "Email API endpoint not found. The server may not be configured to handle email requests."
-        };
-      }
-      
-      // Check for JSON parsing errors
-      if (error.message.includes('JSON')) {
-        return {
-          success: false,
-          error: "Received invalid JSON response from server. Check server logs for details."
-        };
-      }
       
       return {
         success: false,
-        error: error.message || "An unknown error occurred"
+        error: error.message || "Failed to connect to email server"
       };
     }
   } catch (error: any) {
