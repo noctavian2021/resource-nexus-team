@@ -1,7 +1,8 @@
 
 import { handleMockRequest } from './mockApiHandler';
 
-export const API_URL = process.env.API_URL || 'https://api.example.com';
+// Use import.meta.env instead of process.env for Vite
+export const API_URL = import.meta.env.VITE_API_URL || 'https://api.example.com';
 
 // Flag to control mock data usage
 let useMockData = false; // Changed to false by default for production
