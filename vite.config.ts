@@ -48,7 +48,9 @@ export default defineConfig(({ mode }) => ({
       // Fix for color-string import issues
       "color-string": path.resolve(__dirname, "node_modules/color-string"),
       // Fix for parse-svg-path import issues
-      "parse-svg-path": path.resolve(__dirname, "node_modules/parse-svg-path")
+      "parse-svg-path": path.resolve(__dirname, "node_modules/parse-svg-path"),
+      // Fix for crypto-js import issues
+      "crypto-js": path.resolve(__dirname, "node_modules/crypto-js")
     },
   },
   optimizeDeps: {
@@ -67,7 +69,8 @@ export default defineConfig(({ mode }) => ({
       "cross-fetch",
       "abs-svg-path",
       "color-string",
-      "parse-svg-path"
+      "parse-svg-path",
+      "crypto-js"
     ],
     exclude: [
       // Add problematic dependencies here to exclude them from optimization
@@ -100,6 +103,7 @@ export default defineConfig(({ mode }) => ({
         /abs-svg-path/,
         /color-string/,
         /parse-svg-path/,
+        /crypto-js/,
         /node_modules/
       ]
     }
