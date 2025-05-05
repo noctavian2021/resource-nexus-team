@@ -79,6 +79,10 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => ({
         if (id === 'pako/lib/zlib/constants' || id === 'pako/lib/zlib/constants.js') {
           return path.resolve(__dirname, './src/shims/pako-constants-shim.js');
         }
+        // Check for media-engine imports
+        if (id === 'media-engine' || id === 'media-engine/src/index.js') {
+          return path.resolve(__dirname, './src/shims/media-engine-shim.js');
+        }
         return null;
       },
       transform(code: string, id: string) {
@@ -258,6 +262,17 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => ({
             map: null
           };
         }
+        // Handle media-engine module
+        if (id.includes('media-engine') && !id.includes('media-engine-shim')) {
+          return {
+            code: `
+              import mediaEngineShim from '${path.resolve(__dirname, './src/shims/media-engine-shim.js')}';
+              export default mediaEngineShim;
+              export * from '${path.resolve(__dirname, './src/shims/media-engine-shim.js')}';
+            `,
+            map: null
+          };
+        }
         return null;
       }
     }
@@ -319,7 +334,10 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => ({
       "pako/lib/zlib/inflate.js": path.resolve(__dirname, './src/shims/pako-inflate-shim.js'),
       // Add direct alias for pako/lib/zlib/constants
       "pako/lib/zlib/constants": path.resolve(__dirname, './src/shims/pako-constants-shim.js'),
-      "pako/lib/zlib/constants.js": path.resolve(__dirname, './src/shims/pako-constants-shim.js')
+      "pako/lib/zlib/constants.js": path.resolve(__dirname, './src/shims/pako-constants-shim.js'),
+      // Add direct alias for media-engine
+      "media-engine": path.resolve(__dirname, './src/shims/media-engine-shim.js'),
+      "media-engine/src/index.js": path.resolve(__dirname, './src/shims/media-engine-shim.js'),
     },
     // Add mainFields to prefer module format
     mainFields: ['browser', 'module', 'jsnext:main', 'jsnext', 'main'],
@@ -345,6 +363,7 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => ({
       'pako/lib/zlib/deflate', // Add pako/lib/zlib/deflate to include
       'pako/lib/zlib/inflate', // Add pako/lib/zlib/inflate to include
       'pako/lib/zlib/constants', // Add pako/lib/zlib/constants to include
+      'media-engine', // Add media-engine to include
     ],
     exclude: [
       // Add problematic dependencies here to exclude them from optimization

@@ -16,6 +16,7 @@ import pakoDeflateModule from './shims/pako-deflate-shim';
 import pakoInflateModule from './shims/pako-inflate-shim';
 import pakoConstantsModule from './shims/pako-constants-shim';
 import hslToHexModule from './shims/hsl-to-hex-shim';
+import mediaEngineModule from './shims/media-engine-shim';
 
 console.log('Polyfills loaded:', {
   pakoZstream: pakoZstreamModule,
@@ -23,7 +24,8 @@ console.log('Polyfills loaded:', {
   pakoInflate: pakoInflateModule,
   pakoConstants: pakoConstantsModule,
   md5Module: md5Module,
-  hslToHex: hslToHexModule
+  hslToHex: hslToHexModule,
+  mediaEngine: mediaEngineModule
 });
 
 // Create a minimal Process interface with only the properties we need
@@ -56,6 +58,7 @@ declare global {
     pakoInflate?: any;
     pakoConstants?: any;
     hslToHex?: any;
+    mediaEngine?: any;
   }
 }
 
@@ -146,6 +149,12 @@ if (typeof window !== 'undefined') {
   if (!window.hslToHex) {
     window.hslToHex = hslToHexModule;
     console.log('Added hsl-to-hex polyfill to window', hslToHexModule);
+  }
+  
+  // Add media-engine polyfill
+  if (!window.mediaEngine) {
+    window.mediaEngine = mediaEngineModule;
+    console.log('Added media-engine polyfill to window', mediaEngineModule);
   }
 }
 
@@ -334,6 +343,13 @@ const customHslToHexShim = {
   hslToHex: hslToHexModule
 };
 
+// Add media-engine module shims
+const customMediaEngineShim = {
+  __esModule: true,
+  default: mediaEngineModule,
+  ...mediaEngineModule
+};
+
 // This will be used by our import interception logic in vite.config.ts
 if (typeof window !== 'undefined') {
   window.__customModuleShims = {
@@ -369,6 +385,8 @@ if (typeof window !== 'undefined') {
     'pako/lib/zlib/constants': customPakoConstantsShim,
     'pako/lib/zlib/constants.js': customPakoConstantsShim,
     'hsl-to-hex': customHslToHexShim,
-    'hsl-to-hex/index.js': customHslToHexShim
+    'hsl-to-hex/index.js': customHslToHexShim,
+    'media-engine': customMediaEngineShim,
+    'media-engine/src/index.js': customMediaEngineShim
   };
 }
