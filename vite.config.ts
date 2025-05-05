@@ -1,4 +1,3 @@
-
 import { defineConfig, ConfigEnv, Plugin, UserConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
@@ -51,6 +50,10 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => ({
         // Check for abs-svg-path imports
         if (id === 'abs-svg-path' || id === 'abs-svg-path/index.js') {
           return path.resolve(__dirname, './src/shims/abs-svg-path-shim.js');
+        }
+        // Check for color-string imports
+        if (id === 'color-string' || id === 'color-string/index.js') {
+          return path.resolve(__dirname, './src/shims/color-string-shim.js');
         }
         return null;
       },
@@ -142,6 +145,16 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => ({
             map: null
           };
         }
+        // Handle color-string module
+        if (id.includes('color-string') && !id.includes('color-string-shim')) {
+          return {
+            code: `
+              import colorStringShim from '${path.resolve(__dirname, './src/shims/color-string-shim.js')}';
+              export default colorStringShim;
+            `,
+            map: null
+          };
+        }
         return null;
       }
     }
@@ -182,7 +195,10 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => ({
       "cross-fetch/dist/browser-ponyfill.js": path.resolve(__dirname, './src/shims/cross-fetch-shim.js'),
       // Add direct alias for abs-svg-path
       "abs-svg-path": path.resolve(__dirname, './src/shims/abs-svg-path-shim.js'),
-      "abs-svg-path/index.js": path.resolve(__dirname, './src/shims/abs-svg-path-shim.js')
+      "abs-svg-path/index.js": path.resolve(__dirname, './src/shims/abs-svg-path-shim.js'),
+      // Add direct alias for color-string
+      "color-string": path.resolve(__dirname, './src/shims/color-string-shim.js'),
+      "color-string/index.js": path.resolve(__dirname, './src/shims/color-string-shim.js')
     },
     // Add mainFields to prefer module format
     mainFields: ['browser', 'module', 'jsnext:main', 'jsnext', 'main'],
@@ -201,6 +217,7 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => ({
       'unicode-trie', // Add unicode-trie to include
       'cross-fetch', // Add cross-fetch to include
       'abs-svg-path', // Add abs-svg-path to include
+      'color-string', // Add color-string to include
     ],
     exclude: [
       // Add problematic dependencies here to exclude them from optimization

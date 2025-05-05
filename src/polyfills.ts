@@ -1,4 +1,3 @@
-
 // Add necessary polyfills for browser environment
 import { Buffer as BufferPolyfill } from 'buffer';
 import streamBrowserify from 'stream-browserify';
@@ -9,6 +8,7 @@ import tinyInflateModule from './shims/tiny-inflate-shim';
 import unicodeTrieModule from './shims/unicode-trie-shim';
 import crossFetchModule from './shims/cross-fetch-shim';
 import absSvgPathModule from './shims/abs-svg-path-shim';
+import colorStringModule from './shims/color-string-shim';
 
 // Create a minimal Process interface with only the properties we need
 interface MinimalProcess {
@@ -32,6 +32,7 @@ declare global {
     unicodeTrie?: any;
     crossFetch?: any;
     absSvgPath?: any;
+    colorString?: any;
   }
 }
 
@@ -77,6 +78,11 @@ if (typeof window !== 'undefined') {
   // Add abs-svg-path polyfill
   if (!window.absSvgPath) {
     window.absSvgPath = absSvgPathModule;
+  }
+  
+  // Add color-string polyfill
+  if (!window.colorString) {
+    window.colorString = colorStringModule;
   }
 }
 
@@ -175,6 +181,12 @@ const customAbsSvgPathShim = {
   default: absSvgPathModule
 };
 
+// Add color-string module shims
+const customColorStringShim = {
+  __esModule: true,
+  default: colorStringModule
+};
+
 // This will be used by our import interception logic in vite.config.ts
 if (typeof window !== 'undefined') {
   window.__customModuleShims = {
@@ -194,6 +206,8 @@ if (typeof window !== 'undefined') {
     'cross-fetch': customCrossFetchShim,
     'cross-fetch/dist/browser-ponyfill.js': customCrossFetchShim,
     'abs-svg-path': customAbsSvgPathShim,
-    'abs-svg-path/index.js': customAbsSvgPathShim
+    'abs-svg-path/index.js': customAbsSvgPathShim,
+    'color-string': customColorStringShim,
+    'color-string/index.js': customColorStringShim
   };
 }
