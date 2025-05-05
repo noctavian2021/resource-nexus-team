@@ -38,11 +38,10 @@ export default defineConfig(({ mode }) => ({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
-      // Ensure React is correctly aliased with proper exports
+      // Fix React aliases with correct exports
       "react": path.resolve(__dirname, "node_modules/react"),
       "react-dom": path.resolve(__dirname, "node_modules/react-dom"),
-      "react/jsx-runtime": path.resolve(__dirname, "node_modules/react/jsx-runtime"),
-      "react/jsx-dev-runtime": path.resolve(__dirname, "node_modules/react/jsx-dev-runtime"),
+      "react/jsx-runtime": path.resolve(__dirname, "node_modules/react/jsx-runtime")
     },
   },
   define: {
@@ -53,8 +52,6 @@ export default defineConfig(({ mode }) => ({
   },
   optimizeDeps: {
     include: [
-      'postcss-value-parser',
-      'media-engine',
       'react',
       'react-dom',
       'react/jsx-runtime'
@@ -69,7 +66,6 @@ export default defineConfig(({ mode }) => ({
       transformMixedEsModules: true
     },
     rollupOptions: {
-      external: [],
       output: {
         manualChunks: {
           'react-vendor': ['react', 'react-dom', 'react/jsx-runtime'],
