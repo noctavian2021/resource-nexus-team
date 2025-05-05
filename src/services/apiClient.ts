@@ -1,8 +1,9 @@
+
 import { handleMockRequest } from './mockApiHandler';
 import { EmailConfig } from '@/hooks/email/types';
 
 // API URL configuration - change to point to local server
-export const API_URL = 'http://localhost:5000/api';
+export const API_URL = 'http://localhost:5000';
 
 // Flag to control mock data usage - setting it to false by default
 let useMockData = false;

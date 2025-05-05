@@ -49,7 +49,7 @@ export const sendTestEmail = async (
   }
   
   try {
-    // Use the dedicated server endpoint for email testing
+    // Use the correct endpoint path for email testing
     const result = await apiRequest<{
       success: boolean;
       message?: string;
