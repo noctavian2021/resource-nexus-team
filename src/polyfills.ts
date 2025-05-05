@@ -10,6 +10,7 @@ import crossFetchModule from './shims/cross-fetch-shim';
 import absSvgPathModule from './shims/abs-svg-path-shim';
 import colorStringModule from './shims/color-string-shim';
 import parseSvgPathModule from './shims/parse-svg-path-shim';
+import md5Module from './shims/crypto-js-md5-shim';
 
 // Create a minimal Process interface with only the properties we need
 interface MinimalProcess {
@@ -35,6 +36,7 @@ declare global {
     absSvgPath?: any;
     colorString?: any;
     parseSvgPath?: any;
+    md5?: any;
   }
 }
 
@@ -90,6 +92,11 @@ if (typeof window !== 'undefined') {
   // Add parse-svg-path polyfill
   if (!window.parseSvgPath) {
     window.parseSvgPath = parseSvgPathModule;
+  }
+  
+  // Add md5 polyfill
+  if (!window.md5) {
+    window.md5 = md5Module;
   }
 }
 
@@ -200,6 +207,13 @@ const customParseSvgPathShim = {
   default: parseSvgPathModule
 };
 
+// Add md5 module shims
+const customMd5Shim = {
+  __esModule: true,
+  default: md5Module,
+  MD5: md5Module
+};
+
 // This will be used by our import interception logic in vite.config.ts
 if (typeof window !== 'undefined') {
   window.__customModuleShims = {
@@ -223,6 +237,8 @@ if (typeof window !== 'undefined') {
     'color-string': customColorStringShim,
     'color-string/index.js': customColorStringShim,
     'parse-svg-path': customParseSvgPathShim,
-    'parse-svg-path/index.js': customParseSvgPathShim
+    'parse-svg-path/index.js': customParseSvgPathShim,
+    'crypto-js/md5': customMd5Shim,
+    'crypto-js/md5.js': customMd5Shim
   };
 }

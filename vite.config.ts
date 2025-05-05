@@ -59,6 +59,10 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => ({
         if (id === 'parse-svg-path' || id === 'parse-svg-path/index.js') {
           return path.resolve(__dirname, './src/shims/parse-svg-path-shim.js');
         }
+        // Check for crypto-js/md5 imports
+        if (id === 'crypto-js/md5' || id === 'crypto-js/md5.js') {
+          return path.resolve(__dirname, './src/shims/crypto-js-md5-shim.js');
+        }
         return null;
       },
       transform(code: string, id: string) {
@@ -169,6 +173,17 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => ({
             map: null
           };
         }
+        // Handle crypto-js/md5 module
+        if (id.includes('crypto-js/md5') && !id.includes('crypto-js-md5-shim')) {
+          return {
+            code: `
+              import md5Shim, { MD5 } from '${path.resolve(__dirname, './src/shims/crypto-js-md5-shim.js')}';
+              export default md5Shim;
+              export { MD5 };
+            `,
+            map: null
+          };
+        }
         return null;
       }
     }
@@ -215,7 +230,10 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => ({
       "color-string/index.js": path.resolve(__dirname, './src/shims/color-string-shim.js'),
       // Add direct alias for parse-svg-path
       "parse-svg-path": path.resolve(__dirname, './src/shims/parse-svg-path-shim.js'),
-      "parse-svg-path/index.js": path.resolve(__dirname, './src/shims/parse-svg-path-shim.js')
+      "parse-svg-path/index.js": path.resolve(__dirname, './src/shims/parse-svg-path-shim.js'),
+      // Add direct alias for crypto-js/md5
+      "crypto-js/md5": path.resolve(__dirname, './src/shims/crypto-js-md5-shim.js'),
+      "crypto-js/md5.js": path.resolve(__dirname, './src/shims/crypto-js-md5-shim.js')
     },
     // Add mainFields to prefer module format
     mainFields: ['browser', 'module', 'jsnext:main', 'jsnext', 'main'],
@@ -236,6 +254,7 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => ({
       'abs-svg-path', // Add abs-svg-path to include
       'color-string', // Add color-string to include
       'parse-svg-path', // Add parse-svg-path to include
+      'crypto-js/md5', // Add crypto-js/md5 to include
     ],
     exclude: [
       // Add problematic dependencies here to exclude them from optimization
