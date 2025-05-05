@@ -18,9 +18,12 @@ export default defineConfig(({ mode }) => ({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      // Fix for base64-js import issues
+      "base64-js": path.resolve(__dirname, "node_modules/base64-js")
     },
   },
   optimizeDeps: {
+    include: ["base64-js"],
     exclude: [
       // Add problematic dependencies here to exclude them from optimization
       '@react-pdf/renderer',
@@ -28,5 +31,12 @@ export default defineConfig(({ mode }) => ({
       'vaul',
       'cmdk'
     ]
+  },
+  build: {
+    commonjsOptions: {
+      // Handle CommonJS dependencies properly
+      transformMixedEsModules: true,
+      include: [/base64-js/, /unicode-properties/, /node_modules/]
+    }
   }
 }));
