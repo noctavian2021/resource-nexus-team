@@ -98,6 +98,10 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => ({
             return path.resolve(__dirname, './src/shims/postcss-value-parser-shim.js');
           }
         }
+        // Check for hyphen imports
+        if (id === 'hyphen' || id === 'hyphen/hyphen.js') {
+          return path.resolve(__dirname, './src/shims/hyphen-shim.js');
+        }
         return null;
       },
       transform(code: string, id: string) {
@@ -326,6 +330,17 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => ({
             map: null
           };
         }
+        // Handle hyphen module
+        if (id.includes('hyphen') && !id.includes('hyphen-shim')) {
+          return {
+            code: `
+              import hyphenShim from '${path.resolve(__dirname, './src/shims/hyphen-shim.js')}';
+              export default hyphenShim;
+              export * from '${path.resolve(__dirname, './src/shims/hyphen-shim.js')}';
+            `,
+            map: null
+          };
+        }
         return null;
       }
     }
@@ -398,6 +413,9 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => ({
       "postcss-value-parser/lib/unit.js": path.resolve(__dirname, './src/shims/postcss-value-parser-shim.js'),
       "postcss-value-parser/lib/parse": path.resolve(__dirname, './src/shims/postcss-value-parser-shim.js'),
       "postcss-value-parser/lib/unit": path.resolve(__dirname, './src/shims/postcss-value-parser-shim.js'),
+      // Add direct alias for hyphen
+      "hyphen": path.resolve(__dirname, './src/shims/hyphen-shim.js'),
+      "hyphen/hyphen.js": path.resolve(__dirname, './src/shims/hyphen-shim.js'),
     },
     // Add mainFields to prefer module format
     mainFields: ['browser', 'module', 'jsnext:main', 'jsnext', 'main'],
@@ -425,6 +443,7 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => ({
       'pako/lib/zlib/constants', // Add pako/lib/zlib/constants to include
       'media-engine', // Add media-engine to include
       'postcss-value-parser', // Add postcss-value-parser to include
+      'hyphen', // Add hyphen to include
     ],
     exclude: [
       // Add problematic dependencies here to exclude them from optimization

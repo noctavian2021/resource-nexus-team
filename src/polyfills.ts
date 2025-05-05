@@ -18,6 +18,7 @@ import pakoConstantsModule from './shims/pako-constants-shim';
 import hslToHexModule from './shims/hsl-to-hex-shim';
 import mediaEngineModule from './shims/media-engine-shim';
 import postcssValueParserModule from './shims/postcss-value-parser-shim';
+import hyphenModule from './shims/hyphen-shim';
 
 console.log('Polyfills loaded:', {
   pakoZstream: pakoZstreamModule,
@@ -64,6 +65,7 @@ declare global {
     postcssValueParser?: any;
     postcssValueParserParse?: any;
     postcssValueParserUnit?: any;
+    hyphen?: any;
   }
 }
 
@@ -178,6 +180,12 @@ if (typeof window !== 'undefined') {
     }
     
     console.log('Added postcss-value-parser polyfill to window', postcssValueParserModule);
+  }
+  
+  // Add hyphen polyfill
+  if (!window.hyphen) {
+    window.hyphen = hyphenModule;
+    console.log('Added hyphen polyfill to window', hyphenModule);
   }
 }
 
@@ -386,6 +394,13 @@ const customPostcssValueParserShim = {
   }
 };
 
+// Add hyphen module shims
+const customHyphenShim = {
+  __esModule: true,
+  default: hyphenModule,
+  ...hyphenModule
+};
+
 // This will be used by our import interception logic in vite.config.ts
 if (typeof window !== 'undefined') {
   window.__customModuleShims = {
@@ -446,6 +461,8 @@ if (typeof window !== 'undefined') {
       __esModule: true, 
       default: postcssValueParserModule.unit,
       unit: postcssValueParserModule.unit
-    }
+    },
+    'hyphen': customHyphenShim,
+    'hyphen/hyphen.js': customHyphenShim,
   };
 }
