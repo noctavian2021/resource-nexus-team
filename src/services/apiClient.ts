@@ -1,8 +1,8 @@
 import { handleMockRequest } from './mockApiHandler';
 import { EmailConfig } from '@/hooks/email/types';
 
-// API URL configuration
-export const API_URL = 'https://api.example.com/v1'; // This is a placeholder, as we're mostly using mock data
+// API URL configuration - change to point to local server
+export const API_URL = 'http://localhost:5000/api';
 
 // Flag to control mock data usage - setting it to false by default
 let useMockData = false;
@@ -39,11 +39,6 @@ const apiRequest = async <T>(
       console.error('Mock API error:', error);
       throw error;
     }
-  }
-
-  // Check if this is an email-specific endpoint and handle it differently
-  if (endpoint.includes('/email/send')) {
-    return await handleEmailRequest<T>(data, options);
   }
 
   // Otherwise attempt a real API request with better error handling
@@ -97,102 +92,6 @@ const apiRequest = async <T>(
   } catch (error) {
     console.error('API request error:', error);
     throw error;
-  }
-};
-
-/**
- * Direct SMTP email handling using the configured email settings
- * In a production environment, this would be handled by a NodeJS server with Nodemailer
- * For this client-side implementation, we simulate the SMTP connection for demonstration
- */
-const handleEmailRequest = async <T>(data: any, options: RequestInit = {}): Promise<T> => {
-  try {
-    const emailConfig = data.emailConfig as EmailConfig;
-    
-    // Log email sending attempt with detailed information
-    console.log('Attempting to send email with config:', JSON.stringify({
-      to: data.to,
-      from: emailConfig.fromEmail,
-      subject: data.subject,
-      host: emailConfig.host,
-      port: emailConfig.port,
-      secure: emailConfig.secure,
-      username: emailConfig.username,
-      // Don't log the password for security
-    }, null, 2));
-    
-    // In a real production environment, this would connect to the SMTP server
-    // and send the email directly. For this client-side app, we simulate the process
-    // with detailed logging to show what would happen
-    
-    // Connection simulation based on email provider
-    console.log(`[SMTP Simulation] Connecting to ${emailConfig.host}:${emailConfig.port} (secure: ${emailConfig.secure ? 'yes' : 'no'})`);
-    
-    // Authentication simulation
-    console.log(`[SMTP Simulation] Authenticating as ${emailConfig.username}`);
-    
-    // Message preparation simulation
-    console.log(`[SMTP Simulation] Preparing message from ${emailConfig.fromEmail} to ${data.to}`);
-    console.log(`[SMTP Simulation] Subject: ${data.subject}`);
-    
-    // Email sending simulation with provider-specific details
-    if (emailConfig.provider === 'gmail') {
-      console.log('[SMTP Simulation] Using Gmail SMTP with STARTTLS');
-      console.log('[SMTP Simulation] Gmail requires App Password if 2FA is enabled');
-    } else if (emailConfig.provider === 'yahoo') {
-      console.log('[SMTP Simulation] Using Yahoo SMTP with SSL/TLS');
-      console.log('[SMTP Simulation] Yahoo requires App Password, not regular account password');
-    } else if (emailConfig.provider === 'outlook365') {
-      console.log('[SMTP Simulation] Using Outlook 365 with Modern Authentication');
-    }
-    
-    // -------------------------------------------------------------------------
-    // IMPORTANT: In production, use a server-side API with Nodemailer or similar
-    // This client-side implementation can only simulate email sending
-    // -------------------------------------------------------------------------
-    console.log('[SMTP Simulation] In a production environment, this would use real SMTP connection with Nodemailer or similar');
-
-    // Check for obvious configuration errors that would prevent successful email sending
-    if (!emailConfig.host || !emailConfig.port) {
-      throw new Error('Missing SMTP host or port configuration');
-    }
-    
-    if (!emailConfig.username || !emailConfig.password) {
-      throw new Error('Missing SMTP authentication credentials');
-    }
-    
-    if (!emailConfig.fromEmail) {
-      throw new Error('Missing sender email address');
-    }
-
-    // Simulate a successful email send for testing purposes
-    console.log('[SMTP Simulation] Email simulation completed successfully');
-    
-    return {
-      success: true,
-      message: 'Email simulation completed. In production, this would send a real email via SMTP.',
-      messageId: `smtp-simulation-${Date.now()}`,
-      smtpResponse: '250 Message accepted for delivery',
-      details: {
-        provider: emailConfig.provider,
-        host: emailConfig.host,
-        port: emailConfig.port,
-        simulated: true
-      }
-    } as unknown as T;
-  } catch (error: any) {
-    console.error('Email sending error:', error);
-    
-    // Properly format the error response
-    return {
-      success: false,
-      error: `Email sending failed: ${error.message}`,
-      details: {
-        simulated: true,
-        errorType: error.name,
-        errorTime: new Date().toISOString()
-      }
-    } as unknown as T;
   }
 };
 

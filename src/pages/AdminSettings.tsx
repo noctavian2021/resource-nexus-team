@@ -474,22 +474,21 @@ export default function AdminSettings() {
                 <AlertTriangle className="h-4 w-4 text-yellow-600" />
                 <AlertTitle className="text-yellow-800">Simulated Email</AlertTitle>
                 <AlertDescription className="text-yellow-700">
-                  This was a simulated email send. In a production environment, you would need a server-side API with Nodemailer or similar to actually send emails.
+                  This was a simulated email send. For actual email delivery, make sure your server is running and properly configured with Nodemailer.
                 </AlertDescription>
               </Alert>
             )}
             <p className="text-xs text-muted-foreground mt-2">
-              If the SMTP response shows a success code (usually starting with 2xx), the email was successfully handed over to the mail server.
+              If the SMTP response shows a success code (usually starting with 2xx), the email was successfully sent.
             </p>
           </div>
         )}
         
         <Alert variant="default" className="mb-4 bg-blue-50 border-blue-100">
           <Info className="h-4 w-4 text-blue-600" />
-          <AlertTitle className="text-blue-800">Important Note About Email Testing</AlertTitle>
+          <AlertTitle className="text-blue-800">Email Server Information</AlertTitle>
           <AlertDescription className="text-blue-700">
-            This is a client-side application that can't directly connect to SMTP servers. The email test simulates what would happen if a real server-side email API were used.
-            To send real emails, you would need to implement a server-side API with a library like Nodemailer.
+            This application now uses a NodeJS server with Nodemailer to send real emails. Make sure the server is running on port 5000 before sending test emails.
           </AlertDescription>
         </Alert>
       </div>

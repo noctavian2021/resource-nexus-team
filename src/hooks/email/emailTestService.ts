@@ -49,17 +49,16 @@ export const sendTestEmail = async (
   }
   
   try {
-    // Make an actual API request to send the email
+    // Use the dedicated server endpoint for email testing
     const result = await apiRequest<{
       success: boolean;
       message?: string;
       error?: string;
       messageId?: string;
       smtpResponse?: string;
-      fallback?: boolean;
-      simulated?: boolean;
-    }>('/email/send', 'POST', {
-      to: recipient,
+    }>('/api/email/send-test', 'POST', {
+      config: config,
+      recipient: recipient,
       subject: 'Test Email from Resource Management System',
       text: 'This is a test email to verify your SMTP configuration is working correctly.',
       html: `
@@ -71,43 +70,26 @@ export const sendTestEmail = async (
           <hr>
           <p style="color: #666; font-size: 12px;">Resource Management System</p>
         </div>
-      `,
-      // Pass email configuration to the API
-      emailConfig: {
-        ...config,
-        // Ensure port is string and secured is properly set based on port
-        port: String(config.port),
-        secure: config.port === '465' ? true : (config.port === '587' ? false : config.secure),
-        // Add connection timeout settings
-        connectionTimeout: 30000, // 30 seconds
-        greetingTimeout: 30000    // 30 seconds
-      }
+      `
     });
     
     // Enhanced logging of the email sending result
     if (result.success) {
-      console.log('Email API responded with success:', result);
-      
-      if (result.simulated) {
-        console.log('⚠️ IMPORTANT: This was a simulated email send. In a production environment, you need a server-side API that can connect to SMTP servers.');
-      }
-      
-      if (result.fallback) {
-        console.log('Email was sent using the fallback method');
-      }
+      console.log('Email server responded with success:', result);
       
       return { 
         success: true, 
         details: {
           messageId: result.messageId,
           smtpResponse: result.smtpResponse,
-          fallback: result.fallback,
-          simulated: result.simulated
+          fallback: false,
+          simulated: false,
+          provider: config.provider
         }
       };
     } else {
       const errorMsg = result.error || 'Unknown error sending email';
-      console.error('Email error from API:', errorMsg);
+      console.error('Email error from server:', errorMsg);
       
       // Provide more helpful error messages for common issues
       if (config.provider === 'yahoo' && 
@@ -116,7 +98,11 @@ export const sendTestEmail = async (
         return { 
           success: false, 
           error: `Yahoo authentication failed. Make sure you've generated an App Password specifically for this app and you're not using your regular Yahoo account password. Error: ${errorMsg}`,
-          details: undefined 
+          details: {
+            errorType: 'AuthenticationError',
+            provider: config.provider,
+            errorTime: new Date().toISOString()
+          } 
         };
       }
       
@@ -125,7 +111,11 @@ export const sendTestEmail = async (
           return {
             success: false,
             error: `Gmail connection timed out. Please try: 1) Using an App Password if you have 2FA enabled 2) Verifying your username is a Gmail address 3) Checking for security alerts in your Gmail 4) Waiting a few minutes before trying again. Error: ${errorMsg}`,
-            details: undefined 
+            details: {
+              errorType: 'ConnectionTimeoutError',
+              provider: config.provider,
+              errorTime: new Date().toISOString()
+            }
           };
         }
         
@@ -134,7 +124,11 @@ export const sendTestEmail = async (
           return {
             success: false,
             error: `Gmail authentication failed. If you have 2FA enabled on your Google account, you must generate and use an App Password instead of your regular password. Error: ${errorMsg}`,
-            details: undefined 
+            details: {
+              errorType: 'AuthenticationError',
+              provider: config.provider,
+              errorTime: new Date().toISOString()
+            }
           };
         }
       }
@@ -142,7 +136,11 @@ export const sendTestEmail = async (
       return { 
         success: false, 
         error: errorMsg,
-        details: undefined 
+        details: {
+          errorType: 'ServerError',
+          provider: config.provider,
+          errorTime: new Date().toISOString()
+        }
       };
     }
   } catch (apiError: any) {
@@ -152,7 +150,10 @@ export const sendTestEmail = async (
     return {
       success: false,
       error: `API Error: ${apiError.message}`,
-      details: undefined
+      details: {
+        errorType: 'ApiError',
+        errorTime: new Date().toISOString()
+      }
     };
   } finally {
     // If we temporarily disabled mock data, restore its previous state
