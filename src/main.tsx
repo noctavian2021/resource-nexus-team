@@ -3,7 +3,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App.tsx';
 import './index.css';
-import { ToastProvider } from './hooks/use-toast';
+import { ToastProvider } from '@/hooks/use-toast.tsx';
 
 // Make sure we have a valid element to render to
 const rootElement = document.getElementById("root");

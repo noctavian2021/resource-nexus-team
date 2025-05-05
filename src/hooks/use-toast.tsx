@@ -180,7 +180,7 @@ function useToastReducer() {
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const toast = useToastReducer()
   
-  return <ToastContext.Provider value={toast}>{children}</ToastContext.Provider>
+  return React.createElement(ToastContext.Provider, { value: toast }, children)
 }
 
 // Hook for components to use the toast context
