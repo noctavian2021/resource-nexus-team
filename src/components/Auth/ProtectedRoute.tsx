@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
 interface ProtectedRouteProps {
@@ -10,8 +10,26 @@ interface ProtectedRouteProps {
 export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { user, isLoading } = useAuth();
   const location = useLocation();
-
+  const navigate = useNavigate();
+  
   console.log("ProtectedRoute check - User:", user, "Path:", location.pathname);
+
+  // React effect to handle navigation instead of Navigate component
+  React.useEffect(() => {
+    // Redirect to login if not authenticated
+    if (!isLoading && !user) {
+      console.log("No user found, redirecting to login");
+      navigate("/login", { state: { from: location }, replace: true });
+      return;
+    }
+    
+    // For role-based restrictions
+    if (!isLoading && user && location.pathname.includes('/admin') && user.role !== 'admin') {
+      console.log("User doesn't have admin access, redirecting to dashboard");
+      navigate("/", { replace: true });
+      return;
+    }
+  }, [user, isLoading, location, navigate]);
 
   // Show loading state while checking auth
   if (isLoading) {
@@ -21,19 +39,15 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
       </div>
     );
   }
-
-  // Redirect to login if not authenticated
-  if (!user) {
-    console.log("No user found, redirecting to login");
-    return <Navigate to="/login" state={{ from: location }} replace />;
-  }
-
-  // For role-based restrictions
-  const isRestrictedAdminRoute = location.pathname.includes('/admin') && user.role !== 'admin';
   
+  // Don't render children until we're sure authentication is complete and user is authorized
+  if (!user) {
+    return null; // Don't render anything while redirecting
+  }
+  
+  const isRestrictedAdminRoute = location.pathname.includes('/admin') && user.role !== 'admin';
   if (isRestrictedAdminRoute) {
-    console.log("User doesn't have admin access, redirecting to dashboard");
-    return <Navigate to="/" replace />;
+    return null; // Don't render anything while redirecting
   }
 
   // Render children if authenticated and authorized
