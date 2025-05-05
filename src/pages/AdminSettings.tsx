@@ -470,7 +470,7 @@ export default function AdminSettings() {
               </div>
             )}
             {emailTestDetails.simulated && (
-              <Alert variant="warning" className="mt-2 mb-2 bg-yellow-50 border-yellow-200">
+              <Alert variant="default" className="mt-2 mb-2 bg-yellow-50 border-yellow-200">
                 <AlertTriangle className="h-4 w-4 text-yellow-600" />
                 <AlertTitle className="text-yellow-800">Simulated Email</AlertTitle>
                 <AlertDescription className="text-yellow-700">
