@@ -11,13 +11,16 @@ export default defineConfig(({ mode }) => ({
     port: 8080,
   },
   plugins: [
-    react(),
+    react({
+      jsxRuntime: "automatic",
+    }),
     mode === 'development' &&
     componentTagger(),
   ].filter(Boolean),
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      "react/jsx-runtime": "react/jsx-runtime.js",
     },
   },
   define: {
@@ -29,11 +32,20 @@ export default defineConfig(({ mode }) => ({
     include: [
       'postcss-value-parser',
       'media-engine',
-    ]
+      'react',
+      'react-dom',
+      'react/jsx-runtime',
+    ],
+    esbuildOptions: {
+      jsx: 'automatic',
+    },
   },
   build: {
     commonjsOptions: {
       include: [/postcss-value-parser/, /media-engine/]
+    },
+    rollupOptions: {
+      external: [],
     }
   }
 }));
