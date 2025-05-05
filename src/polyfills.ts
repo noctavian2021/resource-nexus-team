@@ -15,13 +15,15 @@ import pakoZstreamModule from './shims/pako-zstream-shim';
 import pakoDeflateModule from './shims/pako-deflate-shim';
 import pakoInflateModule from './shims/pako-inflate-shim';
 import pakoConstantsModule from './shims/pako-constants-shim';
+import hslToHexModule from './shims/hsl-to-hex-shim';
 
 console.log('Polyfills loaded:', {
   pakoZstream: pakoZstreamModule,
   pakoDeflate: pakoDeflateModule,
   pakoInflate: pakoInflateModule,
   pakoConstants: pakoConstantsModule,
-  md5Module: md5Module
+  md5Module: md5Module,
+  hslToHex: hslToHexModule
 });
 
 // Create a minimal Process interface with only the properties we need
@@ -53,6 +55,7 @@ declare global {
     pakoDeflate?: any;
     pakoInflate?: any;
     pakoConstants?: any;
+    hslToHex?: any;
   }
 }
 
@@ -137,6 +140,12 @@ if (typeof window !== 'undefined') {
   if (!window.pakoConstants) {
     window.pakoConstants = pakoConstantsModule;
     console.log('Added pako constants polyfill to window', pakoConstantsModule);
+  }
+  
+  // Add hsl-to-hex polyfill
+  if (!window.hslToHex) {
+    window.hslToHex = hslToHexModule;
+    console.log('Added hsl-to-hex polyfill to window', hslToHexModule);
   }
 }
 
@@ -318,6 +327,13 @@ const customPakoConstantsShim = {
   Z_DEFLATED: pakoConstantsModule.Z_DEFLATED
 };
 
+// Add hsl-to-hex default export shims
+const customHslToHexShim = {
+  __esModule: true,
+  default: hslToHexModule,
+  hslToHex: hslToHexModule
+};
+
 // This will be used by our import interception logic in vite.config.ts
 if (typeof window !== 'undefined') {
   window.__customModuleShims = {
@@ -351,6 +367,8 @@ if (typeof window !== 'undefined') {
     'pako/lib/zlib/inflate': customPakoInflateShim,
     'pako/lib/zlib/inflate.js': customPakoInflateShim,
     'pako/lib/zlib/constants': customPakoConstantsShim,
-    'pako/lib/zlib/constants.js': customPakoConstantsShim
+    'pako/lib/zlib/constants.js': customPakoConstantsShim,
+    'hsl-to-hex': customHslToHexShim,
+    'hsl-to-hex/index.js': customHslToHexShim
   };
 }
