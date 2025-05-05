@@ -84,15 +84,19 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => ({
           return path.resolve(__dirname, './src/shims/media-engine-shim.js');
         }
         // Check for postcss-value-parser imports
-        if (id === 'postcss-value-parser' || id === 'postcss-value-parser/lib/index.js') {
-          return path.resolve(__dirname, './src/shims/postcss-value-parser-shim.js');
-        }
-        // Add specific import paths for postcss-value-parser submodules
-        if (id === 'postcss-value-parser/lib/parse.js' || id === 'postcss-value-parser/lib/parse') {
-          return path.resolve(__dirname, './src/shims/postcss-value-parser-shim.js');
-        }
-        if (id === 'postcss-value-parser/lib/unit.js' || id === 'postcss-value-parser/lib/unit') {
-          return path.resolve(__dirname, './src/shims/postcss-value-parser-shim.js');
+        if (id.includes('postcss-value-parser')) {
+          if (id === 'postcss-value-parser' || id === 'postcss-value-parser/lib/index.js') {
+            return path.resolve(__dirname, './src/shims/postcss-value-parser-shim.js');
+          }
+          
+          // Handle internal paths like parse.js and unit.js
+          if (id.includes('/lib/parse') || id.endsWith('/parse')) {
+            return path.resolve(__dirname, './src/shims/postcss-value-parser-shim.js');
+          }
+          
+          if (id.includes('/lib/unit') || id.endsWith('/unit')) {
+            return path.resolve(__dirname, './src/shims/postcss-value-parser-shim.js');
+          }
         }
         return null;
       },
@@ -286,11 +290,38 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => ({
         }
         // Handle postcss-value-parser module
         if (id.includes('postcss-value-parser') && !id.includes('postcss-value-parser-shim')) {
+          let importPath = path.resolve(__dirname, './src/shims/postcss-value-parser-shim.js');
+          
+          // If it's specifically requesting parse or unit, provide direct access
+          if (id.includes('/lib/parse') || id.endsWith('/parse')) {
+            return {
+              code: `
+                import postcssValueParserShim, { parse } from '${importPath}';
+                export default parse;
+                export { parse };
+              `,
+              map: null
+            };
+          }
+          
+          if (id.includes('/lib/unit') || id.endsWith('/unit')) {
+            return {
+              code: `
+                import postcssValueParserShim, { unit } from '${importPath}';
+                export default unit;
+                export { unit };
+              `,
+              map: null
+            };
+          }
+          
+          // General postcss-value-parser import
           return {
             code: `
-              import postcssValueParserShim from '${path.resolve(__dirname, './src/shims/postcss-value-parser-shim.js')}';
+              import postcssValueParserShim, { parse, unit } from '${importPath}';
               export default postcssValueParserShim;
-              export * from '${path.resolve(__dirname, './src/shims/postcss-value-parser-shim.js')}';
+              export * from '${importPath}';
+              export { parse, unit };
             `,
             map: null
           };
@@ -365,6 +396,8 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => ({
       "postcss-value-parser/lib/index.js": path.resolve(__dirname, './src/shims/postcss-value-parser-shim.js'),
       "postcss-value-parser/lib/parse.js": path.resolve(__dirname, './src/shims/postcss-value-parser-shim.js'),
       "postcss-value-parser/lib/unit.js": path.resolve(__dirname, './src/shims/postcss-value-parser-shim.js'),
+      "postcss-value-parser/lib/parse": path.resolve(__dirname, './src/shims/postcss-value-parser-shim.js'),
+      "postcss-value-parser/lib/unit": path.resolve(__dirname, './src/shims/postcss-value-parser-shim.js'),
     },
     // Add mainFields to prefer module format
     mainFields: ['browser', 'module', 'jsnext:main', 'jsnext', 'main'],

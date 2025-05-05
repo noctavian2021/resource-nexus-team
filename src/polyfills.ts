@@ -167,6 +167,17 @@ if (typeof window !== 'undefined') {
     window.postcssValueParser = postcssValueParserModule;
     window.postcssValueParserParse = postcssValueParserModule.parse;
     window.postcssValueParserUnit = postcssValueParserModule.unit;
+    
+    // Explicitly create properties to match the expected paths
+    // This is important for libraries that try to access specific paths
+    Object.defineProperty(window.postcssValueParser, 'lib', {
+      value: {
+        parse: postcssValueParserModule.parse,
+        unit: postcssValueParserModule.unit
+      },
+      writable: false
+    });
+    
     console.log('Added postcss-value-parser polyfill to window', postcssValueParserModule);
   }
 }
@@ -418,6 +429,17 @@ if (typeof window !== 'undefined') {
       parse: postcssValueParserModule.parse
     },
     'postcss-value-parser/lib/unit.js': { 
+      __esModule: true, 
+      default: postcssValueParserModule.unit,
+      unit: postcssValueParserModule.unit
+    },
+    // Add explicit paths that might be used by @react-pdf/stylesheet
+    'postcss-value-parser/lib/parse': { 
+      __esModule: true, 
+      default: postcssValueParserModule.parse,
+      parse: postcssValueParserModule.parse
+    },
+    'postcss-value-parser/lib/unit': { 
       __esModule: true, 
       default: postcssValueParserModule.unit,
       unit: postcssValueParserModule.unit
