@@ -2,6 +2,7 @@
 // Add necessary polyfills for browser environment
 import { Buffer as BufferPolyfill } from 'buffer';
 import streamBrowserify from 'stream-browserify';
+import cloneModule from './shims/clone-shim';
 
 // Create a minimal Process interface with only the properties we need
 interface MinimalProcess {
@@ -18,6 +19,7 @@ declare global {
     process: any; // Use 'any' to avoid TypeScript errors with the process object
     __customModuleShims?: Record<string, any>;
     Stream?: any;
+    clone?: any;
   }
 }
 
@@ -29,13 +31,17 @@ if (typeof window !== 'undefined') {
   if (!window.Stream) {
     window.Stream = streamBrowserify;
   }
+  
+  // Add clone polyfill
+  if (!window.clone) {
+    window.clone = cloneModule;
+  }
 }
 
 // Create shims for Node.js modules used by PDF libraries
 if (typeof window !== 'undefined') {
-  // Create a minimal browser-compatible process object
+  // Define a minimal process object that won't cause type errors
   if (!window.process) {
-    // Define a minimal process object that won't cause type errors
     window.process = {
       env: { NODE_ENV: 'production' },
       browser: true,
@@ -79,11 +85,20 @@ const customStreamShim = {
   ...streamBrowserify
 };
 
+// Add clone module shims
+const customCloneShim = {
+  __esModule: true,
+  default: cloneModule,
+  clone: cloneModule
+};
+
 // This will be used by our import interception logic in vite.config.ts
 if (typeof window !== 'undefined') {
   window.__customModuleShims = {
     '/node_modules/brotli/decompress.js': customBrotliShim,
     'stream': customStreamShim,
-    'stream-browserify': customStreamShim
+    'stream-browserify': customStreamShim,
+    'clone': customCloneShim,
+    'clone/clone.js': customCloneShim
   };
 }

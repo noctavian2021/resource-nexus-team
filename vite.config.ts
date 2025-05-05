@@ -24,6 +24,10 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => ({
           // Return a resolved path to our local shim
           return path.resolve(__dirname, './src/shims/brotli-shim.js');
         }
+        // Check for clone imports
+        if (id === 'clone' || id === 'clone/clone.js') {
+          return path.resolve(__dirname, './src/shims/clone-shim.js');
+        }
         return null;
       },
       transform(code: string, id: string) {
@@ -36,10 +40,18 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => ({
                 console.warn('Brotli decompress called but not fully implemented in the browser');
                 return null;
               };
-              export const decompress = function() {
-                console.warn('Brotli decompress called but not fully implemented in the browser');
-                return null;
-              };
+              export { decompress };
+            `,
+            map: null
+          };
+        }
+        // Handle clone module
+        if (id.includes('clone') && !id.includes('clone-shim')) {
+          return {
+            code: `
+              import actualClone from '${path.resolve(__dirname, './src/shims/clone-shim.js')}';
+              export default actualClone;
+              export const clone = actualClone;
             `,
             map: null
           };
@@ -64,6 +76,9 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => ({
       "os": '',
       // Add direct alias for brotli
       "brotli/decompress": path.resolve(__dirname, './src/shims/brotli-shim.js'),
+      // Add direct alias for clone
+      "clone": path.resolve(__dirname, './src/shims/clone-shim.js'),
+      "clone/clone.js": path.resolve(__dirname, './src/shims/clone-shim.js')
     },
     // Add mainFields to prefer module format
     mainFields: ['browser', 'module', 'jsnext:main', 'jsnext', 'main'],
@@ -75,6 +90,7 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => ({
       'buffer',
       'process/browser',
       'stream-browserify',  // Add stream-browserify to include
+      'clone', // Add clone to include
     ],
     exclude: [
       // Add problematic dependencies here to exclude them from optimization
