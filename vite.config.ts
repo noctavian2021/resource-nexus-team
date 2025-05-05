@@ -42,7 +42,9 @@ export default defineConfig(({ mode }) => ({
       "buffer": path.resolve(__dirname, "node_modules/buffer"),
       "pdfkit": path.resolve(__dirname, "node_modules/pdfkit"),
       // Fix for cross-fetch import issues
-      "cross-fetch": path.resolve(__dirname, "node_modules/cross-fetch")
+      "cross-fetch": path.resolve(__dirname, "node_modules/cross-fetch"),
+      // Fix for abs-svg-path import issues
+      "abs-svg-path": path.resolve(__dirname, "node_modules/abs-svg-path")
     },
   },
   optimizeDeps: {
@@ -58,7 +60,8 @@ export default defineConfig(({ mode }) => ({
       "restructure",
       "linebreak",
       "fontkit",
-      "cross-fetch"
+      "cross-fetch",
+      "abs-svg-path"
     ],
     exclude: [
       // Add problematic dependencies here to exclude them from optimization
@@ -88,6 +91,7 @@ export default defineConfig(({ mode }) => ({
         /buffer/,
         /pdfkit/,
         /cross-fetch/,
+        /abs-svg-path/,
         /node_modules/
       ]
     }
