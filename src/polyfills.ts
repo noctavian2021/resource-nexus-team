@@ -168,15 +168,14 @@ if (typeof window !== 'undefined') {
     window.postcssValueParserParse = postcssValueParserModule.parse;
     window.postcssValueParserUnit = postcssValueParserModule.unit;
     
-    // Explicitly create properties to match the expected paths
-    // This is important for libraries that try to access specific paths
-    Object.defineProperty(window.postcssValueParser, 'lib', {
-      value: {
+    // Make the parse and unit functions available at the expected paths
+    // This is important for libraries that expect specific paths
+    if (!window.postcssValueParser.lib) {
+      window.postcssValueParser.lib = {
         parse: postcssValueParserModule.parse,
         unit: postcssValueParserModule.unit
-      },
-      writable: false
-    });
+      };
+    }
     
     console.log('Added postcss-value-parser polyfill to window', postcssValueParserModule);
   }
@@ -380,7 +379,11 @@ const customPostcssValueParserShim = {
   default: postcssValueParserModule,
   ...postcssValueParserModule,
   parse: postcssValueParserModule.parse,
-  unit: postcssValueParserModule.unit
+  unit: postcssValueParserModule.unit,
+  lib: {
+    parse: postcssValueParserModule.parse,
+    unit: postcssValueParserModule.unit
+  }
 };
 
 // This will be used by our import interception logic in vite.config.ts
