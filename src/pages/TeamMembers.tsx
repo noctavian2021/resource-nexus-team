@@ -7,11 +7,13 @@ import AddTeamMemberDialog from '@/components/Team/AddTeamMemberDialog';
 import { getTeamMembers } from '@/services/teamService';
 import { TeamMember } from '@/data/mockData';
 import { useToast } from '@/hooks/use-toast';
+import { isMockDataEnabled, toggleMockData } from '@/services/apiClient';
 
 export default function TeamMembers() {
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const [usingMockData, setUsingMockData] = useState(isMockDataEnabled());
 
   // Fetch team members whenever the component mounts
   const fetchTeamMembers = async () => {
@@ -20,6 +22,7 @@ export default function TeamMembers() {
       const data = await getTeamMembers();
       console.log('Fetched team members:', data);
       setTeamMembers(data);
+      setUsingMockData(isMockDataEnabled());
     } catch (error) {
       console.error('Error fetching team members:', error);
       toast({
@@ -30,6 +33,9 @@ export default function TeamMembers() {
       
       // Initialize with empty array if fetch fails
       setTeamMembers([]);
+      // Make sure mock data is enabled after an error
+      toggleMockData(true);
+      setUsingMockData(true);
     } finally {
       setLoading(false);
     }
@@ -76,7 +82,14 @@ export default function TeamMembers() {
       <Header title="Team Members" />
       <main className="flex-1 space-y-6 p-6">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <h1 className="text-2xl font-semibold tracking-tight">Team Members</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Team Members
+            {usingMockData && (
+              <span className="ml-2 text-sm px-2 py-1 bg-amber-100 text-amber-800 rounded-md">
+                Using Mock Data
+              </span>
+            )}
+          </h1>
           <div className="flex gap-2">
             <SendWelcomeDialog 
               teamMembers={teamMembers} 

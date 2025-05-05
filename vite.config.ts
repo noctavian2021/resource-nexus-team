@@ -49,6 +49,7 @@ export default defineConfig(({ mode }) => ({
     // Define any environment variables the app needs
     // This replaces process.env references at build time
     'import.meta.env.VITE_API_URL': JSON.stringify('https://api.example.com'),
+    'import.meta.env.VITE_USE_MOCK_DATA': JSON.stringify('true'),
   },
   optimizeDeps: {
     include: [

@@ -5,7 +5,7 @@ import { handleMockRequest } from './mockApiHandler';
 export const API_URL = import.meta.env.VITE_API_URL || 'https://api.example.com';
 
 // Flag to control mock data usage
-let useMockData = false; // Changed to false by default for production
+let useMockData = true; // Changed to true by default for development
 
 // Toggle mock data usage
 export const toggleMockData = (enabled: boolean): boolean => {
@@ -119,6 +119,18 @@ const apiRequest = async <T>(
     }
   } catch (error) {
     console.error('API request error:', error);
+    
+    // Fallback to mock data when API fails
+    if (!useMockData) {
+      console.log('API request failed, falling back to mock data');
+      try {
+        return await handleMockRequest<T>(endpoint, method, data);
+      } catch (mockError) {
+        console.error('Mock fallback error:', mockError);
+        throw error; // Throw the original error if mock fails too
+      }
+    }
+    
     throw error;
   }
 };
