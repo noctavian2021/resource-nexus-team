@@ -1,4 +1,3 @@
-
 // Add necessary polyfills for browser environment
 import { Buffer as BufferPolyfill } from 'buffer';
 import streamBrowserify from 'stream-browserify';
@@ -7,6 +6,7 @@ import dfaModule from './shims/dfa-shim';
 import equalModule from './shims/fast-deep-equal-shim';
 import tinyInflateModule from './shims/tiny-inflate-shim';
 import unicodeTrieModule from './shims/unicode-trie-shim';
+import crossFetchModule from './shims/cross-fetch-shim';
 
 // Create a minimal Process interface with only the properties we need
 interface MinimalProcess {
@@ -28,6 +28,7 @@ declare global {
     equal?: any;
     tinyInflate?: any;
     unicodeTrie?: any;
+    crossFetch?: any;
   }
 }
 
@@ -63,6 +64,11 @@ if (typeof window !== 'undefined') {
   // Add unicode-trie polyfill
   if (!window.unicodeTrie) {
     window.unicodeTrie = unicodeTrieModule;
+  }
+  
+  // Add cross-fetch polyfill
+  if (!window.crossFetch) {
+    window.crossFetch = crossFetchModule;
   }
 }
 
@@ -145,6 +151,16 @@ const customUnicodeTrieShim = {
   default: unicodeTrieModule
 };
 
+// Add cross-fetch module shims
+const customCrossFetchShim = {
+  __esModule: true,
+  default: crossFetchModule,
+  fetch: crossFetchModule.fetch,
+  Headers: crossFetchModule.Headers,
+  Request: crossFetchModule.Request,
+  Response: crossFetchModule.Response
+};
+
 // This will be used by our import interception logic in vite.config.ts
 if (typeof window !== 'undefined') {
   window.__customModuleShims = {
@@ -160,6 +176,8 @@ if (typeof window !== 'undefined') {
     'tiny-inflate': customTinyInflateShim,
     'tiny-inflate/index.js': customTinyInflateShim,
     'unicode-trie': customUnicodeTrieShim,
-    'unicode-trie/index.js': customUnicodeTrieShim
+    'unicode-trie/index.js': customUnicodeTrieShim,
+    'cross-fetch': customCrossFetchShim,
+    'cross-fetch/dist/browser-ponyfill.js': customCrossFetchShim
   };
 }

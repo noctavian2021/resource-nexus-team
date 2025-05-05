@@ -1,4 +1,3 @@
-
 import { defineConfig, ConfigEnv, Plugin, UserConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
@@ -43,6 +42,10 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => ({
         // Check for unicode-trie imports
         if (id === 'unicode-trie' || id === 'unicode-trie/index.js') {
           return path.resolve(__dirname, './src/shims/unicode-trie-shim.js');
+        }
+        // Check for cross-fetch imports
+        if (id === 'cross-fetch' || id === 'cross-fetch/dist/browser-ponyfill.js') {
+          return path.resolve(__dirname, './src/shims/cross-fetch-shim.js');
         }
         return null;
       },
@@ -113,6 +116,17 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => ({
             map: null
           };
         }
+        // Handle cross-fetch module
+        if (id.includes('cross-fetch') && !id.includes('cross-fetch-shim')) {
+          return {
+            code: `
+              import crossFetchShim, { fetch, Headers, Request, Response } from '${path.resolve(__dirname, './src/shims/cross-fetch-shim.js')}';
+              export default crossFetchShim;
+              export { fetch, Headers, Request, Response };
+            `,
+            map: null
+          };
+        }
         return null;
       }
     }
@@ -147,7 +161,10 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => ({
       "tiny-inflate/index.js": path.resolve(__dirname, './src/shims/tiny-inflate-shim.js'),
       // Add direct alias for unicode-trie
       "unicode-trie": path.resolve(__dirname, './src/shims/unicode-trie-shim.js'),
-      "unicode-trie/index.js": path.resolve(__dirname, './src/shims/unicode-trie-shim.js')
+      "unicode-trie/index.js": path.resolve(__dirname, './src/shims/unicode-trie-shim.js'),
+      // Add direct alias for cross-fetch
+      "cross-fetch": path.resolve(__dirname, './src/shims/cross-fetch-shim.js'),
+      "cross-fetch/dist/browser-ponyfill.js": path.resolve(__dirname, './src/shims/cross-fetch-shim.js')
     },
     // Add mainFields to prefer module format
     mainFields: ['browser', 'module', 'jsnext:main', 'jsnext', 'main'],
@@ -164,6 +181,7 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => ({
       'fast-deep-equal', // Add fast-deep-equal to include
       'tiny-inflate', // Add tiny-inflate to include
       'unicode-trie', // Add unicode-trie to include
+      'cross-fetch', // Add cross-fetch to include
     ],
     exclude: [
       // Add problematic dependencies here to exclude them from optimization
