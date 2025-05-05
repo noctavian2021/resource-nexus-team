@@ -20,6 +20,7 @@ import mediaEngineModule from './shims/media-engine-shim';
 import postcssValueParserModule from './shims/postcss-value-parser-shim';
 import hyphenModule from './shims/hyphen-shim';
 import queueModule, { createQueue, Queue } from './shims/queue-shim';
+import objectAssignModule from './shims/object-assign-shim';
 
 console.log('Polyfills loaded:', {
   pakoZstream: pakoZstreamModule,
@@ -30,7 +31,8 @@ console.log('Polyfills loaded:', {
   hslToHex: hslToHexModule,
   mediaEngine: mediaEngineModule,
   postcssValueParser: postcssValueParserModule,
-  queue: queueModule
+  queue: queueModule,
+  objectAssign: objectAssignModule
 });
 
 // Create a minimal Process interface with only the properties we need
@@ -200,6 +202,12 @@ if (typeof window !== 'undefined') {
   if (!window.queue) {
     window.queue = queueModule;
     console.log('Added queue polyfill to window', queueModule);
+  }
+  
+  // Add object-assign polyfill
+  if (!window.objectAssign) {
+    window.objectAssign = objectAssignModule;
+    console.log('Added object-assign polyfill to window', objectAssignModule);
   }
 }
 
@@ -426,6 +434,13 @@ const customQueueShim = {
   Queue: Queue
 };
 
+// Add object-assign default export shims
+const customObjectAssignShim = {
+  __esModule: true,
+  default: objectAssignModule,
+  objectAssign: objectAssignModule
+};
+
 // This will be used by our import interception logic in vite.config.ts
 if (typeof window !== 'undefined') {
   window.__customModuleShims = {
@@ -489,5 +504,7 @@ if (typeof window !== 'undefined') {
     },
     'queue': customQueueShim,
     'queue/index.js': customQueueShim,
+    'object-assign': customObjectAssignShim,
+    'object-assign/index.js': customObjectAssignShim,
   };
 }
