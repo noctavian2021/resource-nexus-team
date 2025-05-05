@@ -12,7 +12,8 @@ export default defineConfig(({ mode }) => ({
   },
   plugins: [
     react({
-      jsxRuntime: "automatic",
+      // Using JSX transform correctly according to SWC options
+      jsxImportSource: "react",
     }),
     mode === 'development' &&
     componentTagger(),
@@ -20,7 +21,6 @@ export default defineConfig(({ mode }) => ({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
-      "react/jsx-runtime": "react/jsx-runtime.js",
     },
   },
   define: {
@@ -34,7 +34,6 @@ export default defineConfig(({ mode }) => ({
       'media-engine',
       'react',
       'react-dom',
-      'react/jsx-runtime',
     ],
     esbuildOptions: {
       jsx: 'automatic',
