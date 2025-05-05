@@ -3,8 +3,8 @@ import { handleMockRequest } from './mockApiHandler';
 
 export const API_URL = 'https://api.example.com';
 
-// Flag to control mock data usage
-let useMockData = true;
+// Flag to control mock data usage - setting it to false by default
+let useMockData = false;
 
 // Toggle mock data usage
 export const toggleMockData = (enabled: boolean): boolean => {

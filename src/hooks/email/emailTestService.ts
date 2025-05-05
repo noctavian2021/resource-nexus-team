@@ -42,7 +42,7 @@ export const sendTestEmail = async (
   }
   
   try {
-    // Check if we're using mock data
+    // Check if we're using mock data - but now this would be false by default
     if (isMockDataEnabled()) {
       console.log('Using mock data for email test');
       // Simulate email sending with mock data
