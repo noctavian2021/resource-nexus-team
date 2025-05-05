@@ -1,6 +1,6 @@
+
 import * as React from "react"
-// Import React hooks directly
-import { useState, useEffect } from "react"
+import { useReducer, useEffect } from "react"
 
 import {
   Toast,
@@ -34,11 +34,11 @@ type ActionType = typeof actionTypes
 type Action =
   | {
       type: ActionType["ADD_TOAST"]
-      toast: Toast
+      toast: ToasterToast
     }
   | {
       type: ActionType["UPDATE_TOAST"]
-      toast: Partial<Toast>
+      toast: Partial<ToasterToast>
     }
   | {
       type: ActionType["DISMISS_TOAST"]
@@ -58,6 +58,10 @@ let count = 0
 function genId() {
   count = (count + 1) % Number.MAX_VALUE
   return count.toString()
+}
+
+const initialState: State = {
+  toasts: [],
 }
 
 const reducer = (state: State, action: Action): State => {
@@ -98,22 +102,34 @@ const reducer = (state: State, action: Action): State => {
 
 const toastTimeouts = new Map<string, ReturnType<typeof setTimeout>>()
 
-type Toast = Omit<ToasterToast, "id">
+export type Toast = Omit<ToasterToast, "id">
 
-function useToast() {
-  const [state, dispatch] = useState<State>({
-    toasts: [],
-  })
+// Create a single instance of the toast context
+const ToastContext = React.createContext<ReturnType<typeof useToastReducer> | null>(null)
+
+function useToastReducer() {
+  const [state, dispatch] = useReducer(reducer, initialState)
 
   useEffect(() => {
-    return () => {
-      state.toasts.forEach((toast) => {
-        toastTimeouts.get(toast.id)?.(toast.id)
-      })
-    }
+    state.toasts.forEach((toast) => {
+      if (!toast.open && toastTimeouts.has(toast.id)) return
+
+      // When toast closes, dismiss it after the delay
+      if (!toast.open) {
+        const timeout = setTimeout(() => {
+          dispatch({ 
+            type: actionTypes.REMOVE_TOAST, 
+            toastId: toast.id 
+          })
+          toastTimeouts.delete(toast.id)
+        }, TOAST_REMOVE_DELAY)
+
+        toastTimeouts.set(toast.id, timeout)
+      }
+    })
   }, [state.toasts])
 
-  function toast({ ...props }: Toast) {
+  const toast = (props: Toast) => {
     const id = genId()
 
     const update = (props: Partial<ToasterToast>) =>
@@ -121,7 +137,7 @@ function useToast() {
         type: actionTypes.UPDATE_TOAST,
         toast: { ...props, id },
       })
-    const dismiss = () => dismissToast(id)
+    const dismiss = () => dispatch({ type: actionTypes.DISMISS_TOAST, toastId: id })
 
     dispatch({
       type: actionTypes.ADD_TOAST,
@@ -136,35 +152,60 @@ function useToast() {
     })
 
     return {
-      id: id,
+      id,
       update,
       dismiss,
     }
   }
 
-  function updateToast(id: string, props: Partial<ToasterToast>) {
+  const dismissToast = (toastId?: string) => {
+    dispatch({ type: actionTypes.DISMISS_TOAST, toastId })
+  }
+
+  const updateToast = (id: string, props: Partial<ToasterToast>) => {
     dispatch({
       type: actionTypes.UPDATE_TOAST,
       toast: { ...props, id },
     })
   }
 
-  function dismissToast(toastId?: string) {
-    dispatch({ type: actionTypes.DISMISS_TOAST, toastId: toastId })
-    toastTimeouts.set(
-      toastId || "",
-      setTimeout(() => {
-        dispatch({ type: actionTypes.REMOVE_TOAST, toastId: toastId })
-      }, TOAST_REMOVE_DELAY)
-    )
-  }
-
   return {
     ...state,
     toast,
-    updateToast,
     dismissToast,
+    updateToast,
   }
 }
 
-export { useToast, type Toast }
+// Provider component
+export function ToastProvider({ children }: { children: React.ReactNode }) {
+  const toast = useToastReducer()
+  
+  return <ToastContext.Provider value={toast}>{children}</ToastContext.Provider>
+}
+
+// Hook for components to use the toast context
+export function useToast() {
+  const context = React.useContext(ToastContext)
+  if (!context) {
+    throw new Error("useToast must be used within a ToastProvider")
+  }
+  return context
+}
+
+// Standalone function for use outside of React components
+export const toast = (props: Toast) => {
+  // This is a fallback for non-React contexts or outside components
+  console.warn("Toast used outside of component context - this may not work as expected")
+  const toastId = genId()
+  // Implementation for standalone usage if needed
+  return {
+    id: toastId,
+    dismiss: () => {
+      // Implement if needed
+    },
+    update: () => {
+      // Implement if needed
+    },
+  }
+}
