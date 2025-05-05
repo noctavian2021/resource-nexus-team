@@ -40,7 +40,9 @@ export default defineConfig(({ mode }) => ({
       // Additional aliases for other potential problematic modules
       "@babel/runtime": path.resolve(__dirname, "node_modules/@babel/runtime"),
       "buffer": path.resolve(__dirname, "node_modules/buffer"),
-      "pdfkit": path.resolve(__dirname, "node_modules/pdfkit")
+      "pdfkit": path.resolve(__dirname, "node_modules/pdfkit"),
+      // Fix for cross-fetch import issues
+      "cross-fetch": path.resolve(__dirname, "node_modules/cross-fetch")
     },
   },
   optimizeDeps: {
@@ -55,7 +57,8 @@ export default defineConfig(({ mode }) => ({
       "unicode-properties",
       "restructure",
       "linebreak",
-      "fontkit"
+      "fontkit",
+      "cross-fetch"
     ],
     exclude: [
       // Add problematic dependencies here to exclude them from optimization
@@ -84,6 +87,7 @@ export default defineConfig(({ mode }) => ({
         /@babel\/runtime/,
         /buffer/,
         /pdfkit/,
+        /cross-fetch/,
         /node_modules/
       ]
     }
