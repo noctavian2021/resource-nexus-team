@@ -56,7 +56,9 @@ export default defineConfig(({ mode }) => ({
       // Fix for hsl-to-hex import issues
       "hsl-to-hex": path.resolve(__dirname, "node_modules/hsl-to-hex"),
       // Fix for media-engine import issues
-      "media-engine": path.resolve(__dirname, "node_modules/media-engine")
+      "media-engine": path.resolve(__dirname, "node_modules/media-engine"),
+      // Fix for postcss-value-parser import issues
+      "postcss-value-parser": path.resolve(__dirname, "node_modules/postcss-value-parser")
     },
   },
   optimizeDeps: {
@@ -79,7 +81,8 @@ export default defineConfig(({ mode }) => ({
       "crypto-js",
       "pako",
       "hsl-to-hex",
-      "media-engine"
+      "media-engine",
+      "postcss-value-parser"
     ],
     exclude: [
       // Add problematic dependencies here to exclude them from optimization
@@ -116,6 +119,7 @@ export default defineConfig(({ mode }) => ({
         /pako/,
         /hsl-to-hex/,
         /media-engine/,
+        /postcss-value-parser/,
         /node_modules/
       ]
     }
