@@ -36,7 +36,11 @@ export default defineConfig(({ mode }) => ({
       "unicode-properties": path.resolve(__dirname, "node_modules/unicode-properties"),
       "restructure": path.resolve(__dirname, "node_modules/restructure"),
       "fontkit": path.resolve(__dirname, "node_modules/fontkit"),
-      "linebreak": path.resolve(__dirname, "node_modules/linebreak")
+      "linebreak": path.resolve(__dirname, "node_modules/linebreak"),
+      // Additional aliases for other potential problematic modules
+      "@babel/runtime": path.resolve(__dirname, "node_modules/@babel/runtime"),
+      "buffer": path.resolve(__dirname, "node_modules/buffer"),
+      "pdfkit": path.resolve(__dirname, "node_modules/pdfkit")
     },
   },
   optimizeDeps: {
@@ -50,7 +54,8 @@ export default defineConfig(({ mode }) => ({
       "tiny-inflate",
       "unicode-properties",
       "restructure",
-      "linebreak"
+      "linebreak",
+      "fontkit"
     ],
     exclude: [
       // Add problematic dependencies here to exclude them from optimization
@@ -76,6 +81,9 @@ export default defineConfig(({ mode }) => ({
         /restructure/,
         /linebreak/,
         /fontkit/,
+        /@babel\/runtime/,
+        /buffer/,
+        /pdfkit/,
         /node_modules/
       ]
     }
