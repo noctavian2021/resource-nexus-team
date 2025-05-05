@@ -1,6 +1,5 @@
 
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
 interface ProtectedRouteProps {
@@ -9,7 +8,6 @@ interface ProtectedRouteProps {
 
 export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { user, isLoading } = useAuth();
-  const navigate = useNavigate();
   const [currentPath, setCurrentPath] = React.useState(window.location.pathname);
   
   console.log("ProtectedRoute check - User:", user, "Path:", currentPath);
@@ -30,17 +28,17 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
     // Redirect to login if not authenticated
     if (!isLoading && !user) {
       console.log("No user found, redirecting to login");
-      navigate("/login", { replace: true });
+      window.location.href = "/login";
       return;
     }
     
     // For role-based restrictions
     if (!isLoading && user && currentPath.includes('/admin') && user.role !== 'admin') {
       console.log("User doesn't have admin access, redirecting to dashboard");
-      navigate("/", { replace: true });
+      window.location.href = "/";
       return;
     }
-  }, [user, isLoading, currentPath, navigate]);
+  }, [user, isLoading, currentPath]);
 
   // Show loading state while checking auth
   if (isLoading) {

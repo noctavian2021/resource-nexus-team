@@ -75,6 +75,10 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => ({
         if (id === 'pako/lib/zlib/inflate' || id === 'pako/lib/zlib/inflate.js') {
           return path.resolve(__dirname, './src/shims/pako-inflate-shim.js');
         }
+        // Check for pako/lib/zlib/constants imports
+        if (id === 'pako/lib/zlib/constants' || id === 'pako/lib/zlib/constants.js') {
+          return path.resolve(__dirname, './src/shims/pako-constants-shim.js');
+        }
         return null;
       },
       transform(code: string, id: string) {
@@ -229,6 +233,31 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => ({
             map: null
           };
         }
+        // Handle pako/lib/zlib/constants module
+        if (id.includes('pako/lib/zlib/constants') && !id.includes('pako-constants-shim')) {
+          return {
+            code: `
+              import pakoConstantsShim, { 
+                Z_NO_FLUSH, Z_PARTIAL_FLUSH, Z_SYNC_FLUSH, Z_FULL_FLUSH, Z_FINISH, 
+                Z_BLOCK, Z_TREES, Z_OK, Z_STREAM_END, Z_NEED_DICT, Z_ERRNO, Z_STREAM_ERROR,
+                Z_DATA_ERROR, Z_MEM_ERROR, Z_BUF_ERROR, Z_VERSION_ERROR, Z_NO_COMPRESSION,
+                Z_BEST_SPEED, Z_BEST_COMPRESSION, Z_DEFAULT_COMPRESSION, Z_FILTERED,
+                Z_HUFFMAN_ONLY, Z_RLE, Z_FIXED, Z_DEFAULT_STRATEGY, Z_BINARY, Z_TEXT,
+                Z_UNKNOWN, Z_DEFLATED
+              } from '${path.resolve(__dirname, './src/shims/pako-constants-shim.js')}';
+              export default pakoConstantsShim;
+              export { 
+                Z_NO_FLUSH, Z_PARTIAL_FLUSH, Z_SYNC_FLUSH, Z_FULL_FLUSH, Z_FINISH, 
+                Z_BLOCK, Z_TREES, Z_OK, Z_STREAM_END, Z_NEED_DICT, Z_ERRNO, Z_STREAM_ERROR,
+                Z_DATA_ERROR, Z_MEM_ERROR, Z_BUF_ERROR, Z_VERSION_ERROR, Z_NO_COMPRESSION,
+                Z_BEST_SPEED, Z_BEST_COMPRESSION, Z_DEFAULT_COMPRESSION, Z_FILTERED,
+                Z_HUFFMAN_ONLY, Z_RLE, Z_FIXED, Z_DEFAULT_STRATEGY, Z_BINARY, Z_TEXT,
+                Z_UNKNOWN, Z_DEFLATED
+              };
+            `,
+            map: null
+          };
+        }
         return null;
       }
     }
@@ -287,7 +316,10 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => ({
       "pako/lib/zlib/deflate.js": path.resolve(__dirname, './src/shims/pako-deflate-shim.js'),
       // Add direct alias for pako/lib/zlib/inflate
       "pako/lib/zlib/inflate": path.resolve(__dirname, './src/shims/pako-inflate-shim.js'),
-      "pako/lib/zlib/inflate.js": path.resolve(__dirname, './src/shims/pako-inflate-shim.js')
+      "pako/lib/zlib/inflate.js": path.resolve(__dirname, './src/shims/pako-inflate-shim.js'),
+      // Add direct alias for pako/lib/zlib/constants
+      "pako/lib/zlib/constants": path.resolve(__dirname, './src/shims/pako-constants-shim.js'),
+      "pako/lib/zlib/constants.js": path.resolve(__dirname, './src/shims/pako-constants-shim.js')
     },
     // Add mainFields to prefer module format
     mainFields: ['browser', 'module', 'jsnext:main', 'jsnext', 'main'],
@@ -312,6 +344,7 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => ({
       'pako/lib/zlib/zstream', // Add pako/lib/zlib/zstream to include
       'pako/lib/zlib/deflate', // Add pako/lib/zlib/deflate to include
       'pako/lib/zlib/inflate', // Add pako/lib/zlib/inflate to include
+      'pako/lib/zlib/constants', // Add pako/lib/zlib/constants to include
     ],
     exclude: [
       // Add problematic dependencies here to exclude them from optimization

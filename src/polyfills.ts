@@ -1,4 +1,3 @@
-
 // Add necessary polyfills for browser environment
 import { Buffer as BufferPolyfill } from 'buffer';
 import streamBrowserify from 'stream-browserify';
@@ -15,11 +14,13 @@ import md5Module from './shims/crypto-js-md5-shim';
 import pakoZstreamModule from './shims/pako-zstream-shim';
 import pakoDeflateModule from './shims/pako-deflate-shim';
 import pakoInflateModule from './shims/pako-inflate-shim';
+import pakoConstantsModule from './shims/pako-constants-shim';
 
 console.log('Polyfills loaded:', {
   pakoZstream: pakoZstreamModule,
   pakoDeflate: pakoDeflateModule,
   pakoInflate: pakoInflateModule,
+  pakoConstants: pakoConstantsModule,
   md5Module: md5Module
 });
 
@@ -50,7 +51,8 @@ declare global {
     md5?: any;
     pakoZstream?: any;
     pakoDeflate?: any;
-    pakoInflate?: any; // Add this missing declaration
+    pakoInflate?: any;
+    pakoConstants?: any;
   }
 }
 
@@ -129,6 +131,12 @@ if (typeof window !== 'undefined') {
   if (!window.pakoInflate) {
     window.pakoInflate = pakoInflateModule;
     console.log('Added pako inflate polyfill to window', pakoInflateModule);
+  }
+  
+  // Add pako constants polyfill
+  if (!window.pakoConstants) {
+    window.pakoConstants = pakoConstantsModule;
+    console.log('Added pako constants polyfill to window', pakoConstantsModule);
   }
 }
 
@@ -275,6 +283,41 @@ const customPakoInflateShim = {
   inflateInfo: pakoInflateModule.inflateInfo
 };
 
+// Add pako constants module shims
+const customPakoConstantsShim = {
+  __esModule: true,
+  default: pakoConstantsModule,
+  Z_NO_FLUSH: pakoConstantsModule.Z_NO_FLUSH,
+  Z_PARTIAL_FLUSH: pakoConstantsModule.Z_PARTIAL_FLUSH,
+  Z_SYNC_FLUSH: pakoConstantsModule.Z_SYNC_FLUSH,
+  Z_FULL_FLUSH: pakoConstantsModule.Z_FULL_FLUSH,
+  Z_FINISH: pakoConstantsModule.Z_FINISH,
+  Z_BLOCK: pakoConstantsModule.Z_BLOCK,
+  Z_TREES: pakoConstantsModule.Z_TREES,
+  Z_OK: pakoConstantsModule.Z_OK,
+  Z_STREAM_END: pakoConstantsModule.Z_STREAM_END,
+  Z_NEED_DICT: pakoConstantsModule.Z_NEED_DICT,
+  Z_ERRNO: pakoConstantsModule.Z_ERRNO,
+  Z_STREAM_ERROR: pakoConstantsModule.Z_STREAM_ERROR,
+  Z_DATA_ERROR: pakoConstantsModule.Z_DATA_ERROR,
+  Z_MEM_ERROR: pakoConstantsModule.Z_MEM_ERROR,
+  Z_BUF_ERROR: pakoConstantsModule.Z_BUF_ERROR,
+  Z_VERSION_ERROR: pakoConstantsModule.Z_VERSION_ERROR,
+  Z_NO_COMPRESSION: pakoConstantsModule.Z_NO_COMPRESSION,
+  Z_BEST_SPEED: pakoConstantsModule.Z_BEST_SPEED,
+  Z_BEST_COMPRESSION: pakoConstantsModule.Z_BEST_COMPRESSION,
+  Z_DEFAULT_COMPRESSION: pakoConstantsModule.Z_DEFAULT_COMPRESSION,
+  Z_FILTERED: pakoConstantsModule.Z_FILTERED,
+  Z_HUFFMAN_ONLY: pakoConstantsModule.Z_HUFFMAN_ONLY,
+  Z_RLE: pakoConstantsModule.Z_RLE,
+  Z_FIXED: pakoConstantsModule.Z_FIXED,
+  Z_DEFAULT_STRATEGY: pakoConstantsModule.Z_DEFAULT_STRATEGY,
+  Z_BINARY: pakoConstantsModule.Z_BINARY,
+  Z_TEXT: pakoConstantsModule.Z_TEXT,
+  Z_UNKNOWN: pakoConstantsModule.Z_UNKNOWN,
+  Z_DEFLATED: pakoConstantsModule.Z_DEFLATED
+};
+
 // This will be used by our import interception logic in vite.config.ts
 if (typeof window !== 'undefined') {
   window.__customModuleShims = {
@@ -306,6 +349,8 @@ if (typeof window !== 'undefined') {
     'pako/lib/zlib/deflate': customPakoDeflateShim,
     'pako/lib/zlib/deflate.js': customPakoDeflateShim,
     'pako/lib/zlib/inflate': customPakoInflateShim,
-    'pako/lib/zlib/inflate.js': customPakoInflateShim
+    'pako/lib/zlib/inflate.js': customPakoInflateShim,
+    'pako/lib/zlib/constants': customPakoConstantsShim,
+    'pako/lib/zlib/constants.js': customPakoConstantsShim
   };
 }
