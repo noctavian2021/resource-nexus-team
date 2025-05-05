@@ -7,6 +7,7 @@ export const sendTestEmail = async (
 ): Promise<TestEmailResponse> => {
   try {
     if (!config.enabled) {
+      console.log('Email test aborted: Email notifications are disabled');
       return {
         success: false,
         error: "Email notifications are disabled"
@@ -14,6 +15,7 @@ export const sendTestEmail = async (
     }
 
     if (!config.host || !config.port || !config.username || !config.password) {
+      console.log('Email test aborted: Incomplete email configuration');
       return {
         success: false,
         error: "Incomplete email configuration"
@@ -93,6 +95,8 @@ export const sendTestEmail = async (
       let responseData;
       try {
         const responseText = await response.text();
+        console.log('Email test response text:', responseText);
+        
         if (!responseText.trim()) {
           // Empty response but status was OK
           return {
