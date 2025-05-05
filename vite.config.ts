@@ -27,11 +27,13 @@ export default defineConfig(({ mode }) => ({
       // Fix for clone import issues
       "clone": path.resolve(__dirname, "node_modules/clone"),
       // Fix for dfa import issues
-      "dfa": path.resolve(__dirname, "node_modules/dfa")
+      "dfa": path.resolve(__dirname, "node_modules/dfa"),
+      // Fix for fast-deep-equal import issues
+      "fast-deep-equal": path.resolve(__dirname, "node_modules/fast-deep-equal")
     },
   },
   optimizeDeps: {
-    include: ["base64-js", "unicode-trie", "brotli", "clone", "dfa"],
+    include: ["base64-js", "unicode-trie", "brotli", "clone", "dfa", "fast-deep-equal"],
     exclude: [
       // Add problematic dependencies here to exclude them from optimization
       '@react-pdf/renderer',
@@ -44,7 +46,7 @@ export default defineConfig(({ mode }) => ({
     commonjsOptions: {
       // Handle CommonJS dependencies properly
       transformMixedEsModules: true,
-      include: [/base64-js/, /unicode-trie/, /unicode-properties/, /brotli/, /clone/, /dfa/, /node_modules/]
+      include: [/base64-js/, /unicode-trie/, /unicode-properties/, /brotli/, /clone/, /dfa/, /fast-deep-equal/, /node_modules/]
     }
   }
 }));
