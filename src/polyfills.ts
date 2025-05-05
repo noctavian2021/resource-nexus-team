@@ -3,6 +3,7 @@
 import { Buffer as BufferPolyfill } from 'buffer';
 import streamBrowserify from 'stream-browserify';
 import cloneModule from './shims/clone-shim';
+import dfaModule from './shims/dfa-shim';
 
 // Create a minimal Process interface with only the properties we need
 interface MinimalProcess {
@@ -20,6 +21,7 @@ declare global {
     __customModuleShims?: Record<string, any>;
     Stream?: any;
     clone?: any;
+    dfa?: any;
   }
 }
 
@@ -35,6 +37,11 @@ if (typeof window !== 'undefined') {
   // Add clone polyfill
   if (!window.clone) {
     window.clone = cloneModule;
+  }
+  
+  // Add dfa polyfill
+  if (!window.dfa) {
+    window.dfa = dfaModule;
   }
 }
 
@@ -92,6 +99,13 @@ const customCloneShim = {
   clone: cloneModule
 };
 
+// Add dfa module shims
+const customDfaShim = {
+  __esModule: true,
+  default: dfaModule,
+  ...dfaModule
+};
+
 // This will be used by our import interception logic in vite.config.ts
 if (typeof window !== 'undefined') {
   window.__customModuleShims = {
@@ -99,6 +113,8 @@ if (typeof window !== 'undefined') {
     'stream': customStreamShim,
     'stream-browserify': customStreamShim,
     'clone': customCloneShim,
-    'clone/clone.js': customCloneShim
+    'clone/clone.js': customCloneShim,
+    'dfa': customDfaShim,
+    'dfa/index.js': customDfaShim
   };
 }

@@ -28,6 +28,10 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => ({
         if (id === 'clone' || id === 'clone/clone.js') {
           return path.resolve(__dirname, './src/shims/clone-shim.js');
         }
+        // Check for dfa imports
+        if (id === 'dfa' || id === 'dfa/index.js') {
+          return path.resolve(__dirname, './src/shims/dfa-shim.js');
+        }
         return null;
       },
       transform(code: string, id: string) {
@@ -56,6 +60,17 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => ({
             map: null
           };
         }
+        // Handle dfa module
+        if (id.includes('dfa') && !id.includes('dfa-shim')) {
+          return {
+            code: `
+              import dfaShim from '${path.resolve(__dirname, './src/shims/dfa-shim.js')}';
+              export default dfaShim;
+              export const DFA = dfaShim.DFA;
+            `,
+            map: null
+          };
+        }
         return null;
       }
     }
@@ -78,7 +93,10 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => ({
       "brotli/decompress": path.resolve(__dirname, './src/shims/brotli-shim.js'),
       // Add direct alias for clone
       "clone": path.resolve(__dirname, './src/shims/clone-shim.js'),
-      "clone/clone.js": path.resolve(__dirname, './src/shims/clone-shim.js')
+      "clone/clone.js": path.resolve(__dirname, './src/shims/clone-shim.js'),
+      // Add direct alias for dfa
+      "dfa": path.resolve(__dirname, './src/shims/dfa-shim.js'),
+      "dfa/index.js": path.resolve(__dirname, './src/shims/dfa-shim.js')
     },
     // Add mainFields to prefer module format
     mainFields: ['browser', 'module', 'jsnext:main', 'jsnext', 'main'],
@@ -91,6 +109,7 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => ({
       'process/browser',
       'stream-browserify',  // Add stream-browserify to include
       'clone', // Add clone to include
+      'dfa', // Add dfa to include
     ],
     exclude: [
       // Add problematic dependencies here to exclude them from optimization
