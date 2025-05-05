@@ -12,7 +12,7 @@ export default defineConfig(({ mode }) => ({
   },
   plugins: [
     react({
-      // Using JSX transform correctly according to SWC options
+      // Using JSX transform with correct configuration
       jsxImportSource: "react",
     }),
     mode === 'development' &&
@@ -21,6 +21,8 @@ export default defineConfig(({ mode }) => ({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      "react/jsx-runtime": path.resolve(__dirname, "node_modules/react/jsx-runtime"),
+      "react/jsx-dev-runtime": path.resolve(__dirname, "node_modules/react/jsx-dev-runtime"),
     },
   },
   define: {
@@ -34,6 +36,7 @@ export default defineConfig(({ mode }) => ({
       'media-engine',
       'react',
       'react-dom',
+      'react/jsx-runtime'
     ],
     esbuildOptions: {
       jsx: 'automatic',
@@ -41,7 +44,8 @@ export default defineConfig(({ mode }) => ({
   },
   build: {
     commonjsOptions: {
-      include: [/postcss-value-parser/, /media-engine/]
+      include: [/postcss-value-parser/, /media-engine/],
+      transformMixedEsModules: true
     },
     rollupOptions: {
       external: [],
