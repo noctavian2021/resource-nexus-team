@@ -25,11 +25,13 @@ export default defineConfig(({ mode }) => ({
       // Fix for brotli import issues
       "brotli": path.resolve(__dirname, "node_modules/brotli"),
       // Fix for clone import issues
-      "clone": path.resolve(__dirname, "node_modules/clone")
+      "clone": path.resolve(__dirname, "node_modules/clone"),
+      // Fix for dfa import issues
+      "dfa": path.resolve(__dirname, "node_modules/dfa")
     },
   },
   optimizeDeps: {
-    include: ["base64-js", "unicode-trie", "brotli", "clone"],
+    include: ["base64-js", "unicode-trie", "brotli", "clone", "dfa"],
     exclude: [
       // Add problematic dependencies here to exclude them from optimization
       '@react-pdf/renderer',
@@ -42,7 +44,7 @@ export default defineConfig(({ mode }) => ({
     commonjsOptions: {
       // Handle CommonJS dependencies properly
       transformMixedEsModules: true,
-      include: [/base64-js/, /unicode-trie/, /unicode-properties/, /brotli/, /clone/, /node_modules/]
+      include: [/base64-js/, /unicode-trie/, /unicode-properties/, /brotli/, /clone/, /dfa/, /node_modules/]
     }
   }
 }));
