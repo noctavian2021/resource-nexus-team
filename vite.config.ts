@@ -40,9 +40,10 @@ export default defineConfig(({ mode }) => ({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      // Ensure React is correctly aliased with proper exports
+      "react": path.resolve(__dirname, "node_modules/react"),
       "react/jsx-runtime": path.resolve(__dirname, "node_modules/react/jsx-runtime"),
       "react/jsx-dev-runtime": path.resolve(__dirname, "node_modules/react/jsx-dev-runtime"),
-      "react": path.resolve(__dirname, "node_modules/react"),
     },
   },
   define: {
@@ -69,6 +70,11 @@ export default defineConfig(({ mode }) => ({
     },
     rollupOptions: {
       external: [],
+      output: {
+        manualChunks: {
+          'react-vendor': ['react', 'react-dom', 'react/jsx-runtime'],
+        },
+      }
     }
   }
 }));

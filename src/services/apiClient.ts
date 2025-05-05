@@ -56,13 +56,19 @@ const apiRequest = async <T>(
       fetchOptions.body = JSON.stringify(data);
     }
 
-    // For email endpoints, use the proxy configured in vite.config.ts
+    // Determine the appropriate URL based on the endpoint
     let url: string;
-    if (endpoint.includes('/email/')) {
-      // Use the /api prefix that our proxy handles correctly
-      url = `/api${endpoint}`;
-      console.log(`Using email API endpoint: ${url}`);
+    if (endpoint.startsWith('/api/') || endpoint.includes('/email/')) {
+      // Use the /api prefix for any API or email routes
+      // Make sure paths that start with /email/ get the /api prefix
+      if (endpoint.startsWith('/email/')) {
+        url = `/api${endpoint}`;
+      } else {
+        url = endpoint; // Already has /api prefix
+      }
+      console.log(`Using API endpoint: ${url}`);
     } else {
+      // Use the configured API_URL for other endpoints
       url = `${API_URL}${endpoint}`;
     }
 
@@ -70,7 +76,27 @@ const apiRequest = async <T>(
 
     if (!response.ok) {
       console.error(`API error: ${response.status} ${response.statusText}`);
-      throw new Error(`API error: ${response.status} ${response.statusText}`);
+      
+      // Try to get more detailed error information
+      let errorDetail = response.statusText;
+      try {
+        const errorText = await response.text();
+        if (errorText) {
+          try {
+            // Try to parse as JSON
+            const errorJson = JSON.parse(errorText);
+            errorDetail = errorJson.error || errorJson.message || errorText;
+          } catch {
+            // If not JSON, use text directly
+            errorDetail = errorText;
+          }
+        }
+      } catch (err) {
+        // If we can't read the error, use status text
+        console.error("Couldn't read error details:", err);
+      }
+      
+      throw new Error(`API error: ${response.status} ${errorDetail}`);
     }
 
     // For DELETE requests with no content

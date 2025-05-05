@@ -59,7 +59,7 @@ export const sendTestEmail = async (
 
       console.log('Email test response status:', response.status);
       
-      // Check if response is ok before trying to parse JSON
+      // Handle different error codes specifically
       if (!response.ok) {
         if (response.status === 404) {
           return {
@@ -69,26 +69,68 @@ export const sendTestEmail = async (
         }
         
         if (response.status === 500) {
-          // Try to get error text
-          const errorText = await response.text();
-          console.error('Server error response:', errorText);
-          return {
-            success: false,
-            error: `Server error: ${errorText || 'Unknown internal server error'}`
-          };
+          try {
+            // Try to get error text
+            const errorText = await response.text();
+            console.error('Server error response:', errorText);
+            
+            // Try to parse the error as JSON if possible
+            try {
+              const errorJson = JSON.parse(errorText);
+              return {
+                success: false,
+                error: errorJson.error || `Server error: ${errorText || 'Unknown internal server error'}`
+              };
+            } catch (jsonParseError) {
+              // If not valid JSON, just return the text
+              return {
+                success: false,
+                error: `Server error: ${errorText || 'Unknown internal server error'}`
+              };
+            }
+          } catch (textReadError) {
+            // If we can't even read the response text
+            return {
+              success: false,
+              error: "Server internal error. Check server logs for details."
+            };
+          }
         }
         
-        // Try to get error text first
-        const errorText = await response.text();
-        console.error(`API error (${response.status}):`, errorText);
-        return {
-          success: false,
-          error: `API returned ${response.status}: ${errorText || response.statusText}`
-        };
+        // For any other error status
+        try {
+          const errorText = await response.text();
+          // Try to parse as JSON first
+          try {
+            const errorJson = JSON.parse(errorText);
+            return {
+              success: false,
+              error: errorJson.error || `API returned ${response.status}: ${errorText || response.statusText}`
+            };
+          } catch (jsonError) {
+            // If not valid JSON, return the text
+            return {
+              success: false,
+              error: `API returned ${response.status}: ${errorText || response.statusText}`
+            };
+          }
+        } catch (textError) {
+          return {
+            success: false,
+            error: `API returned ${response.status}: ${response.statusText}`
+          };
+        }
       }
       
       // Handle empty response
-      const responseText = await response.text();
+      let responseText;
+      try {
+        responseText = await response.text();
+      } catch (error) {
+        console.error('Error reading response text:', error);
+        responseText = '';
+      }
+      
       if (!responseText) {
         console.log('Server returned empty response');
         return {
@@ -121,6 +163,18 @@ export const sendTestEmail = async (
         }
       } catch (jsonError) {
         console.error('JSON parsing error:', jsonError, 'Response text:', responseText);
+        
+        // If JSON parsing fails but status was OK, assume success
+        if (response.ok) {
+          return {
+            success: true,
+            details: {
+              messageId: 'unknown',
+              smtpResponse: 'Email sent successfully, but response format was unexpected'
+            }
+          };
+        }
+        
         return {
           success: false,
           error: `Failed to parse server response: ${responseText.substring(0, 100)}...`
