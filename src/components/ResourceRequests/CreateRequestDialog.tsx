@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
@@ -119,7 +120,7 @@ export default function CreateRequestDialog() {
 
       // Use the same approach as SendWelcomeDialog - direct API call
       try {
-        // First, make a direct API call to send the email with appropriate resource request subject and content
+        // First, make a direct API call to send the email
         const response = await fetch('http://localhost:5000/api/email/send-welcome', {
           method: 'POST',
           headers: {
@@ -128,25 +129,15 @@ export default function CreateRequestDialog() {
           body: JSON.stringify({
             email: data.targetLeadEmail,
             name: targetDepartment?.name || 'Department Lead',
-            subject: `Resource Request: ${data.title}`,
-            // Override the default email template content by setting custom fields
-            isResourceRequest: true, // Signal this is not a regular welcome email
+            subject: `New Resource Request: ${data.title}`,
             startDate: data.startDate,
-            endDate: data.endDate,
-            replacingMember: '', // Not relevant for resource requests
+            replacingMember: '',
             additionalNotes: `
-              RESOURCE REQUEST FROM ${requestingDepartment?.name || user?.name || 'Admin'}
+              New Resource Request: ${data.title}
               
-              ${data.title}
-              
-              Description:
               ${data.description}
               
-              Required Skills: ${data.requiredSkills}
-              Requested Duration: ${data.startDate} to ${data.endDate}
-              
-              Please review this resource request at your earliest convenience.
-              This request requires your attention in the Resource Management System.
+              ${additionalEmailContent}
             `,
             emailConfig: {
               ...emailConfig,
@@ -200,23 +191,17 @@ export default function CreateRequestDialog() {
             body: JSON.stringify({
               email: user.email,
               name: user.name || 'User',
-              subject: `Your Resource Request: ${data.title} - Confirmation`,
-              isResourceRequest: true, // Signal this is not a regular welcome email
-              startDate: data.startDate,
-              endDate: data.endDate,
+              subject: `Your Resource Request: ${data.title}`,
+              startDate: new Date().toISOString().split('T')[0],
               replacingMember: '',
               additionalNotes: `
-                RESOURCE REQUEST CONFIRMATION
-                
                 Your request "${data.title}" has been submitted to ${targetDepartment?.name || 'the department'}.
                 You will be notified when there is an update.
                 
                 Request Details:
-                Description: ${data.description}
+                ${data.description}
                 Required Skills: ${data.requiredSkills}
-                Duration: ${data.startDate} to ${data.endDate}
-                
-                Thank you for submitting your request through the Resource Management System.
+                From ${data.startDate} to ${data.endDate}
               `,
               emailConfig: {
                 ...emailConfig,

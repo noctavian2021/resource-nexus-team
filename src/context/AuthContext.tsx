@@ -50,7 +50,7 @@ const MOCK_USERS = [
   {
     id: '3m',  // Updated to match Mirela's ID
     name: 'Mirela Wang',
-    email: 'octavian.negrea2@ontario.ca', // Updated Mirela's email to match the changed email
+    email: 'mirela@example.com',
     password: 'password123',
     departmentId: '3',
     role: 'team_lead' as const,

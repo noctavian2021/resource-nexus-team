@@ -1,4 +1,3 @@
-
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
@@ -20,13 +19,4 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
-  optimizeDeps: {
-    exclude: [
-      // Add problematic dependencies here to exclude them from optimization
-      '@react-pdf/renderer',
-      'embla-carousel-react',
-      'vaul',
-      'cmdk'
-    ]
-  }
 }));
