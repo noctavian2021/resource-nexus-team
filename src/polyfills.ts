@@ -62,6 +62,8 @@ declare global {
     hslToHex?: any;
     mediaEngine?: any;
     postcssValueParser?: any;
+    postcssValueParserParse?: any;
+    postcssValueParserUnit?: any;
   }
 }
 
@@ -163,6 +165,8 @@ if (typeof window !== 'undefined') {
   // Add postcss-value-parser polyfill
   if (!window.postcssValueParser) {
     window.postcssValueParser = postcssValueParserModule;
+    window.postcssValueParserParse = postcssValueParserModule.parse;
+    window.postcssValueParserUnit = postcssValueParserModule.unit;
     console.log('Added postcss-value-parser polyfill to window', postcssValueParserModule);
   }
 }
@@ -363,7 +367,9 @@ const customMediaEngineShim = {
 const customPostcssValueParserShim = {
   __esModule: true,
   default: postcssValueParserModule,
-  ...postcssValueParserModule
+  ...postcssValueParserModule,
+  parse: postcssValueParserModule.parse,
+  unit: postcssValueParserModule.unit
 };
 
 // This will be used by our import interception logic in vite.config.ts
@@ -406,6 +412,15 @@ if (typeof window !== 'undefined') {
     'media-engine/src/index.js': customMediaEngineShim,
     'postcss-value-parser': customPostcssValueParserShim,
     'postcss-value-parser/lib/index.js': customPostcssValueParserShim,
-    'postcss-value-parser/lib/parse.js': customPostcssValueParserShim,
+    'postcss-value-parser/lib/parse.js': { 
+      __esModule: true, 
+      default: postcssValueParserModule.parse,
+      parse: postcssValueParserModule.parse
+    },
+    'postcss-value-parser/lib/unit.js': { 
+      __esModule: true, 
+      default: postcssValueParserModule.unit,
+      unit: postcssValueParserModule.unit
+    }
   };
 }
