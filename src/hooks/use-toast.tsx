@@ -1,6 +1,5 @@
 
-import * as React from "react"
-import { useReducer, useEffect } from "react"
+import React from 'react';
 
 import {
   Toast,
@@ -108,9 +107,9 @@ export type Toast = Omit<ToasterToast, "id">
 const ToastContext = React.createContext<ReturnType<typeof useToastReducer> | null>(null)
 
 function useToastReducer() {
-  const [state, dispatch] = useReducer(reducer, initialState)
+  const [state, dispatch] = React.useReducer(reducer, initialState)
 
-  useEffect(() => {
+  React.useEffect(() => {
     state.toasts.forEach((toast) => {
       if (!toast.open && toastTimeouts.has(toast.id)) return
 
