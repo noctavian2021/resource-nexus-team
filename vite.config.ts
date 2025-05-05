@@ -46,7 +46,9 @@ export default defineConfig(({ mode }) => ({
       // Fix for abs-svg-path import issues
       "abs-svg-path": path.resolve(__dirname, "node_modules/abs-svg-path"),
       // Fix for color-string import issues
-      "color-string": path.resolve(__dirname, "node_modules/color-string")
+      "color-string": path.resolve(__dirname, "node_modules/color-string"),
+      // Fix for parse-svg-path import issues
+      "parse-svg-path": path.resolve(__dirname, "node_modules/parse-svg-path")
     },
   },
   optimizeDeps: {
@@ -64,7 +66,8 @@ export default defineConfig(({ mode }) => ({
       "fontkit",
       "cross-fetch",
       "abs-svg-path",
-      "color-string"
+      "color-string",
+      "parse-svg-path"
     ],
     exclude: [
       // Add problematic dependencies here to exclude them from optimization
@@ -96,6 +99,7 @@ export default defineConfig(({ mode }) => ({
         /cross-fetch/,
         /abs-svg-path/,
         /color-string/,
+        /parse-svg-path/,
         /node_modules/
       ]
     }
