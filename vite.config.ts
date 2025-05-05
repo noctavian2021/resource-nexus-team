@@ -19,11 +19,13 @@ export default defineConfig(({ mode }) => ({
     alias: {
       "@": path.resolve(__dirname, "./src"),
       // Fix for base64-js import issues
-      "base64-js": path.resolve(__dirname, "node_modules/base64-js")
+      "base64-js": path.resolve(__dirname, "node_modules/base64-js"),
+      // Fix for unicode-trie import issues
+      "unicode-trie": path.resolve(__dirname, "node_modules/unicode-trie")
     },
   },
   optimizeDeps: {
-    include: ["base64-js"],
+    include: ["base64-js", "unicode-trie"],
     exclude: [
       // Add problematic dependencies here to exclude them from optimization
       '@react-pdf/renderer',
@@ -36,7 +38,7 @@ export default defineConfig(({ mode }) => ({
     commonjsOptions: {
       // Handle CommonJS dependencies properly
       transformMixedEsModules: true,
-      include: [/base64-js/, /unicode-properties/, /node_modules/]
+      include: [/base64-js/, /unicode-trie/, /unicode-properties/, /node_modules/]
     }
   }
 }));
