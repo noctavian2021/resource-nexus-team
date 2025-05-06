@@ -5,7 +5,7 @@
 
 // Configuration
 export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000'; 
-let USE_MOCK = import.meta.env.MODE === 'development' ? false : true;
+let USE_MOCK = import.meta.env.MODE === 'development' ? false : false; // Setting default to false for production mode
 
 // Function to toggle mock data
 export const toggleMockData = (showMock: boolean) => {
