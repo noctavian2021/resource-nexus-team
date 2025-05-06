@@ -1,201 +1,143 @@
-
 import { EmailConfig, TestEmailResponse } from './types';
+import apiRequest from '@/services/apiClient';
 
 export const sendTestEmail = async (
   config: EmailConfig, 
   recipient: string
 ): Promise<TestEmailResponse> => {
+  if (!config.enabled) {
+    return { success: false, error: 'Email notifications are disabled' };
+  }
+
+  if (!recipient || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recipient)) {
+    return { success: false, error: 'Valid recipient email is required' };
+  }
+
+  // Enhanced logging for better debugging
+  console.log('Sending test email to', recipient, 'with config:', JSON.stringify({
+    provider: config.provider,
+    host: config.host,
+    port: config.port,
+    secure: config.secure,
+    username: config.username,
+    fromEmail: config.fromEmail,
+    fromName: config.fromName,
+    enabled: config.enabled
+  }, null, 2));
+  
+  // Add more detailed logging about recipient
+  console.log(`Attempting to deliver email to recipient: ${recipient}`);
+  
+  // Special handling for providers - logging
+  if (config.provider === 'yahoo') {
+    console.log('Using Yahoo provider with special configuration');
+    console.log('Note: Yahoo requires an app password, not regular account password');
+  }
+  
+  if (config.provider === 'gmail') {
+    console.log('Using Gmail provider - note that Gmail requires an App Password if 2FA is enabled');
+    console.log('Gmail connection may fail if the account has security restrictions. Check for emails about security alerts.');
+  }
+  
   try {
-    if (!config.enabled) {
-      console.log('Email test aborted: Email notifications are disabled');
-      // Show immediate toast feedback without waiting for server
-      showToast({
-        title: "Email Test Failed",
-        description: "Email notifications are disabled",
-        variant: "destructive"
-      });
-      return {
-        success: false,
-        error: "Email notifications are disabled"
-      };
-    }
-
-    if (!config.host || !config.port || !config.username || !config.password) {
-      console.log('Email test aborted: Incomplete email configuration');
-      // Show immediate toast feedback without waiting for server
-      showToast({
-        title: "Email Test Failed",
-        description: "Incomplete email configuration",
-        variant: "destructive"
-      });
-      return {
-        success: false,
-        error: "Incomplete email configuration"
-      };
-    }
-
-    console.log(`Sending test email to ${recipient} using ${config.provider} configuration`);
-    
-    // Use the consistent endpoint path with /api prefix
-    const url = '/api/email/send';
-    console.log(`Sending test email to endpoint: ${url}`);
-    
-    // Show sending status toast
-    showToast({
-      title: "Sending Test Email",
-      description: `Attempting to send email to ${recipient}...`,
-      duration: 3000
+    // Updated to use a more consistent endpoint for email sending
+    const result = await apiRequest<{
+      success: boolean;
+      message?: string;
+      error?: string;
+      messageId?: string;
+      smtpResponse?: string;
+    }>('/email/send', 'POST', {
+      to: recipient,
+      subject: 'Test Email from Resource Management System',
+      text: 'This is a test email to verify your SMTP configuration is working correctly.',
+      html: `
+        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2>Test Email</h2>
+          <p>This is a test email to verify your SMTP configuration is working correctly.</p>
+          <p>If you received this email, your email system is properly configured!</p>
+          <hr>
+          <p style="color: #666; font-size: 12px;">Resource Management System</p>
+        </div>
+      `,
+      // Ensure config is normalized correctly
+      emailConfig: {
+        ...config,
+        // Ensure port is string and secured is properly set based on port
+        port: String(config.port),
+        secure: config.port === '465' ? true : (config.port === '587' ? false : config.secure),
+        // Add connection timeout settings
+        connectionTimeout: 30000, // 30 seconds
+        greetingTimeout: 30000    // 30 seconds
+      }
     });
     
-    try {
-      // Call the email API endpoint with added error handling
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          to: recipient,
-          subject: 'Test Email from Resource Management System',
-          text: 'This is a test email to verify your SMTP configuration is working correctly.',
-          html: `
-          <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2>Test Email</h2>
-            <p>This is a test email to verify your SMTP configuration is working correctly.</p>
-            <p>If you received this email, your email system is properly configured!</p>
-            <hr>
-            <p style="color: #666; font-size: 12px;">Resource Management System</p>
-          </div>
-        `,
-          emailConfig: {
-            ...config,
-            // Ensure port is string
-            port: String(config.port),
-            // Add connection timeouts
-            connectionTimeout: 30000,
-            greetingTimeout: 30000
-          }
-        }),
-      });
-
-      console.log('Email test response status:', response.status);
-      
-      // Display toast immediately when the server responds
-      showToast({
-        title: response.ok ? "Email Server Response" : "Email Server Error",
-        description: `Status: ${response.status} - ${response.ok ? "Server accepted the request" : "Server error occurred"}`,
-        variant: response.ok ? "default" : "destructive",
-        duration: 5000
-      });
-      
-      // Handle different error codes specifically
-      if (!response.ok) {
-        let errorText = '';
-        
-        try {
-          errorText = await response.text();
-          console.log('Error response text:', errorText);
-          
-          try {
-            // Try to parse as JSON
-            const errorJson = JSON.parse(errorText);
-            return {
-              success: false,
-              error: errorJson.error || `Error (${response.status}): ${errorText}`
-            };
-          } catch (jsonError) {
-            // Not valid JSON, return as string
-            return {
-              success: false,
-              error: `Error (${response.status}): ${errorText}`
-            };
-          }
-        } catch (e) {
-          return {
-            success: false,
-            error: `Server returned error status ${response.status}`
-          };
+    if (result.success) {
+      console.log('Email sent successfully:', result);
+      return { 
+        success: true, 
+        details: {
+          messageId: result.messageId,
+          smtpResponse: result.smtpResponse
         }
-      }
+      };
+    } else {
+      const errorMsg = result.error || 'Unknown error sending email';
+      console.error('Email error:', errorMsg);
       
-      // Handle successful response
-      let responseData;
-      try {
-        const responseText = await response.text();
-        console.log('Email test response text:', responseText);
-        
-        if (!responseText.trim()) {
-          // Empty response but status was OK
-          return {
-            success: true,
-            details: {
-              messageId: 'unknown',
-              smtpResponse: 'Email sent successfully (no details returned)'
-            }
-          };
-        }
-        
-        responseData = JSON.parse(responseText);
-      } catch (parseError) {
-        console.error('Error parsing response:', parseError);
-        // If we can't parse but the status was OK, assume success
-        return {
-          success: true,
-          details: {
-            messageId: 'unknown',
-            smtpResponse: 'Email sent successfully (response parsing error)'
-          }
+      // Enhanced error handling for specific providers
+      if (config.provider === 'yahoo' && 
+          (errorMsg.includes('535') || errorMsg.includes('authentication') || 
+          errorMsg.includes('auth') || errorMsg.includes('login'))) {
+        return { 
+          success: false, 
+          error: `Yahoo authentication failed. Make sure you've generated an App Password specifically for this app and you're not using your regular Yahoo account password. Error: ${errorMsg}`,
+          details: undefined // Explicitly set details to undefined for failed attempts
         };
       }
       
-      // Return a properly structured response
-      return {
-        success: true,
-        details: {
-          messageId: responseData?.messageId || 'unknown',
-          smtpResponse: responseData?.smtpResponse || 'Email sent successfully'
+      if (config.provider === 'gmail') {
+        if (errorMsg.includes('Greeting never received')) {
+          return {
+            success: false,
+            error: `Gmail connection timed out. Please try: 1) Using an App Password if you have 2FA enabled 2) Verifying your username is a Gmail address 3) Checking for security alerts in your Gmail 4) Waiting a few minutes before trying again. Error: ${errorMsg}`,
+            details: undefined // Explicitly set details to undefined for failed attempts
+          };
         }
-      };
-    } catch (error: any) {
-      console.error('Fetch error in sendTestEmail:', error);
+        
+        if (errorMsg.includes('535') || errorMsg.includes('authentication') || 
+          errorMsg.includes('auth') || errorMsg.includes('login')) {
+          return {
+            success: false,
+            error: `Gmail authentication failed. If you have 2FA enabled on your Google account, you must generate and use an App Password instead of your regular password. Error: ${errorMsg}`,
+            details: undefined // Explicitly set details to undefined for failed attempts
+          };
+        }
+      }
       
-      // Show a toast for network errors
-      showToast({
-        title: "Network Error",
-        description: error.message || "Failed to connect to email server",
-        variant: "destructive",
-        duration: 5000
-      });
-      
-      return {
-        success: false,
-        error: error.message || "Failed to connect to email server"
+      return { 
+        success: false, 
+        error: errorMsg,
+        details: undefined // Explicitly set details to undefined for failed attempts 
       };
     }
-  } catch (error: any) {
-    console.error("Error in sendTestEmail:", error);
-    return {
-      success: false,
-      error: error.message || "Failed to send test email"
+  } catch (err: any) {
+    const errorMsg = `Email sending failed: ${err.message || 'Unknown error'}`;
+    console.error(errorMsg);
+    
+    // Provide more specific guidance for common errors
+    if (err.message && err.message.includes('Greeting never received')) {
+      return { 
+        success: false, 
+        error: "SMTP connection timeout - server didn't respond. This could be due to: 1) Network connectivity issues 2) Email provider blocking access 3) Incorrect port or security settings. For Gmail, try using port 587 with secure=false. If using a corporate email, check with your IT department about firewall restrictions.",
+        details: undefined // Explicitly set details to undefined for failed attempts
+      };
+    }
+    
+    return { 
+      success: false, 
+      error: errorMsg,
+      details: undefined // Explicitly set details to undefined for failed attempts
     };
   }
 };
-
-// Helper function to show toast messages
-function showToast(props: { 
-  title: string; 
-  description: string; 
-  variant?: "default" | "destructive"; 
-  duration?: number;
-}) {
-  if (typeof window !== 'undefined') {
-    const eventName = "lovable-toast-event";
-    const toastEvent = new CustomEvent(eventName, { 
-      detail: {
-        ...props,
-        duration: props.duration || 5000
-      } 
-    });
-    window.dispatchEvent(toastEvent);
-  }
-}

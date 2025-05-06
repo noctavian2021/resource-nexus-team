@@ -124,21 +124,8 @@ export const teamMembers: TeamMember[] = [
     availability: 50,
     projects: ['2']
   },
-  // Using a consistent, standard ID '3' for Mirela as the Product department lead
   {
     id: '3',
-    name: 'Mirela Wang',
-    role: 'Product Manager',
-    department: 'Product',
-    email: 'octavian.negrea2@ontario.ca', // Updated to match the changed email
-    avatar: 'https://i.pravatar.cc/150?img=4',
-    skills: ['Product Strategy', 'User Research', 'Roadmapping'],
-    availability: 65,
-    projects: ['2', '5'],
-    isLead: true // Explicitly marking her as lead
-  },
-  {
-    id: '4',
     name: 'Michael Chen',
     role: 'Project Manager',
     department: 'Product',
@@ -147,7 +134,6 @@ export const teamMembers: TeamMember[] = [
     skills: ['Agile', 'Roadmapping', 'Stakeholder Management'],
     availability: 15,
     projects: ['1', '2', '4'],
-    isLead: false, // No longer the lead
     vacation: {
       isOnVacation: false,
       startDate: '2025-06-10',
@@ -155,7 +141,7 @@ export const teamMembers: TeamMember[] = [
     }
   },
   {
-    id: '5',
+    id: '4',
     name: 'Emily Davis',
     role: 'Marketing Specialist',
     department: 'Marketing',
@@ -166,7 +152,7 @@ export const teamMembers: TeamMember[] = [
     projects: ['3']
   },
   {
-    id: '6',
+    id: '5',
     name: 'James Wilson',
     role: 'DevOps Engineer',
     department: 'Engineering',
@@ -201,7 +187,7 @@ export const departments: Department[] = [
     id: '3',
     name: 'Product',
     description: 'Product management and strategy',
-    leadId: '3', // Updated to use the standard ID '3' for Mirela
+    leadId: '3',
     memberCount: 6,
     color: '#10b981', // emerald-500
     isHidden: false

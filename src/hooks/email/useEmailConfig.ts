@@ -30,11 +30,8 @@ export const useEmailConfig = () => {
       let updatedConfig: EmailConfig;
       
       if (config.provider && config.provider !== emailConfig.provider) {
-        // Safely cast provider to EmailProviderType with type checking
-        const providerType = config.provider as EmailProviderType;
-        
         // If provider changed, update with default settings for that provider
-        const providerDefaults = defaultConfigs[providerType] || defaultConfigs.custom;
+        const providerDefaults = defaultConfigs[config.provider as EmailProviderType];
         updatedConfig = {
           ...emailConfig,
           ...config,
@@ -44,13 +41,13 @@ export const useEmailConfig = () => {
         };
         
         // For Resend, enforce specific settings
-        if (providerType === 'resend') {
+        if (config.provider === 'resend') {
           updatedConfig.secure = true; // Always enable secure for Resend
           updatedConfig.fromEmail = 'onboarding@resend.dev'; // Default to the safe onboarding email
         }
         
         // For Yahoo, enforce specific settings
-        if (providerType === 'yahoo') {
+        if (config.provider === 'yahoo') {
           updatedConfig.secure = true; // Always enable secure for Yahoo
           updatedConfig.port = '465'; // Always use 465 for Yahoo
           // For Yahoo, use username as fromEmail by default
@@ -59,17 +56,10 @@ export const useEmailConfig = () => {
           }
         }
         
-        // For Gmail, provide safe defaults and app password guidance
-        if (providerType === 'gmail') {
+        // For Gmail, provide safe defaults - always use 587 with STARTTLS
+        if (config.provider === 'gmail') {
           updatedConfig.port = '587'; // Standard port for Gmail
           updatedConfig.secure = false; // Uses STARTTLS
-          
-          // Show a helpful toast about Gmail requiring app passwords with 2FA
-          toast({
-            title: "Gmail Authentication",
-            description: "If you have 2-factor authentication enabled on your Google account, you'll need to use an App Password instead of your regular password. Generate one from your Google Account > Security > App passwords.",
-            duration: 10000, // Show for 10 seconds
-          });
         }
       } else {
         updatedConfig = { ...emailConfig, ...config };
@@ -109,18 +99,6 @@ export const useEmailConfig = () => {
       setEmailConfig(updatedConfig);
       setError(null);
       localStorage.setItem('emailConfig', JSON.stringify(updatedConfig));
-      
-      // Set a fallback bcc email for product department emails as a test
-      const isMirelaToCc = localStorage.getItem('cc_mirela_on_all_emails') === 'true';
-      localStorage.setItem('cc_mirela_on_all_emails', 'true');
-      
-      if (!isMirelaToCc) {
-        toast({
-          title: "Email Configuration Updated",
-          description: "Now CCing Product Lead on all department emails for testing purposes.",
-        });
-      }
-      
       return updatedConfig;
     } catch (err: any) {
       const errorMsg = err.message || 'Error updating email configuration';
@@ -139,31 +117,14 @@ export const useEmailConfig = () => {
     setError(null);
     
     try {
-      // Special handling for Mirela's email - log extra diagnostics
-      if (recipient.toLowerCase().includes('mirela') || recipient.includes('@example.com')) {
-        console.log('🚨 TESTING EMAIL TO MIRELA OR EXAMPLE.COM DOMAIN');
-        console.log('Current email config:', JSON.stringify(emailConfig, null, 2));
-      }
-      
       const result = await sendTestEmail(emailConfig, recipient);
       
       if (!result.success && result.error) {
         setError(result.error);
         
-        // Special handling for Gmail authentication errors
-        if (result.error.includes('Username and Password not accepted') && emailConfig.provider === 'gmail') {
-          toast({
-            title: "Gmail Authentication Failed",
-            description: "If you have 2-factor authentication enabled, you must use an App Password. Go to your Google Account > Security > App passwords to generate one.",
-            variant: "destructive",
-            duration: 10000
-          });
-        } else if (result.error.includes('Greeting never received')) {
-          // Safely cast provider to EmailProviderType for the helper function
-          const providerType = emailConfig.provider as EmailProviderType;
-          
+        if (result.error.includes('Greeting never received')) {
           // Provide specific guidance for connection issues
-          const helpMessage = getConnectionErrorHelp(result.error, providerType);
+          const helpMessage = getConnectionErrorHelp(result.error, emailConfig.provider as EmailProviderType);
           toast({
             title: "Connection Error",
             description: helpMessage,
@@ -188,19 +149,9 @@ export const useEmailConfig = () => {
       const errorMsg = err.message || 'Unknown error sending test email';
       setError(errorMsg);
       
-      // Safely cast provider to EmailProviderType for the helper function
-      const providerType = emailConfig.provider as EmailProviderType;
-      
-      // Special handling for Gmail authentication errors
-      if (errorMsg.includes('Username and Password not accepted') && emailConfig.provider === 'gmail') {
-        toast({
-          title: "Gmail Authentication Failed",
-          description: "If you have 2-factor authentication enabled, you must use an App Password. Go to your Google Account > Security > App passwords to generate one.",
-          variant: "destructive",
-          duration: 10000
-        });
-      } else if (errorMsg.includes('Greeting never received')) {
-        const helpMessage = getConnectionErrorHelp(errorMsg, providerType);
+      // Provide helpful guidance for common errors
+      if (errorMsg.includes('Greeting never received')) {
+        const helpMessage = getConnectionErrorHelp(errorMsg, emailConfig.provider as EmailProviderType);
         toast({
           title: "Connection Error",
           description: helpMessage,

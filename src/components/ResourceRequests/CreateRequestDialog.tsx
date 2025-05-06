@@ -1,7 +1,7 @@
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useForm } from 'react-hook-form';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
@@ -11,22 +11,20 @@ import { PlusCircle, Mail } from 'lucide-react';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from '@/hooks/use-toast';
-import { useNotifications, NotificationOptions } from '@/hooks/useNotifications';
-import { useEmailConfig } from '@/hooks/useEmailConfig';
+import { useNotifications } from '@/hooks/useNotifications';
+import { useEmailConfig, EmailConfig } from '@/hooks/useEmailConfig';
+import apiRequest from '@/services/api';
+import { useEffect, useState } from 'react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useQuery } from '@tanstack/react-query';
 import { getDepartments } from '@/services/departmentService';
 import { useAuth } from '@/context/AuthContext';
 import { playNotificationSound } from '@/utils/sound';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { teamMembers } from '@/data/mockData';
-import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import { AlertTriangle } from 'lucide-react';
 
 const requestFormSchema = z.object({
   title: z.string().min(1, "Title is required"),
   description: z.string().min(1, "Description is required"),
   targetDepartmentId: z.string().min(1, "Target department is required"),
-  targetLeadEmail: z.string().email("Valid email address is required").min(1, "Lead email is required"),
   requiredSkills: z.string().min(1, "Required skills are required"),
   startDate: z.string().min(1, "Start date is required"),
   endDate: z.string().min(1, "End date is required"),
@@ -37,10 +35,12 @@ type RequestFormData = z.infer<typeof requestFormSchema>;
 export default function CreateRequestDialog() {
   const [open, setOpen] = React.useState(false);
   const [sending, setSending] = React.useState(false);
-  const [error, setError] = React.useState<string | null>(null);
-  const { addNotification, findDepartmentLeadEmail } = useNotifications();
+  const { addNotification } = useNotifications();
   const { emailConfig } = useEmailConfig();
-  const { user } = useAuth();
+  const { user, getAllUsers } = useAuth();
+  
+  // Get all users for mapping department leads
+  const allUsers = getAllUsers();
   
   // Fetch departments using React Query
   const { data: departmentList = [], isLoading: isLoadingDepartments } = useQuery({
@@ -57,27 +57,14 @@ export default function CreateRequestDialog() {
       title: '',
       description: '',
       targetDepartmentId: '',
-      targetLeadEmail: '',
       requiredSkills: '',
       startDate: '',
       endDate: '',
     }
   });
 
-  // Auto-populate lead email when department is selected
-  useEffect(() => {
-    const departmentId = form.watch('targetDepartmentId');
-    if (departmentId) {
-      const targetLeadInfo = findDepartmentLeadEmail(departmentId);
-      if (targetLeadInfo.email) {
-        form.setValue('targetLeadEmail', targetLeadInfo.email);
-      }
-    }
-  }, [form.watch('targetDepartmentId'), findDepartmentLeadEmail, form]);
-  
   const onSubmit = async (data: RequestFormData) => {
     setSending(true);
-    setError(null);
     
     try {
       // In a real app, this would be an API call
@@ -85,6 +72,24 @@ export default function CreateRequestDialog() {
       
       const targetDepartment = departmentList.find(dept => dept.id === data.targetDepartmentId);
       const requestingDepartment = departmentList.find(d => d.id === currentUserDepartmentId);
+      
+      // Find the actual department lead's email - improved lookup
+      let targetDepartmentLeadEmail = '';
+      let targetDepartmentLeadName = '';
+      
+      if (targetDepartment && targetDepartment.leadId) {
+        // Find the lead user by ID
+        const departmentLead = allUsers.find(u => u.id === targetDepartment.leadId);
+        if (departmentLead && departmentLead.email) {
+          targetDepartmentLeadEmail = departmentLead.email;
+          targetDepartmentLeadName = departmentLead.name || '';
+          console.log(`Found target department lead email: ${targetDepartmentLeadEmail} (${targetDepartmentLeadName})`);
+        } else {
+          console.warn(`Department lead found (ID: ${targetDepartment.leadId}), but email is missing`);
+        }
+      } else {
+        console.warn(`No department lead ID found for department ${targetDepartment?.name || data.targetDepartmentId}`);
+      }
       
       // Modified to match the ResourceRequest interface
       const newRequest: Partial<ResourceRequest> = {
@@ -107,114 +112,145 @@ export default function CreateRequestDialog() {
         updatedAt: new Date().toISOString()
       };
 
-      // Enhanced email content for better readability
-      const additionalEmailContent = `
-        Required Skills: ${data.requiredSkills}
-        Duration: ${data.startDate} to ${data.endDate}
-        From Department: ${requestingDepartment?.name || user?.name || 'Admin'}
-        
-        Please review this request in the Resource Management System.
-        
-        *** THIS IS A HIGH PRIORITY REQUEST ***
-      `;
-
-      // Use the same approach as SendWelcomeDialog - direct API call
-      try {
-        // First, make a direct API call to send the email
-        const response = await fetch('http://localhost:5000/api/email/send-welcome', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            email: data.targetLeadEmail,
-            name: targetDepartment?.name || 'Department Lead',
-            subject: `New Resource Request: ${data.title}`,
-            startDate: data.startDate,
-            replacingMember: '',
-            additionalNotes: `
-              New Resource Request: ${data.title}
-              
-              ${data.description}
-              
-              ${additionalEmailContent}
-            `,
-            emailConfig: {
-              ...emailConfig,
-              port: String(emailConfig.port),
-              secure: emailConfig.port === '465' ? true : (emailConfig.port === '587' ? false : emailConfig.secure),
-              connectionTimeout: 30000,
-              greetingTimeout: 30000
-            }
-          })
-        });
-        
-        const result = await response.json();
-        
-        if (!result.success) {
-          throw new Error(result.error || 'Failed to send email');
-        }
-        
-        console.log('Email sent successfully:', result);
-        
-      } catch (emailError) {
-        console.error('Error sending email via API:', emailError);
-        setError(`Failed to send email: ${emailError}`);
-      }
-
-      // Also add notification for the system
-      await addNotification(
+      // Add notification for the department lead
+      addNotification(
         "New Resource Request",
         `${data.title} - Resource request from ${requestingDepartment?.name || 'Admin'}`,
-        'request',
-        {
-          emailRecipient: data.targetLeadEmail,
-          targetDepartmentId: data.targetDepartmentId, 
-          additionalEmailContent: additionalEmailContent
-        }
+        'request'
       );
       
-      // Play notification sound
+      // Play notification sound for both sender and receiver
       playNotificationSound().catch(err => {
         console.log('Error playing notification sound in CreateRequestDialog:', err);
       });
       
-      // Send confirmation email to requester if different from target
-      if (user?.email && user.email !== data.targetLeadEmail) {
-        // Send copy to requester with different message
+      // Send email notification if email is configured - IMPROVED VERSION
+      if (emailConfig.enabled) {
         try {
-          await fetch('http://localhost:5000/api/email/send-welcome', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              email: user.email,
-              name: user.name || 'User',
-              subject: `Your Resource Request: ${data.title}`,
-              startDate: new Date().toISOString().split('T')[0],
-              replacingMember: '',
-              additionalNotes: `
-                Your request "${data.title}" has been submitted to ${targetDepartment?.name || 'the department'}.
-                You will be notified when there is an update.
-                
-                Request Details:
-                ${data.description}
-                Required Skills: ${data.requiredSkills}
-                From ${data.startDate} to ${data.endDate}
-              `,
-              emailConfig: {
-                ...emailConfig,
-                port: String(emailConfig.port),
-                secure: emailConfig.port === '465' ? true : (emailConfig.port === '587' ? false : emailConfig.secure),
-                connectionTimeout: 30000,
-                greetingTimeout: 30000
-              }
-            })
+          // Ensure email config is correctly normalized - fixed format to match backend
+          const normalizedEmailConfig = {
+            ...emailConfig,
+            port: String(emailConfig.port),
+            secure: emailConfig.port === '465' ? true : (emailConfig.port === '587' ? false : emailConfig.secure),
+            connectionTimeout: 30000,
+            greetingTimeout: 30000
+          };
+          
+          console.log('Sending email notification for resource request with config:', {
+            enabled: normalizedEmailConfig.enabled,
+            provider: normalizedEmailConfig.provider,
+            host: normalizedEmailConfig.host,
+            port: normalizedEmailConfig.port,
+            secure: normalizedEmailConfig.secure,
+            fromEmail: normalizedEmailConfig.fromEmail
           });
-        } catch (confirmError) {
-          console.error('Error sending confirmation email:', confirmError);
+          
+          // Prepare better email content with HTML formatting
+          const emailSubject = `New Resource Request: ${data.title}`;
+          const emailHtml = `
+            <div style="font-family: Arial, sans-serif; max-width: 600px;">
+              <h2>New Resource Request: ${data.title}</h2>
+              
+              <p><strong>From:</strong> ${requestingDepartment?.name || user?.name || 'Admin'}</p>
+              <p><strong>Required Skills:</strong> ${data.requiredSkills}</p>
+              <p><strong>Duration:</strong> ${data.startDate} to ${data.endDate}</p>
+              
+              <h3>Description:</h3>
+              <p style="padding: 10px; background-color: #f5f5f5; border-radius: 4px;">${data.description}</p>
+              
+              <p style="margin-top: 20px;">Please review this request in the Resource Management System.</p>
+              
+              <div style="margin-top: 30px; padding-top: 10px; border-top: 1px solid #eee; color: #666; font-size: 12px;">
+                This is an automated notification from the Resource Management System.
+              </div>
+            </div>
+          `;
+          
+          const emailText = `
+            New Resource Request: ${data.title}
+            
+            From: ${requestingDepartment?.name || user?.name || 'Admin'}
+            Required Skills: ${data.requiredSkills}
+            Duration: ${data.startDate} to ${data.endDate}
+            
+            Description:
+            ${data.description}
+            
+            Please review this request in the Resource Management System.
+          `;
+          
+          // First, send to target department lead if we have a valid email
+          if (targetDepartmentLeadEmail) {
+            console.log(`Sending email notification to ${targetDepartmentLeadName} (${targetDepartmentLeadEmail})`);
+            
+            const targetResponse = await apiRequest('/email/send', 'POST', {
+              to: targetDepartmentLeadEmail,
+              subject: emailSubject,
+              text: emailText,
+              html: emailHtml,
+              emailConfig: normalizedEmailConfig
+            });
+            
+            console.log(`Email notification sent to department lead (${targetDepartmentLeadEmail}):`, targetResponse);
+          } else {
+            console.warn('Could not find target department lead email. Using fallback address.');
+            // Fallback to a generic department email if we can't find the lead's email
+            const fallbackEmail = targetDepartment ? 
+              `${targetDepartment.name?.toLowerCase().replace(/\s+/g, '')}@example.com` : 
+              'no-reply@example.com';
+              
+            const targetResponse = await apiRequest('/email/send', 'POST', {
+              to: fallbackEmail,
+              subject: emailSubject,
+              text: emailText,
+              html: emailHtml,
+              emailConfig: normalizedEmailConfig
+            });
+            
+            console.log('Email notification sent to fallback address:', targetResponse);
+          }
+          
+          // Always send a copy to the admin email
+          const adminEmail = 'admin@example.com';
+          console.log('Sending email notification to admin:', adminEmail);
+          
+          const adminResponse = await apiRequest('/email/send', 'POST', {
+            to: adminEmail,
+            subject: `[ADMIN COPY] ${emailSubject}`,
+            text: emailText,
+            html: emailHtml,
+            emailConfig: normalizedEmailConfig
+          });
+          
+          console.log('Email notification sent to admin:', adminResponse);
+          
+          // Send a copy to the requester if they're not the admin
+          if (user?.email && user.email !== adminEmail) {
+            console.log('Sending email notification to requester:', user.email);
+            
+            const requesterResponse = await apiRequest('/email/send', 'POST', {
+              to: user.email,
+              subject: `Your Resource Request: ${data.title}`,
+              text: emailText,
+              html: emailHtml,
+              emailConfig: normalizedEmailConfig
+            });
+            
+            console.log('Email notification sent to requester:', requesterResponse);
+          }
+          
+          console.log('All email notifications for resource request processed');
+        } catch (error) {
+          console.error('Failed to send email notification:', error);
         }
+      } else {
+        // Log why email wasn't sent
+        console.log('Email notification not sent - email is not enabled in config:', {
+          emailEnabled: emailConfig.enabled,
+          hasTargetDepartment: !!targetDepartment,
+          targetDepartmentId: data.targetDepartmentId,
+          targetDepartmentName: targetDepartment?.name
+        });
       }
       
       // Show confirmation toast to the requester
@@ -249,29 +285,7 @@ export default function CreateRequestDialog() {
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Create Resource Request</DialogTitle>
-          <DialogDescription>
-            Fill out this form to request resources from another department.
-          </DialogDescription>
         </DialogHeader>
-
-        {error && (
-          <Alert variant="destructive">
-            <AlertTriangle className="h-4 w-4" />
-            <AlertTitle>Error</AlertTitle>
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
-
-        {!emailConfig.enabled && (
-          <Alert variant="default" className="bg-amber-50 border-amber-200">
-            <AlertTriangle className="h-4 w-4 text-amber-500" />
-            <AlertTitle className="text-amber-800">Email notifications not enabled</AlertTitle>
-            <AlertDescription className="text-amber-700">
-              Email notifications are currently disabled. The request will be processed but no email will be sent.
-            </AlertDescription>
-          </Alert>
-        )}
-        
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
@@ -331,24 +345,6 @@ export default function CreateRequestDialog() {
                       )}
                     </SelectContent>
                   </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="targetLeadEmail"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Department Lead Email</FormLabel>
-                  <FormControl>
-                    <Input 
-                      placeholder="Department lead email" 
-                      type="email"
-                      {...field} 
-                    />
-                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}

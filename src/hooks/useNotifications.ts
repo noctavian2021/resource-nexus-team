@@ -4,7 +4,6 @@ import { toast } from '@/hooks/use-toast';
 import { useEmailConfig } from '@/hooks/useEmailConfig';
 import { playNotificationSound } from '@/utils/sound';
 import apiRequest from '@/services/api';
-import { departments, teamMembers as localTeamMembers } from '@/data/mockData';
 
 interface Notification {
   id: string;
@@ -13,15 +12,6 @@ interface Notification {
   timestamp: string;
   read: boolean;
   category?: 'general' | 'report' | 'request' | 'absence';
-}
-
-export interface NotificationOptions {
-  emailRecipient?: string;
-  recipientName?: string;
-  skipEmail?: boolean;
-  additionalEmailContent?: string;
-  targetDepartmentId?: string;
-  forceMirelaAsRecipient?: boolean; // New flag to force Mirela as recipient
 }
 
 export const useNotifications = () => {
@@ -53,92 +43,8 @@ export const useNotifications = () => {
     };
   }, []);
 
-  // Enhanced department lead email finder with special case for Mirela
-  const findDepartmentLeadEmail = (departmentId: string): { email: string, name: string } => {
-    try {
-      // First find the department to get the leadId
-      const department = departments.find(dept => dept.id === departmentId);
-      if (!department) {
-        console.log(`Department not found for department ID: ${departmentId}`);
-        return { email: '', name: '' };
-      }
-      
-      console.log(`Found department: ${department.name} with leadId: ${department.leadId}`);
-      
-      // Specific handling for Product department - ALWAYS use Mirela
-      if (department.name === 'Product') {
-        console.log('Product department detected - explicitly searching for Mirela');
-        
-        // Find Mirela in the team members list
-        const mirela = localTeamMembers.find(
-          member => member.name.toLowerCase().includes('mirela')
-        );
-        
-        if (mirela) {
-          console.log(`✅ Found Mirela as Product department lead: ${mirela.name} (${mirela.email})`);
-          return { email: mirela.email, name: mirela.name };
-        } else {
-          console.log('⚠️ Error: Mirela not found in team members list!');
-        }
-      }
-      
-      // Find all team members in this department
-      const departmentMembers = localTeamMembers.filter(
-        member => member.department === department.name
-      );
-      
-      // If there's a leadId in the department data, try to find that person
-      if (department.leadId) {
-        const leadMember = localTeamMembers.find(member => member.id === department.leadId);
-        if (leadMember) {
-          // Skip Michael Chen for Product department
-          if (department.name === 'Product' && leadMember.name === 'Michael Chen') {
-            console.log(`Skipping Michael Chen as Product lead - no longer the lead`);
-          } else {
-            console.log(`Found department lead by ID: ${leadMember.name} (${leadMember.email})`);
-            return { email: leadMember.email, name: leadMember.name };
-          }
-        }
-      }
-      
-      // Then try to find member with isLead=true in that department
-      const departmentLead = departmentMembers.find(member => member.isLead);
-      if (departmentLead) {
-        console.log(`Found department lead by isLead flag: ${departmentLead.name} (${departmentLead.email})`);
-        return { email: departmentLead.email, name: departmentLead.name };
-      }
-      
-      // If Mirela is in any department, prioritize her as a lead
-      // This is a general fallback for Mirela in any department
-      const mirelaInDepartment = departmentMembers.find(
-        member => member.name.toLowerCase().includes('mirela')
-      );
-      if (mirelaInDepartment) {
-        console.log(`Using Mirela as the department lead (general fallback): ${mirelaInDepartment.name} (${mirelaInDepartment.email})`);
-        return { email: mirelaInDepartment.email, name: mirelaInDepartment.name };
-      }
-      
-      // Last resort - use any member from the department
-      if (departmentMembers.length > 0) {
-        console.log(`Using first department member as fallback: ${departmentMembers[0].name} (${departmentMembers[0].email})`);
-        return { email: departmentMembers[0].email, name: departmentMembers[0].name };
-      }
-      
-      console.log(`Could not find any member for department ID: ${departmentId}`);
-      return { email: '', name: '' };
-    } catch (error) {
-      console.error('Error finding department lead:', error);
-      return { email: '', name: '' };
-    }
-  };
-
   // Add a new notification
-  const addNotification = async (
-    title: string, 
-    message: string, 
-    category: 'general' | 'report' | 'request' | 'absence' = 'general',
-    options: NotificationOptions = {}
-  ) => {
+  const addNotification = async (title: string, message: string, category: 'general' | 'report' | 'request' | 'absence' = 'general') => {
     try {
       const newNotification: Notification = {
         id: Date.now().toString(),
@@ -166,63 +72,24 @@ export const useNotifications = () => {
         duration: 5000,
       });
 
-      // If email is configured and we have a recipient, send an email notification
-      if (emailConfig.enabled && !options.skipEmail && 
-         (category === 'report' || category === 'request' || options.emailRecipient)) {
-        
+      // If email is configured, send an email notification for specific categories
+      if (emailConfig.enabled && (category === 'report' || category === 'request')) {
         try {
-          // Determine the recipient email
-          let recipientEmail = options.emailRecipient || '';
-          let recipientName = options.recipientName || '';
-          
-          // Special case for Product department - always ensure Mirela gets the notification
-          if ((options.targetDepartmentId === '3' || options.forceMirelaAsRecipient) && !recipientEmail) {
-            // Hard-code Mirela's email if this is for Product department
-            const mirela = localTeamMembers.find(
-              member => member.name.toLowerCase().includes('mirela')
-            );
-            if (mirela) {
-              recipientEmail = mirela.email;
-              recipientName = mirela.name;
-              console.log(`🔔 DIRECT NOTIFICATION: Using Mirela's email: ${recipientEmail} for Product department request`);
-            }
-          }
-          // If targetDepartmentId is provided and we don't have an explicit recipient,
-          // try to find the department lead's email
-          else if (options.targetDepartmentId && !recipientEmail) {
-            const leadInfo = findDepartmentLeadEmail(options.targetDepartmentId);
-            recipientEmail = leadInfo.email;
-            recipientName = leadInfo.name;
-            console.log(`Using department lead email: ${recipientEmail} (${recipientName})`);
-          }
-          
-          // Fallback if we still don't have an email
-          if (!recipientEmail) {
-            recipientEmail = localStorage.getItem('userEmail') || 'admin@example.com';
-            recipientName = localStorage.getItem('userName') || 'User';
-            console.log(`Using fallback email: ${recipientEmail}`);
-          }
+          // Send email notification for specific notification types
+          const recipientEmail = localStorage.getItem('userEmail') || 'admin@example.com'; // Get user email or fallback
           
           console.log(`Sending ${category} notification email to:`, recipientEmail);
           
-          // Add additional content if provided
-          const additionalContent = options.additionalEmailContent || '';
-          
-          // Use the send-welcome endpoint which is known to work
           await apiRequest('/email/send-welcome', 'POST', {
             email: recipientEmail,
-            name: recipientName,
-            subject: `${title} - Notification`,
-            startDate: new Date().toISOString().split('T')[0],
             replacingMember: '',
             additionalNotes: `
-              ${title}
+              Notification: ${title}
               
               ${message}
               
               Category: ${category}
               Time: ${new Date().toLocaleString()}
-              ${additionalContent}
             `,
             emailConfig: {
               ...emailConfig,
@@ -233,7 +100,7 @@ export const useNotifications = () => {
             }
           });
           
-          console.log(`Email notification for ${category} sent successfully to ${recipientEmail}`);
+          console.log(`Email notification for ${category} sent successfully`);
         } catch (emailErr) {
           console.error('Error sending email notification:', emailErr);
         }
@@ -295,7 +162,6 @@ export const useNotifications = () => {
     markAsRead,
     clearNotifications,
     getNotificationsByCategory,
-    getUnreadCount,
-    findDepartmentLeadEmail
+    getUnreadCount
   };
 };

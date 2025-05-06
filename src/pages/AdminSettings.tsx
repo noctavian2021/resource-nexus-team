@@ -46,8 +46,8 @@ export default function AdminSettings() {
   
   // Handle mock data toggle
   const handleMockDataToggle = (checked: boolean) => {
-    toggleMockData(checked);
-    setUseMockData(checked);
+    const newSetting = toggleMockData(checked);
+    setUseMockData(newSetting);
     toast({
       title: checked ? "Mock Data Enabled" : "Mock Data Disabled",
       description: checked ? 
@@ -60,11 +60,11 @@ export default function AdminSettings() {
     updateEmailConfig({ provider });
     
     // Show provider-specific help tips
-    const helpInfo = getProviderHelp(provider);
-    if (helpInfo) {
+    const helpText = getProviderHelp(provider);
+    if (helpText) {
       toast({
-        title: helpInfo.title,
-        description: helpInfo.content.substring(0, 200) + "...",
+        title: `${provider.charAt(0).toUpperCase() + provider.slice(1)} Setup Tip`,
+        description: helpText,
         duration: 8000,
       });
     }
@@ -376,23 +376,6 @@ export default function AdminSettings() {
     );
   };
 
-  // Get SSL configuration help text based on current settings
-  const getSslHelpText = () => {
-    if (!emailConfig.secure) {
-      return (
-        <Alert variant="default" className="mb-4">
-          <Info className="h-4 w-4" />
-          <AlertTitle>SSL/TLS is not enabled</AlertTitle>
-          <AlertDescription>
-            Enable SSL/TLS to secure your email connections.
-          </AlertDescription>
-        </Alert>
-      );
-    }
-    
-    return null;
-  };
-
   // Get a visual indicator for email configuration status
   const getEmailStatusIndicator = () => {
     if (!emailConfig.enabled) {
@@ -435,16 +418,14 @@ export default function AdminSettings() {
   };
 
   const getProviderNote = () => {
-    const helpInfo = getProviderHelp(emailConfig.provider as EmailProviderType);
-    if (!helpInfo) return null;
+    const help = getProviderHelp(emailConfig.provider as EmailProviderType);
+    if (!help) return null;
     
     return (
       <Alert variant="default" className="mt-4">
         <Info className="h-4 w-4" />
-        <AlertTitle>{helpInfo.title}</AlertTitle>
-        <AlertDescription>
-          <div dangerouslySetInnerHTML={{ __html: helpInfo.content.replace(/\n/g, '<br/>') }} />
-        </AlertDescription>
+        <AlertTitle>{emailConfig.provider.charAt(0).toUpperCase() + emailConfig.provider.slice(1)} Setup Note</AlertTitle>
+        <AlertDescription>{help}</AlertDescription>
       </Alert>
     );
   };

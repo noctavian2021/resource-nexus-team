@@ -9,14 +9,12 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { isMockDataEnabled } from '@/services/apiClient';
 
 export default function Departments() {
   const [departments, setDepartments] = useState<Department[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showHidden, setShowHidden] = useState(false);
-  const [usingMockData, setUsingMockData] = useState(isMockDataEnabled());
   const { toast } = useToast();
 
   const fetchDepartments = async () => {
@@ -27,7 +25,6 @@ export default function Departments() {
       const data = await getDepartments();
       // Ensure we're working with an array
       setDepartments(Array.isArray(data) ? data : []);
-      setUsingMockData(isMockDataEnabled());
     } catch (error) {
       console.error('Error fetching departments:', error);
       setError('There was a problem loading the departments.');
@@ -37,7 +34,6 @@ export default function Departments() {
         variant: "destructive"
       });
       setDepartments([]);
-      setUsingMockData(true);
     } finally {
       setLoading(false);
     }
@@ -61,14 +57,7 @@ export default function Departments() {
       <Header title="Departments" />
       <main className="flex-1 space-y-6 p-6">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <h1 className="text-2xl font-semibold tracking-tight">
-            Departments
-            {usingMockData && (
-              <span className="ml-2 text-sm px-2 py-1 bg-amber-100 text-amber-800 rounded-md">
-                Using Mock Data
-              </span>
-            )}
-          </h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Departments</h1>
           <div className="flex items-center gap-4">
             <div className="flex items-center space-x-2">
               <Switch 

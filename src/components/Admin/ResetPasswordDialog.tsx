@@ -49,7 +49,7 @@ const ResetPasswordDialog: React.FC<ResetPasswordDialogProps> = ({
   userId,
   userName,
 }) => {
-  const { resetUserPassword, getAllUsers } = useAuth();
+  const { resetUserPassword } = useAuth();
   const { toast } = useToast();
   const [isResettingPassword, setIsResettingPassword] = useState(false);
 
@@ -70,12 +70,7 @@ const ResetPasswordDialog: React.FC<ResetPasswordDialogProps> = ({
     setIsResettingPassword(true);
 
     try {
-      console.log(`Attempting to reset password for user: ${userId} (${userName})`);
-      
-      // Debug: List all available users in the system
-      const allUsers = getAllUsers();
-      console.log('Available users:', allUsers.map(u => ({ id: u.id, name: u.name })));
-      
+      console.log(`Attempting to reset password for user: ${userId}`);
       const success = await resetUserPassword(userId, values.newPassword);
 
       if (success) {
@@ -88,7 +83,7 @@ const ResetPasswordDialog: React.FC<ResetPasswordDialogProps> = ({
       } else {
         toast({
           title: 'Error',
-          description: `Failed to reset password for ${userName}. User ID ${userId} may not exist in the authentication system.`,
+          description: 'Failed to reset password.',
           variant: 'destructive',
         });
       }
@@ -96,7 +91,7 @@ const ResetPasswordDialog: React.FC<ResetPasswordDialogProps> = ({
       console.error('Password reset error:', error);
       toast({
         title: 'Error',
-        description: `An unexpected error occurred: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        description: 'An unexpected error occurred.',
         variant: 'destructive',
       });
     } finally {
@@ -110,7 +105,7 @@ const ResetPasswordDialog: React.FC<ResetPasswordDialogProps> = ({
         <DialogHeader>
           <DialogTitle>Reset Password</DialogTitle>
           <DialogDescription>
-            Set a new password for {userName} (ID: {userId})
+            Set a new password for {userName}
           </DialogDescription>
         </DialogHeader>
 

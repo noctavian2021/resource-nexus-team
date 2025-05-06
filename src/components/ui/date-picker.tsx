@@ -45,6 +45,7 @@ export function DatePicker({ id, date, onSelect, children }: DatePickerProps) {
           selected={date}
           onSelect={onSelect}
           initialFocus
+          className={cn("p-3 pointer-events-auto")}
         />
       </PopoverContent>
     </Popover>

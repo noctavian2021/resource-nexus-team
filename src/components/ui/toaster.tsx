@@ -1,5 +1,4 @@
 
-import React, { useEffect } from "react";
 import { useToast } from "@/hooks/use-toast"
 import {
   Toast,
@@ -11,22 +10,7 @@ import {
 } from "@/components/ui/toast"
 
 export function Toaster() {
-  const { toasts, toast } = useToast();
-
-  // Setup toast event listener
-  useEffect(() => {
-    const handleToastEvent = (e: any) => {
-      if (e.detail) {
-        toast(e.detail);
-        console.log("Toast event received:", e.detail);
-      }
-    };
-
-    window.addEventListener("lovable-toast-event", handleToastEvent);
-    return () => {
-      window.removeEventListener("lovable-toast-event", handleToastEvent);
-    };
-  }, [toast]);
+  const { toasts } = useToast()
 
   return (
     <ToastProvider>
