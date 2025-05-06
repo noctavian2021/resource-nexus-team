@@ -11,15 +11,7 @@ import {
 } from "@/components/ui/toast"
 
 export function Toaster() {
-  const { toasts, toast } = useToast()
-
-  // Setup global access to toast
-  useEffect(() => {
-    // Make the toast function globally accessible
-    if (typeof window !== "undefined") {
-      (window as any).toastHandler = { toast };
-    }
-  }, [toast]);
+  const { toasts, toast } = useToast();
 
   // Setup toast event listener
   useEffect(() => {

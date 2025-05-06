@@ -19,12 +19,10 @@ export const createDepartment = (department: Omit<Department, 'id'>) => {
     // This will bypass the missing endpoint in mockApiHandler
     if (window && (window as any).isMockDataEnabled && (window as any).isMockDataEnabled()) {
       console.log('Using mock data workaround for department creation');
-      // Create a mock department with an ID
+      // Create a mock department with an ID (removed createdAt and updatedAt)
       const mockDepartment: Department = {
         id: `mock-${Date.now()}`,
-        ...department,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        ...department
       };
       
       // Show success toast
