@@ -12,9 +12,15 @@ export const getDepartment = (id: string) => {
 
 // Make leadId properly optional
 export const createDepartment = (department: Omit<Department, 'id'>) => {
-  // We don't need to explicitly set leadId to empty string here
-  // as the server will handle undefined/null leadId values
-  return apiRequest<Department>('/departments', 'POST', department);
+  try {
+    console.log('Creating department:', department);
+    // We don't need to explicitly set leadId to empty string here
+    // as the server will handle undefined/null leadId values
+    return apiRequest<Department>('/departments', 'POST', department);
+  } catch (error) {
+    console.error('Error creating department:', error);
+    throw error; // Re-throw so it can be handled by the component
+  }
 };
 
 export const updateDepartment = (id: string, updates: Partial<Department>) => {

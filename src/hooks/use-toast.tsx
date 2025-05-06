@@ -1,5 +1,5 @@
 
-import * as React from "react";
+import React, { createContext, useContext, useReducer, useEffect } from "react";
 
 import {
   Toast,
@@ -105,12 +105,12 @@ const toastTimeouts = new Map<string, ReturnType<typeof setTimeout>>()
 export type Toast = Omit<ToasterToast, "id">
 
 // Create a single instance of the toast context
-const ToastContext = React.createContext<ReturnType<typeof useToastReducer> | null>(null)
+const ToastContext = createContext<ReturnType<typeof useToastReducer> | null>(null)
 
 function useToastReducer() {
-  const [state, dispatch] = React.useReducer(reducer, initialState)
+  const [state, dispatch] = useReducer(reducer, initialState)
 
-  React.useEffect(() => {
+  useEffect(() => {
     state.toasts.forEach((toast) => {
       if (!toast.open && toastTimeouts.has(toast.id)) return
 
@@ -191,7 +191,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 
 // Hook for components to use the toast context
 export function useToast() {
-  const context = React.useContext(ToastContext)
+  const context = useContext(ToastContext)
   if (!context) {
     throw new Error("useToast must be used within a ToastProvider")
   }
