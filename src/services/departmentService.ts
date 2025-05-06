@@ -1,6 +1,6 @@
-
 import { Department } from '@/data/mockData';
 import apiRequest from './api';
+import { toast } from '@/hooks/use-toast';
 
 export const getDepartments = () => {
   return apiRequest<Department[]>('/departments');
@@ -14,11 +14,38 @@ export const getDepartment = (id: string) => {
 export const createDepartment = (department: Omit<Department, 'id'>) => {
   try {
     console.log('Creating department:', department);
-    // We don't need to explicitly set leadId to empty string here
-    // as the server will handle undefined/null leadId values
+    
+    // Generate a mock response when in mock mode
+    // This will bypass the missing endpoint in mockApiHandler
+    if (window && (window as any).isMockDataEnabled && (window as any).isMockDataEnabled()) {
+      console.log('Using mock data workaround for department creation');
+      // Create a mock department with an ID
+      const mockDepartment: Department = {
+        id: `mock-${Date.now()}`,
+        ...department,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+      
+      // Show success toast
+      toast({
+        title: "Department created",
+        description: `${department.name} department has been created successfully.`
+      });
+      
+      return Promise.resolve(mockDepartment);
+    }
+    
+    // Otherwise proceed with the real API request
     return apiRequest<Department>('/departments', 'POST', department);
   } catch (error) {
     console.error('Error creating department:', error);
+    // Show error toast
+    toast({
+      title: "Error creating department",
+      description: "Failed to create department. Please try again.",
+      variant: "destructive"
+    });
     throw error; // Re-throw so it can be handled by the component
   }
 };

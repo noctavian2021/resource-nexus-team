@@ -1,4 +1,3 @@
-
 import { handleMockRequest } from './mockApiHandler';
 
 // Use import.meta.env instead of process.env for Vite
@@ -11,11 +10,22 @@ let useMockData = true; // Changed to true by default for development
 export const toggleMockData = (enabled: boolean): boolean => {
   useMockData = enabled;
   console.log(`Mock data is now ${useMockData ? 'enabled' : 'disabled'}`);
+  
+  // Expose to window for components to check
+  if (typeof window !== 'undefined') {
+    (window as any).isMockDataEnabled = isMockDataEnabled;
+  }
+  
   return useMockData; // Return the new state
 };
 
 // Check if mock data is enabled
 export const isMockDataEnabled = () => useMockData;
+
+// Expose to window for components to check
+if (typeof window !== 'undefined') {
+  (window as any).isMockDataEnabled = isMockDataEnabled;
+}
 
 /**
  * Generic API request function
