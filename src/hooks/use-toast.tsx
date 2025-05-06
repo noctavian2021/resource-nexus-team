@@ -1,5 +1,5 @@
-import React from "react";
-import { createContext, useContext, useReducer, useEffect } from "react";
+
+import * as React from "react";
 
 import {
   Toast,
@@ -105,7 +105,7 @@ const toastTimeouts = new Map<string, ReturnType<typeof setTimeout>>()
 export type Toast = Omit<ToasterToast, "id">
 
 // Create a single instance of the toast context
-const ToastContext = createContext<ReturnType<typeof useToastReducer> | null>(null)
+const ToastContext = React.createContext<ReturnType<typeof useToastReducer> | null>(null)
 
 function useToastReducer() {
   const [state, dispatch] = useReducer(reducer, initialState)
