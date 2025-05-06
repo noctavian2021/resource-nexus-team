@@ -68,10 +68,15 @@ const ResetPasswordDialog: React.FC<ResetPasswordDialogProps> = ({
 
   const onSubmit = async (values: z.infer<typeof resetPasswordSchema>) => {
     setIsResettingPassword(true);
+    console.log(`Attempting to reset password for user ID: ${userId} with name: ${userName}`);
 
     try {
-      console.log(`Attempting to reset password for user: ${userId}`);
+      if (!userId) {
+        throw new Error("User ID is required");
+      }
+      
       const success = await resetUserPassword(userId, values.newPassword);
+      console.log("Password reset result:", success);
 
       if (success) {
         toast({
@@ -83,7 +88,7 @@ const ResetPasswordDialog: React.FC<ResetPasswordDialogProps> = ({
       } else {
         toast({
           title: 'Error',
-          description: 'Failed to reset password.',
+          description: 'Failed to reset password. Please try again.',
           variant: 'destructive',
         });
       }
@@ -91,7 +96,9 @@ const ResetPasswordDialog: React.FC<ResetPasswordDialogProps> = ({
       console.error('Password reset error:', error);
       toast({
         title: 'Error',
-        description: 'An unexpected error occurred.',
+        description: typeof error === 'object' && error !== null ? 
+          (error as Error).message || 'An unexpected error occurred.' : 
+          'An unexpected error occurred.',
         variant: 'destructive',
       });
     } finally {

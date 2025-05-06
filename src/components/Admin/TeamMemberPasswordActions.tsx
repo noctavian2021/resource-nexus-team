@@ -22,24 +22,31 @@ const TeamMemberPasswordActions: React.FC<TeamMemberPasswordActionsProps> = ({
     return null;
   }
 
+  const handleOpenResetDialog = () => {
+    console.log(`Opening reset dialog for user ID: ${userId}, name: ${userName}`);
+    setIsResetDialogOpen(true);
+  };
+
   return (
     <>
       <Button
         variant="outline"
         size="sm"
-        onClick={() => setIsResetDialogOpen(true)}
+        onClick={handleOpenResetDialog}
         className="flex items-center gap-1 w-full"
       >
         <Lock className="h-4 w-4 mr-1" />
         <span>Reset Password</span>
       </Button>
       
-      <ResetPasswordDialog
-        isOpen={isResetDialogOpen}
-        onClose={() => setIsResetDialogOpen(false)}
-        userId={userId}
-        userName={userName}
-      />
+      {isResetDialogOpen && (
+        <ResetPasswordDialog
+          isOpen={isResetDialogOpen}
+          onClose={() => setIsResetDialogOpen(false)}
+          userId={userId}
+          userName={userName}
+        />
+      )}
     </>
   );
 };

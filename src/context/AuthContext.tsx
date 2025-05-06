@@ -215,6 +215,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       
       console.log(`Attempting to reset password for userId: ${userId}`);
       
+      if (!userId) {
+        console.error('Missing user ID for password reset');
+        setError('Missing user ID');
+        return false;
+      }
+      
       // Find user in our "database"
       const userIndex = users.findIndex(u => u.id === userId);
       
@@ -235,7 +241,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       console.log(`Password successfully reset for user: ${updatedUsers[userIndex].name}`);
       return true;
     } catch (err) {
-      setError('An error occurred while resetting password');
+      const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
+      setError(`An error occurred while resetting password: ${errorMessage}`);
       console.error('Password reset error:', err);
       return false;
     }
