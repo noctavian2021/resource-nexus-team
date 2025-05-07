@@ -1,4 +1,3 @@
-
 import React from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import {
@@ -74,10 +73,10 @@ export default function Sidebar() {
           <span
             className={cn(
               "font-semibold text-white overflow-hidden transition-all",
-              isOpen ? "w-24 opacity-100" : "w-0 opacity-0",
+              isOpen ? "w-28 opacity-100" : "w-0 opacity-0",
             )}
           >
-            Resource App
+            TeamSphere
           </span>
           <button
             className="h-8 w-8 rounded-full flex items-center justify-center hover:bg-white/10"

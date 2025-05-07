@@ -24,7 +24,7 @@ export default function HelpTab() {
         <div className="flex flex-col gap-4">
           <h1 className="text-2xl font-semibold tracking-tight">Help & Documentation</h1>
           <p className="text-muted-foreground">
-            Find detailed guidance on how to use the Resource Management Application.
+            Find detailed guidance on how to use TeamSphere.
           </p>
         </div>
 
@@ -46,7 +46,7 @@ export default function HelpTab() {
                   Getting Started
                 </CardTitle>
                 <CardDescription>
-                  Learn the basics of the Resource Management Application
+                  Learn the basics of TeamSphere
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -59,7 +59,7 @@ export default function HelpTab() {
                   title="Navigation"
                   content={
                     <div className="space-y-2">
-                      <p>The application has the following main sections accessible from the sidebar:</p>
+                      <p>TeamSphere has the following main sections accessible from the sidebar:</p>
                       <ul className="list-disc pl-6 space-y-2">
                         <li><strong>Dashboard:</strong> Overview of resource allocation and metrics</li>
                         <li><strong>Team:</strong> Manage team members and their availability</li>
@@ -77,7 +77,7 @@ export default function HelpTab() {
                   title="Key Features"
                   content={
                     <div className="space-y-2">
-                      <p>The Resource Management Application offers these key features:</p>
+                      <p>TeamSphere offers these key features:</p>
                       <ul className="list-disc pl-6 space-y-2">
                         <li>Team member availability tracking with vacation management</li>
                         <li>Department structure visualization and management</li>
@@ -259,7 +259,7 @@ export default function HelpTab() {
               <CardContent className="space-y-4">
                 <HelpSection 
                   title="Notification System"
-                  content="The application includes a comprehensive notification system that alerts users about important events. Notifications appear in the bell icon in the sidebar. Clicking the bell icon shows all your notifications, with unread notifications highlighted. You can mark notifications as read individually or all at once."
+                  content="TeamSphere includes a comprehensive notification system that alerts users about important events. Notifications appear in the bell icon in the sidebar. Clicking the bell icon shows all your notifications, with unread notifications highlighted. You can mark notifications as read individually or all at once."
                 />
                 
                 <HelpSection 

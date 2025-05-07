@@ -1,4 +1,5 @@
-# Welcome to your Lovable project
+
+# Welcome to TeamSphere
 
 ## Project info
 
@@ -64,7 +65,7 @@ This project is built with:
 
 Simply open [Lovable](https://lovable.dev/projects/21c05353-f8b2-4965-9662-10327db1de32) and click on Share -> Publish.
 
-## Can I connect a custom domain to my Lovable project?
+## Can I connect a custom domain to my TeamSphere project?
 
 Yes, you can!
 

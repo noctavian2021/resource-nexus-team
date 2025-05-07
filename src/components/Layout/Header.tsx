@@ -18,9 +18,9 @@ export default function Header({ title }: HeaderProps) {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   
-  // Default company information - in a real app this would come from user settings
+  // Default company information - updated to use TeamSphere as default
   const [companyLogo, setCompanyLogo] = useState(localStorage.getItem('companyLogo') || 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=50&h=50&q=80');
-  const companyName = localStorage.getItem('companyName') || 'Resource Manager';
+  const companyName = localStorage.getItem('companyName') || 'TeamSphere';
   const [showLogoDialog, setShowLogoDialog] = useState(false);
 
   // Convert uploaded file to data URL and save it
