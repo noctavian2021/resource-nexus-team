@@ -1,3 +1,4 @@
+
 import React from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import {
@@ -31,13 +32,15 @@ const SidebarLink = ({ to, icon: Icon, title }: SidebarLinkProps) => (
     className={({ isActive }) => cn(
       'flex items-center gap-3 rounded-lg px-3 py-2 transition-all text-white/80',
       isActive
-        ? 'bg-white/15 text-white'
+        ? 'bg-white/15 text-white font-medium'
         : 'hover:bg-white/15 hover:text-white'
     )}
     end={to === "/" ? true : false}
   >
-    <Icon className="h-5 w-5" />
-    <span className="font-medium">{title}</span>
+    <div className="flex items-center justify-center w-6 h-6">
+      <Icon className="h-5 w-5" />
+    </div>
+    <span className="font-medium transition-all">{title}</span>
   </NavLink>
 );
 
@@ -64,22 +67,20 @@ export default function Sidebar() {
   return (
     <aside
       className={cn(
-        "relative bg-gradient-to-b from-[#2c3e50] to-[#3498db] dark:from-[#1A1F2C] dark:to-[#2c3e50] z-10 h-screen group/sidebar overflow-hidden border-r border-white/10",
+        "relative bg-gradient-to-b from-[#2c3e50] to-[#3498db] dark:from-[#1A1F2C] dark:to-[#2c3e50] z-10 h-screen overflow-hidden border-r border-white/10 shadow-xl transition-all duration-300",
         isOpen ? "w-64" : "w-16",
       )}
     >
       <div className="flex h-full flex-col gap-y-2 p-3">
-        <div className="flex items-center justify-between mb-2 px-3 h-12">
-          <span
-            className={cn(
-              "font-semibold text-white overflow-hidden transition-all",
-              isOpen ? "w-28 opacity-100" : "w-0 opacity-0",
-            )}
-          >
-            TeamSphere
-          </span>
+        <div className="flex items-center justify-between mb-4 px-3 h-12">
+          <div className={cn(
+            "font-bold text-white overflow-hidden transition-all flex items-center",
+            isOpen ? "w-28 opacity-100" : "w-0 opacity-0",
+          )}>
+            <span className="text-gradient text-lg">TeamSphere</span>
+          </div>
           <button
-            className="h-8 w-8 rounded-full flex items-center justify-center hover:bg-white/10"
+            className="h-8 w-8 rounded-full flex items-center justify-center hover:bg-white/10 transition-all"
             onClick={() => setIsOpen(!isOpen)}
           >
             <div className={`h-1 w-4 bg-white/80 rounded-full relative transition-all ${isOpen ? 'rotate-0' : 'rotate-180'} before:content-[''] before:h-1 before:w-3 before:bg-white/80 before:rounded-full before:absolute before:top-1 before:transition-all after:content-[''] after:h-1 after:w-2 after:bg-white/80 after:rounded-full after:absolute after:bottom-1 after:transition-all`} />
@@ -88,17 +89,17 @@ export default function Sidebar() {
         
         {/* User info section */}
         {user && (
-          <div className="border-b border-white/10 pb-2 mb-2">
+          <div className="border-b border-white/10 pb-4 mb-4">
             <NavLink 
               to="/profile"
               className={({ isActive }) => cn(
-                "flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-white/10",
+                "flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-white/10 transition-all",
                 !isOpen && "justify-center",
                 isActive && "bg-white/15"
               )}
             >
-              <Avatar className="h-7 w-7 bg-white/20 text-sm">
-                <AvatarFallback className="text-white bg-blue-600">
+              <Avatar className="h-8 w-8 bg-gradient-to-br from-blue-500 to-purple-600 text-sm border-2 border-white/20">
+                <AvatarFallback className="text-white">
                   {getInitials(user.name)}
                 </AvatarFallback>
               </Avatar>
@@ -117,7 +118,7 @@ export default function Sidebar() {
           </div>
         )}
         
-        <div className="flex flex-col gap-y-2">
+        <div className="flex flex-col gap-y-1 px-1">
           <SidebarLink to="/" icon={BarChart3} title="Dashboard" />
           <SidebarLink to="/team" icon={Users} title="Team" />
           <SidebarLink to="/departments" icon={Building2} title="Departments" />
@@ -133,12 +134,12 @@ export default function Sidebar() {
           
           {/* Logout button */}
           <div 
-            className={cn(
-              "flex items-center gap-3 rounded-lg px-3 py-2 cursor-pointer text-white/80 hover:bg-white/15 hover:text-white",
-            )}
+            className="flex items-center gap-3 rounded-lg px-3 py-2 cursor-pointer text-white/80 hover:bg-white/15 hover:text-white transition-all mt-2"
             onClick={handleLogout}
           >
-            <LogOut className="h-5 w-5" />
+            <div className="flex items-center justify-center w-6 h-6">
+              <LogOut className="h-5 w-5" />
+            </div>
             <span className={cn(
               "font-medium",
               !isOpen && "hidden"
@@ -147,7 +148,7 @@ export default function Sidebar() {
         </div>
         <div 
           className={cn(
-            "flex items-center gap-x-2 px-3 py-2 text-white/70", 
+            "flex items-center gap-x-2 px-3 py-2 text-white/70 mt-4 border-t border-white/10 pt-4", 
             isOpen ? "justify-between" : "justify-center"
           )}
         >
