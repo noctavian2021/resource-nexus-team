@@ -10,6 +10,12 @@ export interface BackupConfig {
   lastBackup: string | null; // ISO date string
 }
 
+export interface ServerBackupInfo {
+  filename: string;
+  created: string;
+  size: number;
+}
+
 const defaultConfig: BackupConfig = {
   enabled: false,
   frequency: 'daily',
@@ -20,7 +26,9 @@ const defaultConfig: BackupConfig = {
 
 export const useBackupConfig = () => {
   const [backupConfig, setBackupConfig] = useState<BackupConfig>(defaultConfig);
-  const [backupsHistory, setBackupsHistory] = useState<Array<{ date: string; filename: string }>>([]);
+  const [backupsHistory, setBackupsHistory] = useState<Array<{ date: string; filename: string; type: 'client' | 'server' | 'integrated' }>>([]);
+  const [serverBackups, setServerBackups] = useState<ServerBackupInfo[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Load config from localStorage on mount
   useEffect(() => {
@@ -47,7 +55,22 @@ export const useBackupConfig = () => {
         console.error('Failed to parse backups history:', e);
       }
     }
+
+    // Fetch server backups
+    fetchServerBackups();
   }, []);
+
+  // Fetch available server backups
+  const fetchServerBackups = async () => {
+    try {
+      const response = await apiRequest<{ success: boolean; backups: ServerBackupInfo[] }>('backup/list');
+      if (response.success && response.backups) {
+        setServerBackups(response.backups);
+      }
+    } catch (error) {
+      console.error('Failed to fetch server backups:', error);
+    }
+  };
 
   // Update backup configuration
   const updateBackupConfig = (config: Partial<BackupConfig>) => {
@@ -75,7 +98,7 @@ export const useBackupConfig = () => {
           // Check if we already had a backup today
           const lastBackupDate = backupConfig.lastBackup ? new Date(backupConfig.lastBackup) : null;
           if (!lastBackupDate || lastBackupDate.toDateString() !== now.toDateString()) {
-            createBackup();
+            createIntegratedBackup();
           }
         }
       }
@@ -86,14 +109,11 @@ export const useBackupConfig = () => {
     return () => clearInterval(interval);
   }, [backupConfig]);
 
-  // Create a backup
-  const createBackup = async () => {
-    console.log('Creating backup...');
+  // Create a client-only backup (localStorage data)
+  const createClientBackup = async () => {
+    console.log('Creating client backup...');
     
     try {
-      // In a real implementation, we'd call an API endpoint
-      // For now, we'll simulate by creating a downloadable file with localStorage data
-      
       // Collect all data from localStorage
       const data: Record<string, any> = {};
       
@@ -117,7 +137,7 @@ export const useBackupConfig = () => {
       const metadata = {
         version: '1.0',
         createdAt: timestamp.toISOString(),
-        type: 'resource-nexus-backup'
+        type: 'resource-nexus-client-backup'
       };
       
       const backup = { metadata, data };
@@ -127,7 +147,7 @@ export const useBackupConfig = () => {
       const url = URL.createObjectURL(blob);
       
       // Create filename
-      const filename = `resource-nexus-backup-${timestamp.toISOString().replace(/:/g, '-')}.json`;
+      const filename = `resource-nexus-client-backup-${timestamp.toISOString().replace(/:/g, '-')}.json`;
       
       // Trigger download
       const a = document.createElement('a');
@@ -147,7 +167,7 @@ export const useBackupConfig = () => {
       
       // Add to history
       const updatedHistory = [
-        { date: timestamp.toISOString(), filename },
+        { date: timestamp.toISOString(), filename, type: 'client' as const },
         ...backupsHistory.slice(0, 9) // Keep only the 10 most recent entries
       ];
       setBackupsHistory(updatedHistory);
@@ -155,18 +175,155 @@ export const useBackupConfig = () => {
       
       return { success: true, filename };
     } catch (error) {
-      console.error('Backup creation failed:', error);
+      console.error('Client backup creation failed:', error);
       return { success: false, error: String(error) };
+    }
+  };
+
+  // Create a server-only backup
+  const createServerBackup = async () => {
+    console.log('Creating server backup...');
+    
+    try {
+      setIsLoading(true);
+      const response = await apiRequest<{
+        success: boolean;
+        filename: string;
+        timestamp: string;
+        size: number;
+        error?: string;
+      }>('backup/create', 'POST');
+      
+      if (!response.success) {
+        throw new Error(response.error || 'Server backup failed');
+      }
+      
+      // Add to history
+      const updatedHistory = [
+        { 
+          date: response.timestamp, 
+          filename: response.filename, 
+          type: 'server' as const 
+        },
+        ...backupsHistory.slice(0, 9) // Keep only the 10 most recent entries
+      ];
+      setBackupsHistory(updatedHistory);
+      localStorage.setItem('backupsHistory', JSON.stringify(updatedHistory));
+      
+      // Refresh server backups list
+      await fetchServerBackups();
+      
+      return { 
+        success: true, 
+        filename: response.filename,
+        timestamp: response.timestamp
+      };
+    } catch (error) {
+      console.error('Server backup creation failed:', error);
+      return { success: false, error: String(error) };
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Create an integrated backup (both client and server data)
+  const createIntegratedBackup = async () => {
+    console.log('Creating integrated backup...');
+    
+    try {
+      setIsLoading(true);
+      
+      // Collect all data from localStorage
+      const clientData: Record<string, any> = {};
+      
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key) {
+          try {
+            // Skip certain keys that don't need backup
+            if (['token', 'session'].includes(key)) continue;
+            
+            clientData[key] = JSON.parse(localStorage.getItem(key) || 'null');
+          } catch {
+            // If it's not JSON, store as string
+            clientData[key] = localStorage.getItem(key);
+          }
+        }
+      }
+      
+      // Get server data via API
+      const serverResponse = await apiRequest<any>('backup/export-data', 'GET');
+      
+      if (!serverResponse.success) {
+        throw new Error('Failed to export server data');
+      }
+      
+      // Create integrated backup object
+      const timestamp = new Date();
+      const metadata = {
+        version: '1.1',
+        createdAt: timestamp.toISOString(),
+        type: 'resource-nexus-integrated-backup'
+      };
+      
+      const backup = { 
+        metadata, 
+        clientData,
+        serverData: serverResponse.data
+      };
+      
+      // Create file for download
+      const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      
+      // Create filename
+      const filename = `resource-nexus-integrated-backup-${timestamp.toISOString().replace(/:/g, '-')}.json`;
+      
+      // Trigger download
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      
+      // Cleanup
+      setTimeout(() => {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }, 0);
+      
+      // Update last backup time
+      updateBackupConfig({ lastBackup: timestamp.toISOString() });
+      
+      // Add to history
+      const updatedHistory = [
+        { 
+          date: timestamp.toISOString(), 
+          filename, 
+          type: 'integrated' as const
+        },
+        ...backupsHistory.slice(0, 9) // Keep only the 10 most recent entries
+      ];
+      setBackupsHistory(updatedHistory);
+      localStorage.setItem('backupsHistory', JSON.stringify(updatedHistory));
+      
+      return { success: true, filename };
+    } catch (error) {
+      console.error('Integrated backup creation failed:', error);
+      return { success: false, error: String(error) };
+    } finally {
+      setIsLoading(false);
     }
   };
 
   // Import and restore from backup
   const importBackup = async (file: File) => {
     try {
+      setIsLoading(true);
       return new Promise<{ success: boolean; error?: string }>((resolve) => {
         const reader = new FileReader();
         
-        reader.onload = (event) => {
+        reader.onload = async (event) => {
           try {
             if (!event.target?.result) {
               resolve({ success: false, error: 'Failed to read file' });
@@ -175,42 +332,133 @@ export const useBackupConfig = () => {
             
             const backupData = JSON.parse(event.target.result as string);
             
-            // Validate backup file
-            if (!backupData.metadata || backupData.metadata.type !== 'resource-nexus-backup') {
-              resolve({ success: false, error: 'Invalid backup file' });
+            // Validate backup file type
+            if (!backupData.metadata) {
+              resolve({ success: false, error: 'Invalid backup file: missing metadata' });
               return;
             }
             
-            // Make sure we have data to restore
-            if (!backupData.data) {
-              resolve({ success: false, error: 'No data found in backup file' });
-              return;
+            // Handle different types of backups
+            switch(backupData.metadata.type) {
+              case 'resource-nexus-client-backup':
+                await handleClientRestore(backupData);
+                resolve({ success: true });
+                break;
+                
+              case 'resource-nexus-backup': // Legacy type
+              case 'resource-nexus-server-backup':
+                await handleServerRestore(backupData);
+                resolve({ success: true });
+                break;
+                
+              case 'resource-nexus-integrated-backup':
+                await handleIntegratedRestore(backupData);
+                resolve({ success: true });
+                break;
+                
+              default:
+                resolve({ success: false, error: 'Unknown backup type' });
             }
-            
-            // Restore all data to localStorage
-            Object.entries(backupData.data).forEach(([key, value]) => {
-              if (typeof value === 'object' && value !== null) {
-                localStorage.setItem(key, JSON.stringify(value));
-              } else {
-                localStorage.setItem(key, String(value));
-              }
-            });
-            
-            resolve({ success: true });
           } catch (error) {
             console.error('Error parsing backup file:', error);
             resolve({ success: false, error: 'Could not parse backup file' });
+          } finally {
+            setIsLoading(false);
           }
         };
         
         reader.onerror = () => {
+          setIsLoading(false);
           resolve({ success: false, error: 'Failed to read file' });
         };
         
         reader.readAsText(file);
       });
     } catch (error) {
+      setIsLoading(false);
       console.error('Import failed:', error);
+      return { success: false, error: String(error) };
+    }
+  };
+  
+  // Handle restoration of client-only backup
+  const handleClientRestore = async (backupData: any) => {
+    if (!backupData.data) {
+      throw new Error('No data found in backup file');
+    }
+    
+    // Restore all data to localStorage
+    Object.entries(backupData.data).forEach(([key, value]) => {
+      if (typeof value === 'object' && value !== null) {
+        localStorage.setItem(key, JSON.stringify(value));
+      } else {
+        localStorage.setItem(key, String(value));
+      }
+    });
+    
+    // Refresh the page to apply changes
+    window.location.reload();
+    return { success: true };
+  };
+  
+  // Handle restoration of server-only backup
+  const handleServerRestore = async (backupData: any) => {
+    // Send the backup data to server for restoration
+    const response = await apiRequest<{ success: boolean; error?: string }>('backup/restore', 'POST', backupData);
+    
+    if (!response.success) {
+      throw new Error(response.error || 'Server restore failed');
+    }
+    
+    // Refresh the page to apply changes
+    window.location.reload();
+    return { success: true };
+  };
+  
+  // Handle restoration of integrated backup
+  const handleIntegratedRestore = async (backupData: any) => {
+    // Validate backup data
+    if (!backupData.clientData) {
+      throw new Error('No client data found in backup file');
+    }
+    
+    if (!backupData.serverData) {
+      throw new Error('No server data found in backup file');
+    }
+    
+    // First restore client data (localStorage)
+    Object.entries(backupData.clientData).forEach(([key, value]) => {
+      if (typeof value === 'object' && value !== null) {
+        localStorage.setItem(key, JSON.stringify(value));
+      } else {
+        localStorage.setItem(key, String(value));
+      }
+    });
+    
+    // Then restore server data
+    const serverRestorePayload = {
+      metadata: backupData.metadata,
+      data: backupData.serverData
+    };
+    
+    const response = await apiRequest<{ success: boolean; error?: string }>('backup/restore', 'POST', serverRestorePayload);
+    
+    if (!response.success) {
+      throw new Error(response.error || 'Server data restore failed');
+    }
+    
+    // Refresh the page to apply changes
+    window.location.reload();
+    return { success: true };
+  };
+
+  // Download a server backup file
+  const downloadServerBackup = async (filename: string) => {
+    try {
+      window.open(`${apiRequest.API_URL}/api/backup/download/${filename}`, '_blank');
+      return { success: true };
+    } catch (error) {
+      console.error('Error downloading server backup:', error);
       return { success: false, error: String(error) };
     }
   };
@@ -218,8 +466,13 @@ export const useBackupConfig = () => {
   return {
     backupConfig,
     updateBackupConfig,
-    createBackup,
+    createClientBackup,
+    createServerBackup,
+    createIntegratedBackup,
     importBackup,
-    backupsHistory
+    backupsHistory,
+    serverBackups,
+    downloadServerBackup,
+    isLoading
   };
 };

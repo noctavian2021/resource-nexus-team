@@ -1,4 +1,3 @@
-
 const express = require('express');
 const cors = require('cors');
 const { db, getNextId } = require('./data');
@@ -512,7 +511,7 @@ app.post('/api/backup/create', (req, res) => {
       metadata: {
         version: '1.0',
         createdAt: timestamp.toISOString(),
-        type: 'resource-nexus-backup'
+        type: 'resource-nexus-server-backup'
       },
       data: db
     };
@@ -536,6 +535,23 @@ app.post('/api/backup/create', (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to create backup',
+      details: error.message
+    });
+  }
+});
+
+// NEW: Export server data for integrated backup
+app.get('/api/backup/export-data', (req, res) => {
+  try {
+    res.status(200).json({
+      success: true,
+      data: db
+    });
+  } catch (error) {
+    console.error('Error exporting server data:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to export server data',
       details: error.message
     });
   }
@@ -602,10 +618,24 @@ app.post('/api/backup/restore', express.raw({ type: 'application/json', limit: '
     const backupData = JSON.parse(req.body.toString());
     
     // Validate backup file
-    if (!backupData.metadata || backupData.metadata.type !== 'resource-nexus-backup') {
+    if (!backupData.metadata) {
       return res.status(400).json({
         success: false,
-        error: 'Invalid backup file format'
+        error: 'Invalid backup file format: missing metadata'
+      });
+    }
+    
+    // Check valid backup types
+    const validTypes = [
+      'resource-nexus-backup',          // Legacy type
+      'resource-nexus-server-backup',   // New server type
+      'resource-nexus-pre-restore-backup'
+    ];
+    
+    if (!validTypes.includes(backupData.metadata.type)) {
+      return res.status(400).json({
+        success: false,
+        error: `Invalid backup type: ${backupData.metadata.type}`
       });
     }
     

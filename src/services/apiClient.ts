@@ -90,4 +90,10 @@ const apiRequest = async <T>(
   }
 };
 
+// Add API_URL property to the function
+Object.defineProperty(apiRequest, 'API_URL', {
+  value: API_URL,
+  writable: false
+});
+
 export default apiRequest;
