@@ -540,9 +540,10 @@ app.post('/api/backup/create', (req, res) => {
   }
 });
 
-// NEW: Export server data for integrated backup
+// Export server data for integrated backup - FIXED ENDPOINT
 app.get('/api/backup/export-data', (req, res) => {
   try {
+    // Return the current database state
     res.status(200).json({
       success: true,
       data: db
