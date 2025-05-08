@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import apiRequest, { API_URL } from '@/services/apiClient';
 
@@ -251,7 +252,7 @@ export const useBackupConfig = () => {
       }
       
       // Get server data via API
-      const serverResponse = await apiRequest<any>('backup/export-data', 'GET');
+      const serverResponse = await apiRequest<{success: boolean; data: any}>('backup/export-data', 'GET');
       
       if (!serverResponse.success) {
         throw new Error('Failed to export server data');
