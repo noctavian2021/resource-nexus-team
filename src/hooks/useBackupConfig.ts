@@ -1,6 +1,5 @@
-
 import { useState, useEffect } from 'react';
-import apiRequest from '@/services/api';
+import apiRequest, { API_URL } from '@/services/apiClient';
 
 export interface BackupConfig {
   enabled: boolean;
@@ -455,7 +454,7 @@ export const useBackupConfig = () => {
   // Download a server backup file
   const downloadServerBackup = async (filename: string) => {
     try {
-      window.open(`${apiRequest.API_URL}/api/backup/download/${filename}`, '_blank');
+      window.open(`${API_URL}/api/backup/download/${filename}`, '_blank');
       return { success: true };
     } catch (error) {
       console.error('Error downloading server backup:', error);

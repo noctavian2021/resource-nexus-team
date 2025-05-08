@@ -26,7 +26,15 @@ export default function AdminSettings() {
     error: emailConfigError,
     isLoading: emailConfigLoading
   } = useEmailConfig();
-  const { backupConfig, updateBackupConfig, createBackup, importBackup } = useBackupConfig();
+  
+  const { 
+    backupConfig, 
+    updateBackupConfig, 
+    createIntegratedBackup, 
+    importBackup, 
+    isLoading: backupIsLoading 
+  } = useBackupConfig();
+  
   const [testEmailRecipient, setTestEmailRecipient] = useState('');
   const [isSendingTest, setIsSendingTest] = useState(false);
   const [isCreatingBackup, setIsCreatingBackup] = useState(false);
@@ -130,7 +138,7 @@ export default function AdminSettings() {
   const handleCreateBackup = async () => {
     setIsCreatingBackup(true);
     try {
-      const result = await createBackup();
+      const result = await createIntegratedBackup();
       if (result.success) {
         toast({
           title: "Backup Created",
