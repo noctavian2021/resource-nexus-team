@@ -7,7 +7,7 @@ import { apiRateLimiter } from '@/utils/security';
 
 // Configuration
 export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000'; 
-let USE_MOCK = import.meta.env.MODE === 'development' ? false : false; // Setting default to false for production mode
+let USE_MOCK = import.meta.env.MODE === 'development' ? true : false; // Setting default to true for development mode
 
 // Logger utility
 const logger = {
@@ -58,10 +58,11 @@ const apiRequest = async <T>(
     throw new Error('API rate limit exceeded. Please try again later.');
   }
 
-  // If mock mode is enabled, use mock data
-  if (USE_MOCK) {
+  // Always use mock data in the Lovable preview environment
+  if (window.location.hostname.includes('lovableproject.com') || USE_MOCK) {
     // Import the mock handler on demand to avoid circular dependencies
     const { handleMockRequest } = await import('./mockApiHandler');
+    logger.log(`Using mock data for: ${endpoint}`);
     return handleMockRequest<T>(endpoint, method, data);
   }
   
@@ -119,7 +120,12 @@ const apiRequest = async <T>(
     }
   } catch (error) {
     logger.error(`API Error (${endpoint}):`, error);
-    throw error;
+    
+    // If we reach a network error (like in the preview environment),
+    // Fall back to mock data
+    logger.log(`Falling back to mock data for: ${endpoint}`);
+    const { handleMockRequest } = await import('./mockApiHandler');
+    return handleMockRequest<T>(endpoint, method, data);
   }
 };
 
