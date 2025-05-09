@@ -1,6 +1,6 @@
 
 /**
- * Core API client for the Resource Nexus app
+ * Core API client for the TeamSphere app
  */
 
 import { apiRateLimiter } from '@/utils/security';

@@ -93,7 +93,7 @@ export default function Login() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-blue-100 to-blue-50 p-4">
       <div className="w-full max-w-md space-y-8">
         <div className="text-center">
-          <h1 className="text-3xl font-bold text-gray-900">Resource Manager</h1>
+          <h1 className="text-3xl font-bold text-gray-900">TeamSphere</h1>
           <p className="mt-2 text-gray-600">Sign in to your team lead account</p>
         </div>
         
