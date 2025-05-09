@@ -3,6 +3,15 @@ import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
+// Logger utility to conditionally log based on environment
+const logger = {
+  log: (message: string, ...args: any[]) => {
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`[PROTECTED ROUTE] ${message}`, ...args);
+    }
+  }
+};
+
 interface ProtectedRouteProps {
   children: React.ReactNode;
 }
@@ -11,7 +20,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { user, isLoading } = useAuth();
   const location = useLocation();
 
-  console.log("ProtectedRoute check - User:", user, "Path:", location.pathname);
+  logger.log("ProtectedRoute check - User:", user, "Path:", location.pathname);
 
   // Show loading state while checking auth
   if (isLoading) {
@@ -24,7 +33,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
 
   // Redirect to login if not authenticated
   if (!user) {
-    console.log("No user found, redirecting to login");
+    logger.log("No user found, redirecting to login");
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
@@ -32,11 +41,11 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   const isRestrictedAdminRoute = location.pathname.includes('/admin') && user.role !== 'admin';
   
   if (isRestrictedAdminRoute) {
-    console.log("User doesn't have admin access, redirecting to dashboard");
+    logger.log("User doesn't have admin access, redirecting to dashboard");
     return <Navigate to="/" replace />;
   }
 
   // Render children if authenticated and authorized
-  console.log("User authorized, rendering protected content");
+  logger.log("User authorized, rendering protected content");
   return <>{children}</>;
 }

@@ -1,6 +1,22 @@
 
 import { Project, departments, teamMembers } from '@/data/mockData';
 
+// Logger utility to conditionally log based on environment
+const logger = {
+  log: (message: string, ...args: any[]) => {
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(message, ...args);
+    }
+  },
+  error: (message: string, ...args: any[]) => {
+    if (process.env.NODE_ENV !== 'production') {
+      console.error(message, ...args);
+    } else {
+      // In production, you might want to log to an error tracking service instead
+    }
+  }
+};
+
 // Mock data access functions
 export const getMockProjects = async (): Promise<Project[]> => {
   // Return a copy of the mock projects to avoid mutation
@@ -70,7 +86,7 @@ export const handleMockRequest = async <T>(
   method: string = 'GET', 
   data: any = null
 ): Promise<T> => {
-  console.log(`[MOCK] ${method} ${endpoint}`);
+  logger.log(`[MOCK] ${method} ${endpoint}`);
   
   // Add delay to simulate network
   await new Promise(resolve => setTimeout(resolve, 300));

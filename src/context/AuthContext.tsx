@@ -1,5 +1,6 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { authService } from '../services/authService';
 
 // Define user type
 export interface User {
@@ -27,42 +28,19 @@ interface AuthContextType {
 // Create the context
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Sample user data (in a real app, this would come from an API/database)
-const MOCK_USERS = [
-  {
-    id: 'user1',
-    name: 'John Smith',
-    email: 'john@example.com',
-    password: 'password123', // In a real app, this would be hashed
-    departmentId: '1',
-    role: 'team_lead' as const,
-    isLead: true
-  },
-  {
-    id: 'user2',
-    name: 'Jane Doe',
-    email: 'jane@example.com',
-    password: 'password123',
-    departmentId: '2',
-    role: 'team_lead' as const,
-    isLead: true
-  },
-  {
-    id: 'user3',
-    name: 'Admin User',
-    email: 'admin@example.com',
-    password: 'admin123',
-    departmentId: '0',
-    role: 'admin' as const,
-    isLead: true  // Mark admin as a lead by default
-  },
-];
+// Logger utility
+const logger = {
+  log: (message: string, ...args: any[]) => {
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`[AUTH CONTEXT] ${message}`, ...args);
+    }
+  }
+};
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [users, setUsers] = useState(MOCK_USERS);
 
   // Check if user is already logged in (via localStorage)
   useEffect(() => {
@@ -87,7 +65,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         // Store user email in localStorage for notification purposes
         localStorage.setItem('userEmail', parsedUser.email);
       } catch (err) {
-        console.error('Error parsing stored user data', err);
+        logger.log('Error parsing stored user data', err);
         localStorage.removeItem('authUser');
       }
     }
@@ -100,35 +78,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setError(null);
     
     try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 800));
+      const authenticatedUser = await authService.authenticateUser(email, password);
       
-      // Find user by email and password
-      const foundUser = users.find(
-        u => u.email.toLowerCase() === email.toLowerCase() && u.password === password
-      );
-      
-      if (foundUser) {
-        // Remove password before storing
-        const { password: _, ...userWithoutPassword } = foundUser;
-        
-        // Ensure admin users always have isLead set to true
-        if (userWithoutPassword.role === 'admin') {
-          userWithoutPassword.isLead = true;
-        }
-        
-        // Ensure team_lead users always have isLead set to true
-        if (userWithoutPassword.role === 'team_lead') {
-          userWithoutPassword.isLead = true;
-        }
-        
-        setUser(userWithoutPassword);
+      if (authenticatedUser) {
+        setUser(authenticatedUser);
         
         // Store in localStorage for persistence
-        localStorage.setItem('authUser', JSON.stringify(userWithoutPassword));
+        localStorage.setItem('authUser', JSON.stringify(authenticatedUser));
         
         // Store user email in localStorage for notification purposes
-        localStorage.setItem('userEmail', userWithoutPassword.email);
+        localStorage.setItem('userEmail', authenticatedUser.email);
         
         setIsLoading(false);
         return true;
@@ -139,7 +98,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
     } catch (err) {
       setError('An error occurred during login');
-      console.error('Login error:', err);
+      logger.log('Login error:', err);
       setIsLoading(false);
       return false;
     }
@@ -159,91 +118,48 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
     
     try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 800));
+      const success = await authService.changePassword(user.id, currentPassword, newPassword);
       
-      // Find user in our "database"
-      const userIndex = users.findIndex(u => u.id === user.id);
-      
-      if (userIndex === -1) {
-        setError('User not found');
-        return false;
-      }
-      
-      // Check current password
-      if (users[userIndex].password !== currentPassword) {
+      if (!success) {
         setError('Current password is incorrect');
-        return false;
       }
       
-      // Update password
-      const updatedUsers = [...users];
-      updatedUsers[userIndex] = {
-        ...updatedUsers[userIndex],
-        password: newPassword
-      };
-      
-      setUsers(updatedUsers);
-      return true;
+      return success;
     } catch (err) {
       setError('An error occurred while changing password');
-      console.error('Password change error:', err);
+      logger.log('Password change error:', err);
       return false;
     }
   };
 
-  // Method for admin to reset any user's password
   const resetUserPassword = async (userId: string, newPassword: string): Promise<boolean> => {
     setError(null);
     
     if (!user) {
       setError('Not logged in');
-      console.error('Cannot reset password: User not logged in');
+      logger.log('Cannot reset password: User not logged in');
       return false;
     }
     
     // Check if the current user is an admin
     if (user.role !== 'admin') {
       setError('Unauthorized: Only admins can reset passwords');
-      console.error('Password reset attempt by non-admin user');
+      logger.log('Password reset attempt by non-admin user');
       return false;
     }
     
     try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 800));
+      const success = await authService.resetUserPassword(userId, newPassword);
       
-      console.log(`Attempting to reset password for userId: ${userId}`);
-      
-      if (!userId) {
-        console.error('Missing user ID for password reset');
-        setError('Missing user ID');
-        return false;
-      }
-      
-      // Find user in our "database"
-      const userIndex = users.findIndex(u => u.id === userId);
-      
-      if (userIndex === -1) {
+      if (!success) {
         setError('User not found');
-        console.error(`User with ID ${userId} not found for password reset`);
-        return false;
       }
       
-      // Update password
-      const updatedUsers = [...users];
-      updatedUsers[userIndex] = {
-        ...updatedUsers[userIndex],
-        password: newPassword
-      };
-      
-      setUsers(updatedUsers);
-      console.log(`Password successfully reset for user: ${updatedUsers[userIndex].name}`);
-      return true;
+      return success;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
       setError(`An error occurred while resetting password: ${errorMessage}`);
-      console.error('Password reset error:', err);
+      logger.log('Password reset error:', err);
       return false;
     }
   };
@@ -254,8 +170,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       return [];
     }
     
-    // Return users without passwords
-    return users.map(({ password, ...userWithoutPassword }) => userWithoutPassword);
+    return authService.getAllUsers();
   };
 
   return (

@@ -9,6 +9,16 @@ import { Label } from '@/components/ui/label';
 import { useForm } from 'react-hook-form';
 import { useToast } from '@/hooks/use-toast';
 import { Building2, Lock, Mail, ShieldAlert } from 'lucide-react';
+import { apiRateLimiter } from '@/utils/security';
+
+// Logger utility
+const logger = {
+  log: (message: string, ...args: any[]) => {
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`[LOGIN] ${message}`, ...args);
+    }
+  }
+};
 
 interface LoginFormData {
   email: string;
@@ -31,13 +41,23 @@ export default function Login() {
   useEffect(() => {
     // If user is already logged in, redirect to dashboard
     if (user) {
-      console.log("User already logged in, redirecting to dashboard");
+      logger.log("User already logged in, redirecting to dashboard");
       navigate('/', { replace: true });
     }
   }, [user, navigate]);
 
   const onSubmit = async (data: LoginFormData) => {
-    console.log("Attempting login with:", data.email);
+    // Apply rate limiting to prevent brute force
+    if (!apiRateLimiter.check('login')) {
+      toast({
+        title: "Too many login attempts",
+        description: "Please try again later",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    logger.log("Attempting login with:", data.email);
     const success = await login(data.email, data.password);
     
     if (success) {
@@ -45,7 +65,9 @@ export default function Login() {
         title: "Login successful",
         description: "Welcome back!",
       });
-      navigate('/', { replace: true });
+      // Get the intended destination or default to dashboard
+      const destination = location.state?.from?.pathname || '/';
+      navigate(destination, { replace: true });
     } else {
       toast({
         title: "Login failed",
@@ -92,6 +114,7 @@ export default function Login() {
                     id="email"
                     placeholder="your@email.com"
                     className="pl-10"
+                    autoComplete="username"
                     {...register('email', { 
                       required: 'Email is required',
                       pattern: {
@@ -114,6 +137,7 @@ export default function Login() {
                     id="password"
                     type="password"
                     className="pl-10"
+                    autoComplete="current-password"
                     {...register('password', { required: 'Password is required' })}
                   />
                 </div>

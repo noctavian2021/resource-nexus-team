@@ -3,9 +3,27 @@
  * Core API client for the Resource Nexus app
  */
 
+import { apiRateLimiter } from '@/utils/security';
+
 // Configuration
 export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000'; 
 let USE_MOCK = import.meta.env.MODE === 'development' ? false : false; // Setting default to false for production mode
+
+// Logger utility
+const logger = {
+  log: (message: string, ...args: any[]) => {
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`[API] ${message}`, ...args);
+    }
+  },
+  error: (message: string, ...args: any[]) => {
+    if (process.env.NODE_ENV !== 'production') {
+      console.error(`[API ERROR] ${message}`, ...args);
+    } else {
+      // In production, you might want to log to an error tracking service
+    }
+  }
+};
 
 // Function to toggle mock data
 export const toggleMockData = (showMock: boolean) => {
@@ -35,6 +53,11 @@ const apiRequest = async <T>(
   method: string = 'GET', 
   data: any = null
 ): Promise<T> => {
+  // Apply rate limiting to prevent API abuse
+  if (!apiRateLimiter.check('api')) {
+    throw new Error('API rate limit exceeded. Please try again later.');
+  }
+
   // If mock mode is enabled, use mock data
   if (USE_MOCK) {
     // Import the mock handler on demand to avoid circular dependencies
@@ -45,15 +68,25 @@ const apiRequest = async <T>(
   // Fix for endpoints: ensure they start with a slash if endpoint doesn't already
   const formattedEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
   const url = `${API_URL}/api${formattedEndpoint}`;
-  console.log(`Making API request to: ${url}`);
+  logger.log(`Making API request to: ${url}`);
   
   const options: RequestInit = {
     method,
     headers: {
       'Content-Type': 'application/json'
     },
+    credentials: 'include', // Include cookies for auth
     body: data ? JSON.stringify(data) : null
   };
+
+  // Add CSRF protection if available
+  const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+  if (csrfToken) {
+    options.headers = {
+      ...options.headers,
+      'X-CSRF-Token': csrfToken,
+    };
+  }
 
   try {
     const response = await fetch(url, options);
@@ -85,15 +118,10 @@ const apiRequest = async <T>(
       return {} as T;
     }
   } catch (error) {
-    console.error(`API Error (${endpoint}):`, error);
+    logger.error(`API Error (${endpoint}):`, error);
     throw error;
   }
 };
 
-// Add API_URL property to the function
-Object.defineProperty(apiRequest, 'API_URL', {
-  value: API_URL,
-  writable: false
-});
-
+// Export the API_URL and apiRequest
 export default apiRequest;
