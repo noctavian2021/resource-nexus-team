@@ -1,5 +1,4 @@
-
-import { Project, departments, teamMembers } from '@/data/mockData';
+import { Project, Department, TeamMember, departments, teamMembers } from '@/data/mockData';
 
 // Logger utility to conditionally log based on environment
 const logger = {
@@ -92,6 +91,66 @@ export const handleMockRequest = async <T>(
   await new Promise(resolve => setTimeout(resolve, 300));
   
   // Process requests based on endpoint and method
+  if (endpoint.startsWith('/departments')) {
+    if (endpoint === '/departments' && method === 'GET') {
+      return departments as unknown as T;
+    }
+    
+    // Handle specific department endpoints
+    const match = endpoint.match(/\/departments\/(.+)/);
+    if (match) {
+      const departmentId = match[1];
+      if (method === 'GET') {
+        const department = departments.find(d => d.id === departmentId);
+        if (!department) throw new Error('Department not found');
+        return department as unknown as T;
+      } else if (method === 'PUT') {
+        // Simulate updating a department
+        return { ...data, id: departmentId } as unknown as T;
+      } else if (method === 'DELETE') {
+        // Simulate deleting a department
+        return { success: true, message: 'Department deleted' } as unknown as T;
+      }
+    }
+    
+    // Handle department creation
+    if (endpoint === '/departments' && method === 'POST') {
+      const newId = Date.now().toString();
+      return { ...data, id: newId } as unknown as T;
+    }
+  }
+  
+  // Handle team members endpoints
+  if (endpoint.startsWith('/team-members')) {
+    if (endpoint === '/team-members' && method === 'GET') {
+      return teamMembers as unknown as T;
+    }
+    
+    // Handle specific team member endpoints
+    const match = endpoint.match(/\/team-members\/(.+)/);
+    if (match) {
+      const teamMemberId = match[1];
+      if (method === 'GET') {
+        const member = teamMembers.find(m => m.id === teamMemberId);
+        if (!member) throw new Error('Team member not found');
+        return member as unknown as T;
+      } else if (method === 'PUT') {
+        // Simulate updating a team member
+        return { ...data, id: teamMemberId } as unknown as T;
+      } else if (method === 'DELETE') {
+        // Simulate deleting a team member
+        return { success: true, message: 'Team member deleted' } as unknown as T;
+      }
+    }
+    
+    // Handle team member creation
+    if (endpoint === '/team-members' && method === 'POST') {
+      const newId = Date.now().toString();
+      return { ...data, id: newId } as unknown as T;
+    }
+  }
+
+  // Process requests for projects (keep existing code)
   if (endpoint.startsWith('/projects')) {
     if (endpoint === '/projects' && method === 'GET') {
       return getMockProjects() as unknown as T;
@@ -120,6 +179,16 @@ export const handleMockRequest = async <T>(
       const newId = Date.now().toString();
       return { ...data, id: newId } as unknown as T;
     }
+  }
+
+  // Handle email sending endpoint
+  if (endpoint === '/email/send-welcome' && method === 'POST') {
+    // Simulate sending a welcome email
+    logger.log('Sending welcome email to:', data.email);
+    return {
+      success: true,
+      message: `Welcome email sent to ${data.email}`
+    } as unknown as T;
   }
   
   // Default response if no handler matches
